@@ -36,7 +36,7 @@ struct OnboardingView: View {
                     }
                     .padding(.horizontal, AppSpacing.lg)
                 }
-                .padding(.bottom, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xl)
             }
 
             if currentPage < pages.count - 1 {
@@ -48,9 +48,6 @@ struct OnboardingView: View {
                         }
                         .font(AppTypography.bodyEmphasis)
                         .foregroundStyle(AppColor.textSecondary)
-                        .padding(.horizontal, AppSpacing.sm)
-                        .padding(.vertical, AppSpacing.xxs)
-                        .background(AppColor.textPrimary.opacity(0.12), in: Capsule())
                         .padding(.trailing, AppSpacing.md)
                         .padding(.top, AppSpacing.xxs)
                     }

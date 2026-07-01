@@ -32,32 +32,22 @@ struct OnboardingPageView: View {
         }
     }
 
-    /// Four-zone vignette: dark behind the photo card, light in the card-to-title gap,
-    /// dark again behind the title block, light for the remainder of the page. Stop
-    /// locations are derived from the actual card/text layout (in points, converted to
-    /// fractions of `height`) rather than guessed, so the dark zones track the content
-    /// they sit behind instead of a fixed percentage of the screen.
+    /// Tan vignette confined to the photo card and the kicker label directly beneath it;
+    /// the headline, subtitle, and everything below fall on flat `AppColor.background`.
+    /// The fade-out point is derived from the actual card height and kicker line height
+    /// (in points, converted to a fraction of `height`) rather than guessed.
     private func backgroundGradient(height: CGFloat, cardHeight: CGFloat) -> some View {
         let cardTop = AppSpacing.lg
         let cardBottom = cardTop + cardHeight
         let textBlockTop = cardBottom + AppSpacing.xl
 
-        // Estimated text block height from AppTypography metrics: kicker (caption line)
-        // + title (display, up to 2 lines) + subtitle (body, up to 2 lines), separated
-        // by AppSpacing.sm.
-        let kickerLineHeight: CGFloat = 16
-        let titleLineHeight: CGFloat = 41 // 34pt bold display font
-        let titleHeight = titleLineHeight * 2
-        let subtitleLineHeight: CGFloat = 20 // 16pt body font
-        let subtitleHeight = subtitleLineHeight * 2
-        let textBlockHeight = kickerLineHeight + AppSpacing.sm + titleHeight + AppSpacing.sm + subtitleHeight
-        let textBlockBottom = textBlockTop + textBlockHeight
+        let kickerLineHeight: CGFloat = 16 // caption-weight kicker line
+        let kickerBottom = textBlockTop + kickerLineHeight
 
-        let gapFade = AppSpacing.xs   // tight fade within the small card-to-title gap
-        let outFade = AppSpacing.lg   // roomier fade below the title block
+        // Fade completes well before the headline (which starts AppSpacing.sm after the
+        // kicker), so the title block always sits on flat background.
+        let fade = AppSpacing.xs
 
-        // Shared opacity for every "dark" stop so Zone A and Zone C read as the same
-        // intensity — using different values per zone made C visibly lighter than A.
         let darkOpacity: Double = 0.52
 
         func location(_ point: CGFloat) -> CGFloat {
@@ -67,17 +57,9 @@ struct OnboardingPageView: View {
 
         return LinearGradient(
             gradient: Gradient(stops: [
-                // Zone A — dark, behind the photo card.
                 .init(color: page.backgroundTint.opacity(darkOpacity), location: location(0)),
-                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(cardBottom)),
-                // Zone B — light gap between the card and the title block.
-                .init(color: AppColor.background, location: location(cardBottom + gapFade)),
-                .init(color: AppColor.background, location: location(textBlockTop - gapFade)),
-                // Zone C — dark again, spanning the title block.
-                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(textBlockTop)),
-                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(textBlockBottom)),
-                // Zone D — light again for the remainder of the page.
-                .init(color: AppColor.background, location: location(textBlockBottom + outFade))
+                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(kickerBottom)),
+                .init(color: AppColor.background, location: location(kickerBottom + fade))
             ]),
             startPoint: .top,
             endPoint: .bottom
