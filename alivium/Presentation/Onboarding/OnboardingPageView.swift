@@ -13,43 +13,50 @@ struct OnboardingPageView: View {
             let width = proxy.size.width
             let height = proxy.size.height
             let progress = width == 0 ? 0 : proxy.frame(in: .global).minX / width
-            let illustrationHeight = height * 0.64
+            let cardHeight = height * 0.54
 
             VStack(spacing: 0) {
-                photoBlock(width: width, height: illustrationHeight, progress: progress)
+                photoCard(width: width, height: cardHeight, progress: progress)
+                    .padding(.top, AppSpacing.lg)
 
-                ZStack(alignment: .top) {
-                    LinearGradient(
-                        colors: [page.backgroundTint, AppColor.background],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+                textBlock(progress: progress)
+                    .padding(.top, AppSpacing.xl)
 
-                    textBlock(progress: progress)
-                        .padding(.top, AppSpacing.xl)
-                }
-                .frame(height: height - illustrationHeight)
+                Spacer(minLength: 0)
             }
             .frame(width: width, height: height)
+            .background(
+                backgroundGradient
+                    .ignoresSafeArea()
+            )
         }
     }
 
-    private func photoBlock(width: CGFloat, height: CGFloat, progress: CGFloat) -> some View {
-        ZStack(alignment: .bottom) {
-            illustration
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(stops: [
+                // Confined vignette glow around the photo card: dark → light → dark.
+                .init(color: page.backgroundTint.opacity(0.55), location: 0),
+                .init(color: page.backgroundTint.opacity(0.25), location: 0.14),
+                .init(color: AppColor.background, location: 0.36),
+                .init(color: page.backgroundTint.opacity(0.28), location: 0.56),
+                // Smooth blend down into a clean, flat, mostly-neutral zone for text/dots/button.
+                .init(color: page.backgroundTint.opacity(0.06), location: 0.68),
+                .init(color: page.backgroundTint.opacity(0.06), location: 1)
+            ]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
 
-            LinearGradient(
-                colors: [page.backgroundTint, page.backgroundTint.opacity(0)],
-                startPoint: .bottom,
-                endPoint: .top
-            )
-            .frame(height: height * 0.38)
-        }
-        .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
-        .offset(x: progress * -28)
-        .scaleEffect(1 - min(abs(progress) * 0.12, 0.12), anchor: .top)
-        .opacity(1 - min(abs(progress) * 0.7, 0.7))
+    private func photoCard(width: CGFloat, height: CGFloat, progress: CGFloat) -> some View {
+        illustration
+            .frame(width: width - AppSpacing.lg * 2, height: height)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
+            .shadow(color: page.shadowTint.opacity(0.35), radius: 20, x: 0, y: 12)
+            .offset(x: progress * -28)
+            .scaleEffect(1 - min(abs(progress) * 0.1, 0.1), anchor: .top)
+            .opacity(1 - min(abs(progress) * 0.6, 0.6))
     }
 
     private func textBlock(progress: CGFloat) -> some View {
