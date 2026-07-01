@@ -48,8 +48,11 @@ struct OnboardingView: View {
                         }
                         .font(AppTypography.bodyEmphasis)
                         .foregroundStyle(AppColor.textSecondary)
-                        .padding(.trailing, AppSpacing.lg)
-                        .padding(.top, AppSpacing.sm)
+                        .padding(.horizontal, AppSpacing.sm)
+                        .padding(.vertical, AppSpacing.xxs)
+                        .background(AppColor.textPrimary.opacity(0.12), in: Capsule())
+                        .padding(.trailing, AppSpacing.md)
+                        .padding(.top, AppSpacing.xxs)
                     }
                     Spacer()
                 }

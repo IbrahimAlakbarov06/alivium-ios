@@ -65,7 +65,7 @@ struct BaseButton: View {
 
     private var verticalPadding: CGFloat {
         switch size {
-        case .large: return AppSpacing.sm
+        case .large: return AppSpacing.md
         case .medium: return AppSpacing.xs
         case .small: return AppSpacing.xxs
         }

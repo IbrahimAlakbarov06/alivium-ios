@@ -15,6 +15,10 @@ struct PageIndicator: View {
                 Capsule()
                     .fill(index == currentPage ? AppColor.accent : AppColor.textSecondary.opacity(0.3))
                     .frame(width: index == currentPage ? 22 : 7, height: 7)
+                    // Flattens each dot into a single opaque layer before the spring-driven
+                    // width animation runs, so the translucent fill can't pick up a transient
+                    // top/bottom shading from being blended mid-transition.
+                    .compositingGroup()
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentPage)
