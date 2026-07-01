@@ -32,16 +32,11 @@ struct OnboardingPageView: View {
         }
     }
 
-    /// Tan vignette confined to the photo card and the kicker label directly beneath it,
-    /// with its own dark → light → dark rhythm. The top has a naturally huge visual
-    /// footprint: its dark tone extends upward behind the status bar (an unbounded literal
-    /// plateau) and fades so gradually across the whole photo that it still reads as solid
-    /// for a long stretch. The bottom only has ~60pt of budget (the card-to-kicker gap plus
-    /// the kicker line) before the headline must sit on flat white, so to give it comparable
-    /// weight the dark tone there is a genuine flat plateau — not just a peak value — spanning
-    /// from shortly before the kicker text through it and a little past it, rather than
-    /// ramping straight from light to white. All transition points are derived from the
-    /// actual card/kicker layout (in points, converted to a fraction of `height`).
+    /// Tan vignette confined to the photo card and the kicker label directly beneath it:
+    /// dark at the top of the photo, lightest in the gap right before the kicker, dark again
+    /// at the bottom of the kicker, then a sharp cut to flat `AppColor.background` for the
+    /// headline onward. Exactly four stops — no intermediate plateau stops — so there is no
+    /// re-lightening after the final dark point.
     private func backgroundGradient(height: CGFloat, cardHeight: CGFloat) -> some View {
         let cardTop = AppSpacing.lg
         let cardBottom = cardTop + cardHeight
@@ -50,20 +45,6 @@ struct OnboardingPageView: View {
         let kickerLineHeight: CGFloat = 16 // caption-weight kicker line
         let kickerBottom = textBlockTop + kickerLineHeight
 
-        // Lightest point sits a little into the gap (not immediately at the card edge),
-        // leaving room afterward to ramp back up into a real dark plateau.
-        let lightPoint = cardBottom + AppSpacing.sm
-        // Plateau starts before the kicker text begins and ends a touch after it, so the
-        // dark band has real height instead of being squeezed to an instant peak.
-        let darkPlateauStart = textBlockTop - AppSpacing.sm
-        let darkPlateauEnd = kickerBottom + AppSpacing.xxs
-        // Short fade into flat white, completed well before the headline (which starts
-        // AppSpacing.sm after the kicker).
-        let whiteStart = darkPlateauEnd + AppSpacing.xxs
-
-        let darkOpacity: Double = 0.62
-        let lightOpacity: Double = 0.06
-
         func location(_ point: CGFloat) -> CGFloat {
             guard height > 0 else { return 0 }
             return min(max(point / height, 0), 1)
@@ -71,20 +52,10 @@ struct OnboardingPageView: View {
 
         return LinearGradient(
             gradient: Gradient(stops: [
-                // Darkest at the top of the photo card. This edge has an implicit plateau
-                // (the color extends upward behind the status bar), so it reads as a solid
-                // tone rather than a fleeting peak.
-                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(0)),
-                // Lightens through the photo, reaching its lightest point a little into the
-                // gap before the kicker label.
-                .init(color: page.backgroundTint.opacity(lightOpacity), location: location(lightPoint)),
-                // Ramps back up and holds a genuine dark plateau spanning just before the
-                // kicker, through it, and a touch past it — giving the bottom band real
-                // visual weight instead of an instant peak.
-                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(darkPlateauStart)),
-                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(darkPlateauEnd)),
-                // Then a short fade into flat white for the headline onward.
-                .init(color: AppColor.background, location: location(whiteStart))
+                .init(color: page.backgroundTint.opacity(0.62), location: 0.0),
+                .init(color: page.backgroundTint.opacity(0.06), location: location(textBlockTop)),
+                .init(color: page.backgroundTint.opacity(0.62), location: location(kickerBottom)),
+                .init(color: AppColor.background, location: location(kickerBottom) + 0.02)
             ]),
             startPoint: .top,
             endPoint: .bottom
