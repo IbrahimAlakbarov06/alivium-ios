@@ -32,10 +32,12 @@ struct OnboardingPageView: View {
         }
     }
 
-    /// Tan vignette confined to the photo card and the kicker label directly beneath it;
-    /// the headline, subtitle, and everything below fall on flat `AppColor.background`.
-    /// The fade-out point is derived from the actual card height and kicker line height
-    /// (in points, converted to a fraction of `height`) rather than guessed.
+    /// Tan vignette confined to the photo card and the kicker label directly beneath it,
+    /// with its own dark → light → dark rhythm: darkest at the top of the photo, lightening
+    /// through the photo to its lightest point in the gap before the kicker, then darkening
+    /// again through the kicker label. The headline, subtitle, and everything below fall on
+    /// flat `AppColor.background`. All transition points are derived from the actual card
+    /// height and kicker line height (in points, converted to a fraction of `height`).
     private func backgroundGradient(height: CGFloat, cardHeight: CGFloat) -> some View {
         let cardTop = AppSpacing.lg
         let cardBottom = cardTop + cardHeight
@@ -48,7 +50,8 @@ struct OnboardingPageView: View {
         // kicker), so the title block always sits on flat background.
         let fade = AppSpacing.xs
 
-        let darkOpacity: Double = 0.52
+        let darkOpacity: Double = 0.62
+        let lightOpacity: Double = 0.06
 
         func location(_ point: CGFloat) -> CGFloat {
             guard height > 0 else { return 0 }
@@ -57,8 +60,14 @@ struct OnboardingPageView: View {
 
         return LinearGradient(
             gradient: Gradient(stops: [
+                // Darkest at the top of the photo card.
                 .init(color: page.backgroundTint.opacity(darkOpacity), location: location(0)),
+                // Lightens through the photo, reaching its lightest point in the gap
+                // right before the kicker label.
+                .init(color: page.backgroundTint.opacity(lightOpacity), location: location(textBlockTop)),
+                // Darkens again through the kicker label.
                 .init(color: page.backgroundTint.opacity(darkOpacity), location: location(kickerBottom)),
+                // Then the existing fade into flat white for the headline onward.
                 .init(color: AppColor.background, location: location(kickerBottom + fade))
             ]),
             startPoint: .top,
