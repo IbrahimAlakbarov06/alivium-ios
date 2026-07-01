@@ -60,12 +60,17 @@ struct OnboardingPageView: View {
 
         return LinearGradient(
             gradient: Gradient(stops: [
-                // Darkest at the top of the photo card.
+                // Darkest at the top of the photo card. This edge has an implicit plateau
+                // (the color extends upward behind the status bar), so it reads as a solid
+                // tone rather than a fleeting peak.
                 .init(color: page.backgroundTint.opacity(darkOpacity), location: location(0)),
                 // Lightens through the photo, reaching its lightest point in the gap
                 // right before the kicker label.
                 .init(color: page.backgroundTint.opacity(lightOpacity), location: location(textBlockTop)),
-                // Darkens again through the kicker label.
+                // Darkens again through the kicker label, holding at full dark opacity for
+                // a short plateau (mirroring the top edge) before the white fade begins,
+                // so it reads with the same visual weight instead of an instant peak.
+                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(kickerBottom - fade)),
                 .init(color: page.backgroundTint.opacity(darkOpacity), location: location(kickerBottom)),
                 // Then the existing fade into flat white for the headline onward.
                 .init(color: AppColor.background, location: location(kickerBottom + fade))
