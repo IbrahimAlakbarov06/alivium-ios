@@ -10,9 +10,11 @@ import Foundation
 @MainActor
 final class AppContainer {
     let authRepository: AuthRepository
+    let localizationManager: LocalizationManager
 
     init() {
         self.authRepository = MockAuthRepository()
+        self.localizationManager = LocalizationManager()
     }
 
     func makeLoginViewModel() -> LoginViewModel {

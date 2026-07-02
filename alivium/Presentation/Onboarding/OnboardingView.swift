@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    @Environment(LocalizationManager.self) private var localization
     let onComplete: () -> Void
 
     @State private var currentPage: Int = 0
@@ -29,7 +30,9 @@ struct OnboardingView: View {
                     PageIndicator(numberOfPages: pages.count, currentPage: currentPage)
 
                     BaseButton(
-                        title: currentPage == pages.count - 1 ? "Get Started" : "Next",
+                        title: currentPage == pages.count - 1
+                            ? localization.string(.getStarted)
+                            : localization.string(.next),
                         kind: .primary
                     ) {
                         advance()
@@ -43,7 +46,7 @@ struct OnboardingView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Button("Skip") {
+                        Button(localization.string(.skip)) {
                             onComplete()
                         }
                         .font(AppTypography.bodyEmphasis)
@@ -70,4 +73,5 @@ struct OnboardingView: View {
 
 #Preview {
     OnboardingView(onComplete: {})
+        .environment(LocalizationManager())
 }

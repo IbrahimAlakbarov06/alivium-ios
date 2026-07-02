@@ -8,20 +8,15 @@ import SwiftUI
 enum SocialProvider {
     case google
     case apple
-
-    var title: String {
-        switch self {
-        case .google: return "Continue with Google"
-        case .apple: return "Continue with Apple"
-        }
-    }
 }
 
 /// Social sign-in CTA shared by Login and Register. No real auth is wired yet — the backend
 /// only supports Google today and Apple needs a paid developer account — so this just renders
-/// functional-looking UI backed by a mock success handler in the ViewModel.
+/// functional-looking UI backed by a mock success handler in the ViewModel. `title` is supplied
+/// by the caller (rather than derived from `provider`) so it can be localized.
 struct SocialSignInButton: View {
     let provider: SocialProvider
+    let title: String
     var isLoading: Bool = false
     let action: () -> Void
 
@@ -34,7 +29,7 @@ struct SocialSignInButton: View {
                         .tint(foregroundColor)
                 } else {
                     icon
-                    Text(provider.title)
+                    Text(title)
                         .font(AppTypography.bodyEmphasis)
                 }
             }
@@ -89,9 +84,9 @@ struct SocialSignInButton: View {
 
 #Preview {
     VStack(spacing: AppSpacing.sm) {
-        SocialSignInButton(provider: .google) {}
-        SocialSignInButton(provider: .apple) {}
-        SocialSignInButton(provider: .google, isLoading: true) {}
+        SocialSignInButton(provider: .google, title: "Continue with Google") {}
+        SocialSignInButton(provider: .apple, title: "Continue with Apple") {}
+        SocialSignInButton(provider: .google, title: "Continue with Google", isLoading: true) {}
     }
     .padding()
 }

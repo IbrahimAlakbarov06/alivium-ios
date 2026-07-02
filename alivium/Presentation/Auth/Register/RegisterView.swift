@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct RegisterView: View {
+    @Environment(LocalizationManager.self) private var localization
     @State var viewModel: RegisterViewModel
     let onNavigateToLogin: () -> Void
 
@@ -15,11 +16,10 @@ struct RegisterView: View {
                 AuthHeaderView()
                     .padding(.bottom, AppSpacing.xl)
 
-                Text("Create Your Account")
+                Text(localization.string(.createYourAccount))
                     .font(AppTypography.display)
                     .foregroundStyle(AppColor.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, AppSpacing.md)
 
                 formSection
                     .padding(.top, AppSpacing.xl)
@@ -28,7 +28,7 @@ struct RegisterView: View {
                     .padding(.top, AppSpacing.md)
 
                 BaseButton(
-                    title: "Create Account",
+                    title: localization.string(.createAccount),
                     kind: .primary,
                     size: .large,
                     isLoading: viewModel.isLoading
@@ -37,7 +37,7 @@ struct RegisterView: View {
                 }
                 .padding(.top, AppSpacing.lg)
 
-                LabeledDivider(label: "or continue with")
+                LabeledDivider(label: localization.string(.orContinueWith))
                     .padding(.top, AppSpacing.xxl)
 
                 socialButtons
@@ -56,10 +56,10 @@ struct RegisterView: View {
 
     private var formSection: some View {
         VStack(spacing: 0) {
-            BaseTextField(placeholder: "Full Name", text: $viewModel.fullName)
+            BaseTextField(placeholder: localization.string(.fullName), text: $viewModel.fullName)
 
             BaseTextField(
-                placeholder: "Email Address",
+                placeholder: localization.string(.emailAddress),
                 text: $viewModel.email,
                 keyboardType: .emailAddress,
                 autocapitalization: .never,
@@ -68,14 +68,14 @@ struct RegisterView: View {
             .padding(.top, AppSpacing.md)
 
             BaseTextField(
-                placeholder: "Password",
+                placeholder: localization.string(.password),
                 text: $viewModel.password,
                 style: .secure
             )
             .padding(.top, AppSpacing.md)
 
             BaseTextField(
-                placeholder: "Confirm Password",
+                placeholder: localization.string(.confirmPassword),
                 text: $viewModel.confirmPassword,
                 style: .secure
             )
@@ -89,28 +89,48 @@ struct RegisterView: View {
             .multilineTextAlignment(.center)
     }
 
+    /// Built from up to five localized segments — intro, the two accent-colored links, the
+    /// connector between them, and a trailing outro — rather than one fixed English sentence,
+    /// since AZ needs a trailing verb ("... qəbul edirsiniz.") that EN doesn't.
     private var termsAttributedString: AttributedString {
-        var intro = AttributedString("By continuing, you agree to our ")
+        var intro = AttributedString(localization.string(.termsAgreement) + " ")
         intro.foregroundColor = AppColor.textSecondary
 
-        var terms = AttributedString("Terms")
+        var terms = AttributedString(localization.string(.terms))
         terms.foregroundColor = AppColor.accent
 
-        var and = AttributedString(" and ")
+        var and = AttributedString(" " + localization.string(.termsAnd) + " ")
         and.foregroundColor = AppColor.textSecondary
 
-        var privacy = AttributedString("Privacy Policy")
+        var privacy = AttributedString(localization.string(.privacyPolicy))
         privacy.foregroundColor = AppColor.accent
 
-        return intro + terms + and + privacy
+        var result = intro + terms + and + privacy
+
+        let outro = localization.string(.termsAgreementOutro)
+        if !outro.isEmpty {
+            var outroSegment = AttributedString(" " + outro)
+            outroSegment.foregroundColor = AppColor.textSecondary
+            result += outroSegment
+        }
+
+        return result
     }
 
     private var socialButtons: some View {
         VStack(spacing: AppSpacing.md) {
-            SocialSignInButton(provider: .google, isLoading: viewModel.isLoading) {
+            SocialSignInButton(
+                provider: .google,
+                title: localization.string(.continueWithGoogle),
+                isLoading: viewModel.isLoading
+            ) {
                 viewModel.continueWithGoogle()
             }
-            SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
+            SocialSignInButton(
+                provider: .apple,
+                title: localization.string(.continueWithApple),
+                isLoading: viewModel.isLoading
+            ) {
                 viewModel.continueWithApple()
             }
             guestButton
@@ -121,7 +141,7 @@ struct RegisterView: View {
         Button {
             viewModel.continueAsGuest()
         } label: {
-            Text("Continue as Guest")
+            Text(localization.string(.continueAsGuest))
                 .font(AppTypography.bodyEmphasis)
                 .foregroundStyle(AppColor.textSecondary)
                 .frame(maxWidth: .infinity)
@@ -132,12 +152,12 @@ struct RegisterView: View {
 
     private var logInFooter: some View {
         HStack(spacing: AppSpacing.xxs) {
-            Text("Already have an account?")
+            Text(localization.string(.alreadyHaveAccount))
                 .font(AppTypography.body)
                 .foregroundStyle(AppColor.textSecondary)
 
             Button(action: onNavigateToLogin) {
-                Text("Log In")
+                Text(localization.string(.logIn))
                     .font(AppTypography.bodyEmphasis)
                     .foregroundStyle(AppColor.accent)
             }
@@ -150,4 +170,5 @@ struct RegisterView: View {
         viewModel: RegisterViewModel(authRepository: MockAuthRepository()),
         onNavigateToLogin: {}
     )
+    .environment(LocalizationManager())
 }

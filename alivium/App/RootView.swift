@@ -24,6 +24,7 @@ struct RootView: View {
                 }
             }
         }
+        .environment(container.localizationManager)
         .task {
             try? await Task.sleep(for: .seconds(1.4))
             withAnimation {

@@ -8,7 +8,7 @@ import SwiftUI
 /// Shared top bar for the Auth screens: brand mark + wordmark on the leading edge, an AZ/EN
 /// language toggle on the trailing edge. Identical on Login and Register.
 struct AuthHeaderView: View {
-    @State private var isAzerbaijani: Bool = true
+    @Environment(LocalizationManager.self) private var localization
     @State private var dragTranslation: CGFloat = 0
 
     private let segmentWidth: CGFloat = 40
@@ -65,6 +65,10 @@ struct AuthHeaderView: View {
             .padding(.vertical, AppSpacing.xxs)
     }
 
+    private var isAzerbaijani: Bool {
+        localization.currentLanguage == .az
+    }
+
     private var restingOffset: CGFloat {
         isAzerbaijani ? 0 : segmentWidth
     }
@@ -85,7 +89,7 @@ struct AuthHeaderView: View {
 
     private func select(azerbaijani: Bool) {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-            isAzerbaijani = azerbaijani
+            localization.setLanguage(azerbaijani ? .az : .en)
             dragTranslation = 0
         }
     }
@@ -94,4 +98,5 @@ struct AuthHeaderView: View {
 #Preview {
     AuthHeaderView()
         .padding()
+        .environment(LocalizationManager())
 }

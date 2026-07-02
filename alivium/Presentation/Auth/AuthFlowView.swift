@@ -41,5 +41,7 @@ struct AuthFlowView: View {
 }
 
 #Preview {
-    AuthFlowView(container: AppContainer())
+    let container = AppContainer()
+    AuthFlowView(container: container)
+        .environment(container.localizationManager)
 }

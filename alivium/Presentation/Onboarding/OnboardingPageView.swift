@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct OnboardingPageView: View {
+    @Environment(LocalizationManager.self) private var localization
     let page: OnboardingPageContent
 
     var body: some View {
@@ -91,19 +92,19 @@ struct OnboardingPageView: View {
 
     private func textBlock(progress: CGFloat) -> some View {
         VStack(spacing: AppSpacing.sm) {
-            Text(page.kicker)
+            Text(localization.string(page.kickerKey))
                 .font(AppTypography.caption)
                 .fontWeight(.semibold)
                 .tracking(2)
                 .foregroundStyle(AppColor.accent)
 
-            Text(page.title)
+            Text(localization.string(page.titleKey))
                 .font(AppTypography.display)
                 .tracking(-0.4)
                 .foregroundStyle(AppColor.textPrimary)
                 .multilineTextAlignment(.center)
 
-            Text(page.subtitle)
+            Text(localization.string(page.subtitleKey))
                 .font(AppTypography.body)
                 .foregroundStyle(AppColor.textSecondary)
                 .multilineTextAlignment(.center)
@@ -129,4 +130,5 @@ struct OnboardingPageView: View {
 
 #Preview {
     OnboardingPageView(page: OnboardingContent.pages[0])
+        .environment(LocalizationManager())
 }

@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @Environment(LocalizationManager.self) private var localization
     @State var viewModel: LoginViewModel
     let onNavigateToRegister: () -> Void
 
@@ -15,7 +16,7 @@ struct LoginView: View {
                 AuthHeaderView()
                     .padding(.bottom, AppSpacing.xl)
 
-                Text("Welcome Back")
+                Text(localization.string(.welcomeBack))
                     .font(AppTypography.display)
                     .foregroundStyle(AppColor.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -24,7 +25,7 @@ struct LoginView: View {
                     .padding(.top, AppSpacing.xl)
 
                 BaseButton(
-                    title: "Log In",
+                    title: localization.string(.logIn),
                     kind: .primary,
                     size: .large,
                     isLoading: viewModel.isLoading
@@ -33,7 +34,7 @@ struct LoginView: View {
                 }
                 .padding(.top, AppSpacing.lg)
 
-                LabeledDivider(label: "or continue with")
+                LabeledDivider(label: localization.string(.orContinueWith))
                     .padding(.top, AppSpacing.xxl)
 
                 socialButtons
@@ -53,7 +54,7 @@ struct LoginView: View {
     private var formSection: some View {
         VStack(spacing: 0) {
             BaseTextField(
-                placeholder: "Email Address",
+                placeholder: localization.string(.emailAddress),
                 text: $viewModel.email,
                 keyboardType: .emailAddress,
                 autocapitalization: .never,
@@ -61,7 +62,7 @@ struct LoginView: View {
             )
 
             BaseTextField(
-                placeholder: "Password",
+                placeholder: localization.string(.password),
                 text: $viewModel.password,
                 style: .secure
             )
@@ -72,7 +73,7 @@ struct LoginView: View {
                 Button {
                     // TODO: navigate to Forgot Password screen
                 } label: {
-                    Text("Forgot Password?")
+                    Text(localization.string(.forgotPassword))
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColor.accent)
                 }
@@ -83,10 +84,18 @@ struct LoginView: View {
 
     private var socialButtons: some View {
         VStack(spacing: AppSpacing.md) {
-            SocialSignInButton(provider: .google, isLoading: viewModel.isLoading) {
+            SocialSignInButton(
+                provider: .google,
+                title: localization.string(.continueWithGoogle),
+                isLoading: viewModel.isLoading
+            ) {
                 viewModel.continueWithGoogle()
             }
-            SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
+            SocialSignInButton(
+                provider: .apple,
+                title: localization.string(.continueWithApple),
+                isLoading: viewModel.isLoading
+            ) {
                 viewModel.continueWithApple()
             }
             guestButton
@@ -97,7 +106,7 @@ struct LoginView: View {
         Button {
             viewModel.continueAsGuest()
         } label: {
-            Text("Continue as Guest")
+            Text(localization.string(.continueAsGuest))
                 .font(AppTypography.bodyEmphasis)
                 .foregroundStyle(AppColor.textSecondary)
                 .frame(maxWidth: .infinity)
@@ -108,12 +117,12 @@ struct LoginView: View {
 
     private var signUpFooter: some View {
         HStack(spacing: AppSpacing.xxs) {
-            Text("Don't have an account?")
+            Text(localization.string(.dontHaveAccount))
                 .font(AppTypography.body)
                 .foregroundStyle(AppColor.textSecondary)
 
             Button(action: onNavigateToRegister) {
-                Text("Sign Up")
+                Text(localization.string(.signUp))
                     .font(AppTypography.bodyEmphasis)
                     .foregroundStyle(AppColor.accent)
             }
@@ -126,4 +135,5 @@ struct LoginView: View {
         viewModel: LoginViewModel(authRepository: MockAuthRepository()),
         onNavigateToRegister: {}
     )
+    .environment(LocalizationManager())
 }
