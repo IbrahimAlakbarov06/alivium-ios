@@ -18,6 +18,7 @@ struct RegisterView: View {
                 Text("Create Your Account")
                     .font(AppTypography.display)
                     .foregroundStyle(AppColor.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, AppSpacing.md)
 
                 formSection

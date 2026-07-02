@@ -9,6 +9,9 @@ import SwiftUI
 /// language toggle on the trailing edge. Identical on Login and Register.
 struct AuthHeaderView: View {
     @State private var isAzerbaijani: Bool = true
+    @State private var dragTranslation: CGFloat = 0
+
+    private let segmentWidth: CGFloat = 40
 
     var body: some View {
         HStack {
@@ -34,11 +37,21 @@ struct AuthHeaderView: View {
     private var languageSwitch: some View {
         HStack(spacing: 0) {
             languageOption(title: "AZ", isSelected: isAzerbaijani) {
-                isAzerbaijani = true
+                select(azerbaijani: true)
             }
             languageOption(title: "EN", isSelected: !isAzerbaijani) {
-                isAzerbaijani = false
+                select(azerbaijani: false)
             }
+        }
+        .background(alignment: .leading) {
+            // The draggable selected-segment indicator. minimumDistance keeps plain taps on
+            // the AZ/EN labels falling through to their own Buttons instead of being eaten
+            // by this gesture.
+            Capsule()
+                .fill(AppColor.primary)
+                .frame(width: segmentWidth)
+                .offset(x: thumbOffset)
+                .gesture(thumbDragGesture)
         }
         .padding(3)
         .background(AppColor.surface)
@@ -50,12 +63,35 @@ struct AuthHeaderView: View {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(isSelected ? AppColor.background : AppColor.textSecondary)
-                .padding(.horizontal, AppSpacing.sm)
+                .frame(width: segmentWidth)
                 .padding(.vertical, AppSpacing.xxs)
-                .background(isSelected ? AppColor.primary : Color.clear)
-                .clipShape(Capsule())
         }
-        .animation(.easeOut(duration: 0.15), value: isSelected)
+    }
+
+    private var restingOffset: CGFloat {
+        isAzerbaijani ? 0 : segmentWidth
+    }
+
+    private var thumbOffset: CGFloat {
+        min(max(restingOffset + dragTranslation, 0), segmentWidth)
+    }
+
+    private var thumbDragGesture: some Gesture {
+        DragGesture(minimumDistance: 2)
+            .onChanged { value in
+                dragTranslation = value.translation.width
+            }
+            .onEnded { value in
+                let finalOffset = min(max(restingOffset + value.translation.width, 0), segmentWidth)
+                select(azerbaijani: finalOffset < segmentWidth / 2)
+            }
+    }
+
+    private func select(azerbaijani: Bool) {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            isAzerbaijani = azerbaijani
+            dragTranslation = 0
+        }
     }
 }
 
