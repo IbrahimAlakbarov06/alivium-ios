@@ -50,6 +50,13 @@ enum LocalizedKey {
     case createAccount
     case alreadyHaveAccount
 
+    // MARK: - Forgot Password
+    case back
+    case resetYourPassword
+    case resetPasswordSubtitle
+    case sendResetLink
+    case backToLogIn
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -131,6 +138,20 @@ enum LocalizedKey {
             return language == .az ? "Hesab yarat" : "Create Account"
         case .alreadyHaveAccount:
             return language == .az ? "Artıq hesabınız var?" : "Already have an account?"
+
+        // MARK: Forgot Password
+        case .back:
+            return language == .az ? "Geri" : "Back"
+        case .resetYourPassword:
+            return language == .az ? "Şifrənizi yeniləyin" : "Reset Your Password"
+        case .resetPasswordSubtitle:
+            return language == .az
+                ? "E-poçtunuzu daxil edin, şifrənizi yeniləmək üçün sizə link göndərək."
+                : "Enter your email and we'll send you a link to reset your password."
+        case .sendResetLink:
+            return language == .az ? "Linki göndər" : "Send Reset Link"
+        case .backToLogIn:
+            return language == .az ? "Girişə qayıt" : "Back to Log In"
         }
     }
 }

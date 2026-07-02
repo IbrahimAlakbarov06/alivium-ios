@@ -24,4 +24,8 @@ final class AppContainer {
     func makeRegisterViewModel() -> RegisterViewModel {
         RegisterViewModel(authRepository: authRepository)
     }
+
+    func makeForgotPasswordViewModel() -> ForgotPasswordViewModel {
+        ForgotPasswordViewModel(authRepository: authRepository)
+    }
 }

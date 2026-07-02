@@ -8,4 +8,5 @@ protocol AuthRepository {
     func register(fullName: String, email: String, password: String) async throws -> User
     func loginWithGoogle() async throws -> User
     func loginWithApple() async throws -> User
+    func forgotPassword(email: String) async throws
 }

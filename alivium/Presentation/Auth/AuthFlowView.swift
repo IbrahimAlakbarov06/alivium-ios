@@ -12,28 +12,48 @@ struct AuthFlowView: View {
     @State private var route: AuthRoute = .login
     @State private var loginViewModel: LoginViewModel
     @State private var registerViewModel: RegisterViewModel
+    @State private var forgotPasswordViewModel: ForgotPasswordViewModel
 
     private enum AuthRoute {
         case login
         case register
+        case forgotPassword
     }
 
     init(container: AppContainer) {
         _loginViewModel = State(initialValue: container.makeLoginViewModel())
         _registerViewModel = State(initialValue: container.makeRegisterViewModel())
+        _forgotPasswordViewModel = State(initialValue: container.makeForgotPasswordViewModel())
     }
 
     var body: some View {
         Group {
             switch route {
             case .login:
-                LoginView(viewModel: loginViewModel) {
-                    withAnimation { route = .register }
-                }
+                LoginView(
+                    viewModel: loginViewModel,
+                    onNavigateToRegister: {
+                        withAnimation { route = .register }
+                    },
+                    onNavigateToForgotPassword: {
+                        withAnimation { route = .forgotPassword }
+                    }
+                )
             case .register:
                 RegisterView(viewModel: registerViewModel) {
                     withAnimation { route = .login }
                 }
+            case .forgotPassword:
+                ForgotPasswordView(
+                    viewModel: forgotPasswordViewModel,
+                    onNavigateBack: {
+                        withAnimation { route = .login }
+                    },
+                    onSuccess: {
+                        // TODO: navigate to the Verification Code screen once it's built.
+                        print("Reset link sent — TODO: navigate to Verification Code screen")
+                    }
+                )
             }
         }
         .transition(.opacity)

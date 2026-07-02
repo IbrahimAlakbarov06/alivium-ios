@@ -9,6 +9,7 @@ struct LoginView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: LoginViewModel
     let onNavigateToRegister: () -> Void
+    let onNavigateToForgotPassword: () -> Void
 
     var body: some View {
         ScrollView {
@@ -70,9 +71,7 @@ struct LoginView: View {
 
             HStack {
                 Spacer()
-                Button {
-                    // TODO: navigate to Forgot Password screen
-                } label: {
+                Button(action: onNavigateToForgotPassword) {
                     Text(localization.string(.forgotPassword))
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColor.accent)
@@ -133,7 +132,8 @@ struct LoginView: View {
 #Preview {
     LoginView(
         viewModel: LoginViewModel(authRepository: MockAuthRepository()),
-        onNavigateToRegister: {}
+        onNavigateToRegister: {},
+        onNavigateToForgotPassword: {}
     )
     .environment(LocalizationManager())
 }

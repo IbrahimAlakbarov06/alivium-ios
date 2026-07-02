@@ -27,4 +27,8 @@ final class MockAuthRepository: AuthRepository {
         try await Task.sleep(for: .seconds(1))
         return User(id: UUID().uuidString, fullName: "Apple User", email: "apple.user@alivium.com")
     }
+
+    func forgotPassword(email: String) async throws {
+        try await Task.sleep(for: .seconds(1))
+    }
 }
