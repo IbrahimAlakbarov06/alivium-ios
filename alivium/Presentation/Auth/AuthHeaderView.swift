@@ -35,37 +35,34 @@ struct AuthHeaderView: View {
     }
 
     private var languageSwitch: some View {
-        HStack(spacing: 0) {
-            languageOption(title: "AZ", isSelected: isAzerbaijani) {
-                select(azerbaijani: true)
-            }
-            languageOption(title: "EN", isSelected: !isAzerbaijani) {
-                select(azerbaijani: false)
-            }
-        }
-        .background(alignment: .leading) {
-            // The draggable selected-segment indicator. minimumDistance keeps plain taps on
-            // the AZ/EN labels falling through to their own Buttons instead of being eaten
-            // by this gesture.
+        ZStack(alignment: .leading) {
             Capsule()
                 .fill(AppColor.primary)
                 .frame(width: segmentWidth)
                 .offset(x: thumbOffset)
-                .gesture(thumbDragGesture)
+
+            HStack(spacing: 0) {
+                languageLabel(title: "AZ", isSelected: isAzerbaijani)
+                languageLabel(title: "EN", isSelected: !isAzerbaijani)
+            }
         }
+        // One gesture recognizer is the sole source of truth for both tap and drag — a second,
+        // competing recognizer per label (onTapGesture) previously raced this one and could
+        // resolve to the wrong side on fast touches. onEnded reads the finger's absolute
+        // location rather than translation-from-rest, so taps and drags share the same logic.
+        .contentShape(Rectangle())
+        .gesture(toggleGesture)
         .padding(3)
         .background(AppColor.surface)
         .clipShape(Capsule())
     }
 
-    private func languageOption(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(isSelected ? AppColor.background : AppColor.textSecondary)
-                .frame(width: segmentWidth)
-                .padding(.vertical, AppSpacing.xxs)
-        }
+    private func languageLabel(title: String, isSelected: Bool) -> some View {
+        Text(title)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(isSelected ? AppColor.background : AppColor.textSecondary)
+            .frame(width: segmentWidth)
+            .padding(.vertical, AppSpacing.xxs)
     }
 
     private var restingOffset: CGFloat {
@@ -76,14 +73,13 @@ struct AuthHeaderView: View {
         min(max(restingOffset + dragTranslation, 0), segmentWidth)
     }
 
-    private var thumbDragGesture: some Gesture {
-        DragGesture(minimumDistance: 2)
+    private var toggleGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
             .onChanged { value in
-                dragTranslation = value.translation.width
+                dragTranslation = min(max(restingOffset + value.translation.width, 0), segmentWidth) - restingOffset
             }
             .onEnded { value in
-                let finalOffset = min(max(restingOffset + value.translation.width, 0), segmentWidth)
-                select(azerbaijani: finalOffset < segmentWidth / 2)
+                select(azerbaijani: value.location.x < segmentWidth)
             }
     }
 
