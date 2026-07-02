@@ -15,6 +15,9 @@ struct BaseTextField: View {
     let placeholder: String
     @Binding var text: String
     var style: AppTextFieldStyleKind = .standard
+    var keyboardType: UIKeyboardType? = nil
+    var autocapitalization: TextInputAutocapitalization? = nil
+    var disablesAutocorrection: Bool? = nil
     var errorMessage: String? = nil
 
     @State private var isSecureTextVisible: Bool = false
@@ -30,6 +33,7 @@ struct BaseTextField: View {
 
                 fieldContent
                     .font(AppTypography.body)
+                    .keyboardType(keyboardType ?? .default)
                     .focused($isFocused)
 
                 if style == .secure {
@@ -64,9 +68,13 @@ struct BaseTextField: View {
             SecureField(placeholder, text: $text)
         } else {
             TextField(placeholder, text: $text)
-                .textInputAutocapitalization(style == .search ? .never : .sentences)
-                .autocorrectionDisabled(style == .search)
+                .textInputAutocapitalization(resolvedAutocapitalization)
+                .autocorrectionDisabled(disablesAutocorrection ?? (style == .search))
         }
+    }
+
+    private var resolvedAutocapitalization: TextInputAutocapitalization {
+        autocapitalization ?? (style == .search ? .never : .sentences)
     }
 
     private var borderColor: Color {

@@ -10,13 +10,14 @@ import SwiftUI
 struct RootView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var isShowingSplash = true
+    @State private var container = AppContainer()
 
     var body: some View {
         Group {
             if isShowingSplash {
                 SplashView()
             } else if hasCompletedOnboarding {
-                AuthPlaceholderView()
+                AuthFlowView(container: container)
             } else {
                 OnboardingView {
                     hasCompletedOnboarding = true
