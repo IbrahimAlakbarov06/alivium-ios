@@ -13,7 +13,7 @@ struct PageIndicator: View {
         HStack(spacing: AppSpacing.xxs) {
             ForEach(0..<numberOfPages, id: \.self) { index in
                 Capsule()
-                    .fill(index == currentPage ? AppColor.accent : AppColor.textSecondary.opacity(0.3))
+                    .fill(index == currentPage ? AppColor.accent : Color(hex: 0x334342).opacity(0.35))
                     .frame(width: index == currentPage ? 22 : 7, height: 7)
                     // Flattens each dot into a single opaque layer before the spring-driven
                     // width animation runs, so the translucent fill can't pick up a transient

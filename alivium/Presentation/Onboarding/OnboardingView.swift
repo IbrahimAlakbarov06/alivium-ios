@@ -47,7 +47,7 @@ struct OnboardingView: View {
                             onComplete()
                         }
                         .font(AppTypography.bodyEmphasis)
-                        .foregroundStyle(AppColor.textSecondary)
+                        .foregroundStyle(Color(hex: 0x334342).opacity(0.75))
                         .padding(.trailing, AppSpacing.md)
                         .padding(.top, AppSpacing.xxs)
                     }

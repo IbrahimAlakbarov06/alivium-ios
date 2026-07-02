@@ -32,11 +32,13 @@ struct OnboardingPageView: View {
         }
     }
 
-    /// Tan vignette confined to the photo card and the kicker label directly beneath it:
-    /// dark at the top of the photo, lightest in the gap right before the kicker, dark again
-    /// at the bottom of the kicker, then a sharp cut to flat `AppColor.background` for the
-    /// headline onward. Exactly four stops — no intermediate plateau stops — so there is no
-    /// re-lightening after the final dark point.
+    /// Tan vignette confined to the photo card and the kicker label directly beneath it.
+    /// Fully symmetric: it fades IN from the very top edge of the screen (opacity 0 at y=0)
+    /// up to its darkest point at the top of the photo, over `edgeFadeDistance`. It's lightest
+    /// exactly in the middle, dark again at the bottom of the kicker (mirroring the top curve),
+    /// then fades back OUT to flat `AppColor.background` over that same `edgeFadeDistance` —
+    /// so the top and bottom curves are true mirror images of each other, and no tint bleeds
+    /// behind the bold title text.
     private func backgroundGradient(height: CGFloat, cardHeight: CGFloat) -> some View {
         let cardTop = AppSpacing.lg
         let cardBottom = cardTop + cardHeight
@@ -45,17 +47,32 @@ struct OnboardingPageView: View {
         let kickerLineHeight: CGFloat = 16 // caption-weight kicker line
         let kickerBottom = textBlockTop + kickerLineHeight
 
+        // Symmetric region: top of photo card -> bottom of kicker.
+        let regionTop = cardTop
+        let regionBottom = kickerBottom
+        let regionMid = (regionTop + regionBottom) / 2
+
+        // Same distance used on both edges, so the fade-in at the top and the fade-out at
+        // the bottom are mirror images of each other.
+        let edgeFadeDistance: CGFloat = AppSpacing.lg
+        let fadeInStart = max(regionTop - edgeFadeDistance, 0)
+        let fadeOutEnd = regionBottom + edgeFadeDistance
+
         func location(_ point: CGFloat) -> CGFloat {
             guard height > 0 else { return 0 }
             return min(max(point / height, 0), 1)
         }
 
+        let darkOpacity = 0.62
+        let lightOpacity = 0.06
+
         return LinearGradient(
             gradient: Gradient(stops: [
-                .init(color: page.backgroundTint.opacity(0.62), location: 0.0),
-                .init(color: page.backgroundTint.opacity(0.06), location: location(textBlockTop)),
-                .init(color: page.backgroundTint.opacity(0.62), location: location(kickerBottom)),
-                .init(color: AppColor.background, location: location(kickerBottom) + 0.02)
+                .init(color: page.backgroundTint.opacity(0), location: location(fadeInStart)),
+                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(regionTop)),
+                .init(color: page.backgroundTint.opacity(lightOpacity), location: location(regionMid)),
+                .init(color: page.backgroundTint.opacity(darkOpacity), location: location(regionBottom)),
+                .init(color: AppColor.background, location: location(fadeOutEnd))
             ]),
             startPoint: .top,
             endPoint: .bottom
