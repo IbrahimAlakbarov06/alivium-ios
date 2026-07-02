@@ -44,12 +44,16 @@ struct BaseButton: View {
             .padding(.vertical, verticalPadding)
             .padding(.horizontal, horizontalPadding)
             .foregroundStyle(foregroundColor)
-            .background(backgroundColor)
+            .background(backgroundFill)
             .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.md)
-                    .stroke(borderColor, lineWidth: kind == .ghost ? 1 : 0)
+                RoundedRectangle(cornerRadius: AppRadius.pill)
+                    .stroke(borderColor, lineWidth: kind == .ghost ? 1.5 : 0)
             )
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.pill))
+            .shadow(
+                color: kind == .primary ? AppColor.primary.opacity(0.25) : .clear,
+                radius: 14, x: 0, y: 6
+            )
         }
         .disabled(!isEnabled || isLoading)
         .opacity(isEnabled ? 1 : 0.5)
@@ -85,6 +89,20 @@ struct BaseButton: View {
         case .secondary: return AppColor.accent
         case .ghost: return .clear
         case .destructive: return AppColor.error
+        }
+    }
+
+    @ViewBuilder
+    private var backgroundFill: some View {
+        switch kind {
+        case .primary:
+            backgroundColor
+        case .secondary:
+            backgroundColor
+        case .ghost:
+            Color.clear
+        case .destructive:
+            backgroundColor
         }
     }
 

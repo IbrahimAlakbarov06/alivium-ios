@@ -47,13 +47,13 @@ struct BaseTextField: View {
             }
             .padding(.vertical, AppSpacing.md)
             .padding(.horizontal, AppSpacing.md)
-            .background(AppColor.surface.opacity(0.6))
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+            .background(AppColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
             .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.md)
-                    .stroke(borderColor, lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppRadius.lg)
+                    .stroke(borderColor, lineWidth: borderWidth)
             )
-            .shadow(color: AppColor.textPrimary.opacity(0.05), radius: 8, x: 0, y: 3)
+            .animation(.easeOut(duration: 0.15), value: isFocused)
 
             if let errorMessage {
                 Text(errorMessage)
@@ -81,7 +81,11 @@ struct BaseTextField: View {
     private var borderColor: Color {
         if errorMessage != nil { return AppColor.error }
         if isFocused { return AppColor.primary }
-        return .clear
+        return AppColor.primary.opacity(0.12)
+    }
+
+    private var borderWidth: CGFloat {
+        (isFocused || errorMessage != nil) ? 1.5 : 1
     }
 }
 

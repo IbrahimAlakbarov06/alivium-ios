@@ -53,13 +53,30 @@ struct RegisterView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: AppSpacing.xs) {
             Button(action: onNavigateToLogin) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(AppColor.textPrimary)
             }
+
             Spacer()
+
+            Image("LogoMark")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 28, height: 28)
+                .clipShape(Circle())
+
+            Text("ALIVIUM")
+                .font(.system(size: 16, weight: .bold))
+                .tracking(2.5)
+                .foregroundStyle(AppColor.primary)
+
+            Spacer()
+
+            // Balances the back chevron so the wordmark stays visually centered.
+            Color.clear.frame(width: 18, height: 18)
         }
     }
 

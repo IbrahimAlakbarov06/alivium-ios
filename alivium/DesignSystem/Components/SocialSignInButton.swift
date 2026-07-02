@@ -43,10 +43,10 @@ struct SocialSignInButton: View {
             .foregroundStyle(foregroundColor)
             .background(backgroundColor)
             .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.md)
-                    .stroke(borderColor, lineWidth: provider == .google ? 1 : 0)
+                RoundedRectangle(cornerRadius: AppRadius.pill)
+                    .stroke(borderColor, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.pill))
         }
         .disabled(isLoading)
     }
@@ -55,11 +55,13 @@ struct SocialSignInButton: View {
     private var icon: some View {
         switch provider {
         case .google:
-            Image(systemName: "g.circle.fill")
-                .font(.system(size: 19, weight: .medium))
+            Image("googleLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
         case .apple:
             Image(systemName: "applelogo")
-                .font(.system(size: 17, weight: .medium))
+                .font(.system(size: 18, weight: .medium))
         }
     }
 
@@ -79,8 +81,8 @@ struct SocialSignInButton: View {
 
     private var borderColor: Color {
         switch provider {
-        case .google: return AppColor.textSecondary.opacity(0.25)
-        case .apple: return .clear
+        case .google: return AppColor.primary.opacity(0.18)
+        case .apple: return AppColor.textPrimary.opacity(0.85)
         }
     }
 }

@@ -23,7 +23,7 @@ struct LabeledDivider: View {
 
     private var line: some View {
         Rectangle()
-            .fill(AppColor.textSecondary.opacity(0.15))
+            .fill(AppColor.primary.opacity(0.15))
             .frame(height: 1)
     }
 }
