@@ -12,7 +12,8 @@ struct RegisterView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                header
+                AuthHeaderView()
+                    .padding(.bottom, AppSpacing.xl)
 
                 Text("Create Your Account")
                     .font(AppTypography.display)
@@ -52,34 +53,6 @@ struct RegisterView: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
-    private var header: some View {
-        HStack(spacing: AppSpacing.xs) {
-            Button(action: onNavigateToLogin) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(AppColor.textPrimary)
-            }
-
-            Spacer()
-
-            Image("LogoMark")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 28, height: 28)
-                .clipShape(Circle())
-
-            Text("ALIVIUM")
-                .font(.system(size: 16, weight: .bold))
-                .tracking(2.5)
-                .foregroundStyle(AppColor.primary)
-
-            Spacer()
-
-            // Balances the back chevron so the wordmark stays visually centered.
-            Color.clear.frame(width: 18, height: 18)
-        }
-    }
-
     private var formSection: some View {
         VStack(spacing: 0) {
             BaseTextField(placeholder: "Full Name", text: $viewModel.fullName)
@@ -91,21 +64,21 @@ struct RegisterView: View {
                 autocapitalization: .never,
                 disablesAutocorrection: true
             )
-            .padding(.top, AppSpacing.sm)
+            .padding(.top, AppSpacing.md)
 
             BaseTextField(
                 placeholder: "Password",
                 text: $viewModel.password,
                 style: .secure
             )
-            .padding(.top, AppSpacing.sm)
+            .padding(.top, AppSpacing.md)
 
             BaseTextField(
                 placeholder: "Confirm Password",
                 text: $viewModel.confirmPassword,
                 style: .secure
             )
-            .padding(.top, AppSpacing.sm)
+            .padding(.top, AppSpacing.md)
         }
     }
 
@@ -139,7 +112,21 @@ struct RegisterView: View {
             SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
                 viewModel.continueWithApple()
             }
+            guestButton
         }
+    }
+
+    private var guestButton: some View {
+        Button {
+            viewModel.continueAsGuest()
+        } label: {
+            Text("Continue as Guest")
+                .font(AppTypography.bodyEmphasis)
+                .foregroundStyle(AppColor.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.sm)
+        }
+        .disabled(viewModel.isLoading)
     }
 
     private var logInFooter: some View {

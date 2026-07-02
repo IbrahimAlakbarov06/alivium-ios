@@ -60,4 +60,8 @@ final class LoginViewModel {
             }
         }
     }
+
+    func continueAsGuest() {
+        print("Continuing as guest — TODO: navigate to next screen")
+    }
 }

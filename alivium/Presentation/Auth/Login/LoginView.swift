@@ -9,12 +9,10 @@ struct LoginView: View {
     @State var viewModel: LoginViewModel
     let onNavigateToRegister: () -> Void
 
-    @State private var isAzerbaijani: Bool = true
-
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                topBar
+                AuthHeaderView()
                     .padding(.bottom, AppSpacing.xl)
 
                 Text("Welcome Back")
@@ -52,54 +50,6 @@ struct LoginView: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
-    private var topBar: some View {
-        HStack {
-            HStack(spacing: AppSpacing.xs) {
-                Image("LogoMark")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 42, height: 42)
-                    .clipShape(Circle())
-
-                Text("ALIVIUM")
-                    .font(.system(size: 24, weight: .bold))
-                    .tracking(3)
-                    .foregroundStyle(AppColor.primary)
-            }
-
-            Spacer()
-
-            languageSwitch
-        }
-    }
-
-    private var languageSwitch: some View {
-        HStack(spacing: 0) {
-            languageOption(title: "AZ", isSelected: isAzerbaijani) {
-                isAzerbaijani = true
-            }
-            languageOption(title: "EN", isSelected: !isAzerbaijani) {
-                isAzerbaijani = false
-            }
-        }
-        .padding(3)
-        .background(AppColor.surface)
-        .clipShape(Capsule())
-    }
-
-    private func languageOption(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(isSelected ? AppColor.background : AppColor.textSecondary)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.xxs)
-                .background(isSelected ? AppColor.primary : Color.clear)
-                .clipShape(Capsule())
-        }
-        .animation(.easeOut(duration: 0.15), value: isSelected)
-    }
-
     private var formSection: some View {
         VStack(spacing: 0) {
             BaseTextField(
@@ -115,7 +65,7 @@ struct LoginView: View {
                 text: $viewModel.password,
                 style: .secure
             )
-            .padding(.top, AppSpacing.sm)
+            .padding(.top, AppSpacing.md)
 
             HStack {
                 Spacer()
@@ -127,7 +77,7 @@ struct LoginView: View {
                         .foregroundStyle(AppColor.accent)
                 }
             }
-            .padding(.top, AppSpacing.xxs)
+            .padding(.top, AppSpacing.xs)
         }
     }
 
@@ -139,7 +89,21 @@ struct LoginView: View {
             SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
                 viewModel.continueWithApple()
             }
+            guestButton
         }
+    }
+
+    private var guestButton: some View {
+        Button {
+            viewModel.continueAsGuest()
+        } label: {
+            Text("Continue as Guest")
+                .font(AppTypography.bodyEmphasis)
+                .foregroundStyle(AppColor.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.sm)
+        }
+        .disabled(viewModel.isLoading)
     }
 
     private var signUpFooter: some View {

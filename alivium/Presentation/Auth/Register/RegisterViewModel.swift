@@ -62,4 +62,8 @@ final class RegisterViewModel {
             }
         }
     }
+
+    func continueAsGuest() {
+        print("Continuing as guest — TODO: navigate to next screen")
+    }
 }
