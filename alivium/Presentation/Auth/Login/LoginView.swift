@@ -42,7 +42,7 @@ struct LoginView: View {
                 signUpFooter
                     .padding(.top, AppSpacing.xl)
             }
-            .padding(.horizontal, AppSpacing.lg)
+            .padding(.horizontal, AppSpacing.md)
             .padding(.top, AppSpacing.md)
             .padding(.bottom, AppSpacing.xl)
         }
