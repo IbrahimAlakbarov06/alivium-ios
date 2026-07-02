@@ -45,14 +45,15 @@ struct BaseTextField: View {
                     }
                 }
             }
-            .padding(.vertical, AppSpacing.sm)
+            .padding(.vertical, AppSpacing.md)
             .padding(.horizontal, AppSpacing.md)
-            .background(AppColor.surface)
+            .background(AppColor.surface.opacity(0.6))
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.md)
                     .stroke(borderColor, lineWidth: 1)
             )
+            .shadow(color: AppColor.textPrimary.opacity(0.05), radius: 8, x: 0, y: 3)
 
             if let errorMessage {
                 Text(errorMessage)

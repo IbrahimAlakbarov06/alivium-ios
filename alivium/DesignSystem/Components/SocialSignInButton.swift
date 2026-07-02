@@ -56,8 +56,10 @@ struct SocialSignInButton: View {
         switch provider {
         case .google:
             Image(systemName: "g.circle.fill")
+                .font(.system(size: 19, weight: .medium))
         case .apple:
             Image(systemName: "applelogo")
+                .font(.system(size: 17, weight: .medium))
         }
     }
 
@@ -77,7 +79,7 @@ struct SocialSignInButton: View {
 
     private var borderColor: Color {
         switch provider {
-        case .google: return AppColor.textSecondary.opacity(0.3)
+        case .google: return AppColor.textSecondary.opacity(0.25)
         case .apple: return .clear
         }
     }

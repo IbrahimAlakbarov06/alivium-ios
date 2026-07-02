@@ -11,40 +11,19 @@ struct RegisterView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.lg) {
+            VStack(spacing: 0) {
                 header
 
                 Text("Create Your Account")
                     .font(AppTypography.display)
                     .foregroundStyle(AppColor.textPrimary)
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, AppSpacing.md)
 
-                VStack(spacing: AppSpacing.md) {
-                    BaseTextField(placeholder: "Full Name", text: $viewModel.fullName)
-
-                    BaseTextField(
-                        placeholder: "Email Address",
-                        text: $viewModel.email,
-                        keyboardType: .emailAddress,
-                        autocapitalization: .never,
-                        disablesAutocorrection: true
-                    )
-
-                    BaseTextField(
-                        placeholder: "Password",
-                        text: $viewModel.password,
-                        style: .secure
-                    )
-
-                    BaseTextField(
-                        placeholder: "Confirm Password",
-                        text: $viewModel.confirmPassword,
-                        style: .secure
-                    )
-                }
-                .padding(.top, AppSpacing.md)
+                formSection
+                    .padding(.top, AppSpacing.xl)
 
                 termsText
+                    .padding(.top, AppSpacing.md)
 
                 BaseButton(
                     title: "Create Account",
@@ -54,26 +33,22 @@ struct RegisterView: View {
                 ) {
                     viewModel.register()
                 }
+                .padding(.top, AppSpacing.lg)
 
                 LabeledDivider(label: "or continue with")
+                    .padding(.top, AppSpacing.xxl)
 
-                VStack(spacing: AppSpacing.sm) {
-                    SocialSignInButton(provider: .google, isLoading: viewModel.isLoading) {
-                        viewModel.continueWithGoogle()
-                    }
-                    SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
-                        viewModel.continueWithApple()
-                    }
-                }
+                socialButtons
+                    .padding(.top, AppSpacing.md)
 
                 logInFooter
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, AppSpacing.xl)
             }
             .padding(.horizontal, AppSpacing.lg)
-            .padding(.top, AppSpacing.xl)
+            .padding(.top, AppSpacing.md)
             .padding(.bottom, AppSpacing.xl)
         }
-        .background(AppColor.background.ignoresSafeArea())
+        .background(AuthBackground())
         .scrollDismissesKeyboard(.interactively)
     }
 
@@ -85,6 +60,35 @@ struct RegisterView: View {
                     .foregroundStyle(AppColor.textPrimary)
             }
             Spacer()
+        }
+    }
+
+    private var formSection: some View {
+        VStack(spacing: 0) {
+            BaseTextField(placeholder: "Full Name", text: $viewModel.fullName)
+
+            BaseTextField(
+                placeholder: "Email Address",
+                text: $viewModel.email,
+                keyboardType: .emailAddress,
+                autocapitalization: .never,
+                disablesAutocorrection: true
+            )
+            .padding(.top, AppSpacing.sm)
+
+            BaseTextField(
+                placeholder: "Password",
+                text: $viewModel.password,
+                style: .secure
+            )
+            .padding(.top, AppSpacing.sm)
+
+            BaseTextField(
+                placeholder: "Confirm Password",
+                text: $viewModel.confirmPassword,
+                style: .secure
+            )
+            .padding(.top, AppSpacing.sm)
         }
     }
 
@@ -108,6 +112,17 @@ struct RegisterView: View {
         privacy.foregroundColor = AppColor.accent
 
         return intro + terms + and + privacy
+    }
+
+    private var socialButtons: some View {
+        VStack(spacing: AppSpacing.md) {
+            SocialSignInButton(provider: .google, isLoading: viewModel.isLoading) {
+                viewModel.continueWithGoogle()
+            }
+            SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
+                viewModel.continueWithApple()
+            }
+        }
     }
 
     private var logInFooter: some View {

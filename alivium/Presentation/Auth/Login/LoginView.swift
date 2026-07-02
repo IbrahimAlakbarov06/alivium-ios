@@ -11,43 +11,13 @@ struct LoginView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                logo
-
+            VStack(spacing: 0) {
                 Text("Welcome Back")
                     .font(AppTypography.display)
                     .foregroundStyle(AppColor.textPrimary)
-                    .padding(.top, AppSpacing.sm)
 
-                VStack(spacing: AppSpacing.md) {
-                    BaseTextField(
-                        placeholder: "Email Address",
-                        text: $viewModel.email,
-                        keyboardType: .emailAddress,
-                        autocapitalization: .never,
-                        disablesAutocorrection: true
-                    )
-
-                    VStack(spacing: AppSpacing.xs) {
-                        BaseTextField(
-                            placeholder: "Password",
-                            text: $viewModel.password,
-                            style: .secure
-                        )
-
-                        HStack {
-                            Spacer()
-                            Button {
-                                // TODO: navigate to Forgot Password screen
-                            } label: {
-                                Text("Forgot Password?")
-                                    .font(AppTypography.caption)
-                                    .foregroundStyle(AppColor.accent)
-                            }
-                        }
-                    }
-                }
-                .padding(.top, AppSpacing.md)
+                formSection
+                    .padding(.top, AppSpacing.xl)
 
                 BaseButton(
                     title: "Log In",
@@ -57,35 +27,65 @@ struct LoginView: View {
                 ) {
                     viewModel.login()
                 }
+                .padding(.top, AppSpacing.lg)
 
                 LabeledDivider(label: "or continue with")
+                    .padding(.top, AppSpacing.xxl)
 
-                VStack(spacing: AppSpacing.sm) {
-                    SocialSignInButton(provider: .google, isLoading: viewModel.isLoading) {
-                        viewModel.continueWithGoogle()
-                    }
-                    SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
-                        viewModel.continueWithApple()
-                    }
-                }
+                socialButtons
+                    .padding(.top, AppSpacing.md)
 
                 signUpFooter
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, AppSpacing.xl)
             }
             .padding(.horizontal, AppSpacing.lg)
             .padding(.top, AppSpacing.xxl)
             .padding(.bottom, AppSpacing.xl)
         }
-        .background(AppColor.background.ignoresSafeArea())
+        .background(AuthBackground())
         .scrollDismissesKeyboard(.interactively)
     }
 
-    private var logo: some View {
-        Image("LogoMark")
-            .resizable()
-            .scaledToFill()
-            .frame(width: 64, height: 64)
-            .clipShape(Circle())
+    private var formSection: some View {
+        VStack(spacing: 0) {
+            BaseTextField(
+                placeholder: "Email Address",
+                text: $viewModel.email,
+                keyboardType: .emailAddress,
+                autocapitalization: .never,
+                disablesAutocorrection: true
+            )
+
+            BaseTextField(
+                placeholder: "Password",
+                text: $viewModel.password,
+                style: .secure
+            )
+            .padding(.top, AppSpacing.sm)
+
+            HStack {
+                Spacer()
+                Button {
+                    // TODO: navigate to Forgot Password screen
+                } label: {
+                    Text("Forgot Password?")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColor.accent)
+                }
+            }
+            .padding(.top, AppSpacing.xxs)
+        }
+    }
+
+    private var socialButtons: some View {
+        VStack(spacing: AppSpacing.md) {
+            SocialSignInButton(provider: .google, isLoading: viewModel.isLoading) {
+                viewModel.continueWithGoogle()
+            }
+            SocialSignInButton(provider: .apple, isLoading: viewModel.isLoading) {
+                viewModel.continueWithApple()
+            }
+        }
     }
 
     private var signUpFooter: some View {

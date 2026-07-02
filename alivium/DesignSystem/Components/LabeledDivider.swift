@@ -5,27 +5,26 @@
 
 import SwiftUI
 
-/// A divider with centered label text, e.g. "OR CONTINUE WITH" between a form and social
-/// sign-in buttons.
+/// A divider with centered label text, e.g. "or continue with" between a form and social
+/// sign-in buttons. Lowercase reads softer/quieter than all-caps, matching the boutique tone.
 struct LabeledDivider: View {
     let label: String
 
     var body: some View {
         HStack(spacing: AppSpacing.sm) {
-            Rectangle()
-                .fill(AppColor.textSecondary.opacity(0.2))
-                .frame(height: 1)
-
-            Text(label.uppercased())
+            line
+            Text(label)
                 .font(AppTypography.caption)
-                .tracking(1)
                 .foregroundStyle(AppColor.textSecondary)
                 .fixedSize()
-
-            Rectangle()
-                .fill(AppColor.textSecondary.opacity(0.2))
-                .frame(height: 1)
+            line
         }
+    }
+
+    private var line: some View {
+        Rectangle()
+            .fill(AppColor.textSecondary.opacity(0.15))
+            .frame(height: 1)
     }
 }
 
