@@ -13,17 +13,20 @@ struct AuthFlowView: View {
     @State private var loginViewModel: LoginViewModel
     @State private var registerViewModel: RegisterViewModel
     @State private var forgotPasswordViewModel: ForgotPasswordViewModel
+    @State private var verificationCodeViewModel: VerificationCodeViewModel
 
     private enum AuthRoute {
         case login
         case register
         case forgotPassword
+        case verification(purpose: VerificationPurpose, email: String)
     }
 
     init(container: AppContainer) {
         _loginViewModel = State(initialValue: container.makeLoginViewModel())
         _registerViewModel = State(initialValue: container.makeRegisterViewModel())
         _forgotPasswordViewModel = State(initialValue: container.makeForgotPasswordViewModel())
+        _verificationCodeViewModel = State(initialValue: container.makeVerificationCodeViewModel())
     }
 
     var body: some View {
@@ -40,9 +43,17 @@ struct AuthFlowView: View {
                     }
                 )
             case .register:
-                RegisterView(viewModel: registerViewModel) {
-                    withAnimation { route = .login }
-                }
+                RegisterView(
+                    viewModel: registerViewModel,
+                    onNavigateToLogin: {
+                        withAnimation { route = .login }
+                    },
+                    onRegisterSuccess: {
+                        withAnimation {
+                            route = .verification(purpose: .emailVerification, email: registerViewModel.email)
+                        }
+                    }
+                )
             case .forgotPassword:
                 ForgotPasswordView(
                     viewModel: forgotPasswordViewModel,
@@ -50,8 +61,30 @@ struct AuthFlowView: View {
                         withAnimation { route = .login }
                     },
                     onSuccess: {
-                        // TODO: navigate to the Verification Code screen once it's built.
-                        print("Reset link sent — TODO: navigate to Verification Code screen")
+                        withAnimation {
+                            route = .verification(purpose: .passwordReset, email: forgotPasswordViewModel.email)
+                        }
+                    }
+                )
+            case .verification(let purpose, let email):
+                VerificationCodeView(
+                    viewModel: verificationCodeViewModel,
+                    purpose: purpose,
+                    email: email,
+                    onNavigateBack: {
+                        withAnimation {
+                            route = purpose == .emailVerification ? .register : .forgotPassword
+                        }
+                    },
+                    onSuccess: {
+                        switch purpose {
+                        case .emailVerification:
+                            // TODO: navigate to Home/main app once it exists.
+                            print("Email verified — TODO: navigate to Home")
+                        case .passwordReset:
+                            // TODO: navigate to Create New Password screen once it's built.
+                            print("Code verified — TODO: navigate to Create New Password screen")
+                        }
                     }
                 )
             }

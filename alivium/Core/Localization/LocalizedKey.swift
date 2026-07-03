@@ -57,6 +57,15 @@ enum LocalizedKey {
     case sendResetLink
     case backToLogIn
 
+    // MARK: - Verification Code
+    case verifyYourEmail
+    case enterResetCode
+    case verifyEmailSubtitle
+    case resetCodeSubtitle
+    case verify
+    case didntReceiveCode
+    case resend
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -152,6 +161,26 @@ enum LocalizedKey {
             return language == .az ? "Linki göndər" : "Send Reset Link"
         case .backToLogIn:
             return language == .az ? "Girişə qayıt" : "Back to Log In"
+
+        // MARK: Verification Code
+        case .verifyYourEmail:
+            return language == .az ? "E-poçtunuzu təsdiqləyin" : "Verify Your Email"
+        case .enterResetCode:
+            return language == .az ? "Sıfırlama kodunu daxil edin" : "Enter Reset Code"
+        case .verifyEmailSubtitle:
+            return language == .az
+                ? "6 rəqəmli kodu {email} ünvanına göndərdik."
+                : "We've sent a 6-digit code to {email}."
+        case .resetCodeSubtitle:
+            return language == .az
+                ? "Davam etmək üçün {email} ünvanına göndərilən 6 rəqəmli kodu daxil edin."
+                : "Enter the 6-digit code sent to {email} to continue."
+        case .verify:
+            return language == .az ? "Təsdiqlə" : "Verify"
+        case .didntReceiveCode:
+            return language == .az ? "Kodu almadınız?" : "Didn't receive the code?"
+        case .resend:
+            return language == .az ? "Yenidən göndər" : "Resend"
         }
     }
 }

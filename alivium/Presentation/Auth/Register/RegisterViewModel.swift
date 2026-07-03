@@ -21,17 +21,16 @@ final class RegisterViewModel {
         self.authRepository = authRepository
     }
 
-    func register() {
+    /// Awaitable, matching `ForgotPasswordViewModel.sendResetLink()` — the view chains
+    /// navigation to the Verification Code screen only once registration actually completes.
+    func register() async {
         guard state != .loading else { return }
         state = .loading
-        Task {
-            defer { state = .idle }
-            do {
-                _ = try await authRepository.register(fullName: fullName, email: email, password: password)
-                print("Registration succeeded — TODO: navigate to next screen")
-            } catch {
-                // Error handling comes later.
-            }
+        defer { state = .idle }
+        do {
+            _ = try await authRepository.register(fullName: fullName, email: email, password: password)
+        } catch {
+            // Error handling comes later.
         }
     }
 

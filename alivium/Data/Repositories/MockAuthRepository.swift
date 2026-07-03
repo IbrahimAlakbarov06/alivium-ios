@@ -31,4 +31,8 @@ final class MockAuthRepository: AuthRepository {
     func forgotPassword(email: String) async throws {
         try await Task.sleep(for: .seconds(1))
     }
+
+    func verifyCode(_ code: String) async throws {
+        try await Task.sleep(for: .seconds(1))
+    }
 }

@@ -9,6 +9,7 @@ struct RegisterView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: RegisterViewModel
     let onNavigateToLogin: () -> Void
+    let onRegisterSuccess: () -> Void
 
     var body: some View {
         ScrollView {
@@ -33,7 +34,10 @@ struct RegisterView: View {
                     size: .large,
                     isLoading: viewModel.isLoading
                 ) {
-                    viewModel.register()
+                    Task {
+                        await viewModel.register()
+                        onRegisterSuccess()
+                    }
                 }
                 .padding(.top, AppSpacing.lg)
 
@@ -168,7 +172,8 @@ struct RegisterView: View {
 #Preview {
     RegisterView(
         viewModel: RegisterViewModel(authRepository: MockAuthRepository()),
-        onNavigateToLogin: {}
+        onNavigateToLogin: {},
+        onRegisterSuccess: {}
     )
     .environment(LocalizationManager())
 }

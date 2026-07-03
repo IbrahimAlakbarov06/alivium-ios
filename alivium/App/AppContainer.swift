@@ -28,4 +28,8 @@ final class AppContainer {
     func makeForgotPasswordViewModel() -> ForgotPasswordViewModel {
         ForgotPasswordViewModel(authRepository: authRepository)
     }
+
+    func makeVerificationCodeViewModel() -> VerificationCodeViewModel {
+        VerificationCodeViewModel(authRepository: authRepository)
+    }
 }
