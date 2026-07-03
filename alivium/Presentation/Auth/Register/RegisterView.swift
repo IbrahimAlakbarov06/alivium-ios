@@ -35,7 +35,7 @@ struct RegisterView: View {
                     isLoading: viewModel.isLoading
                 ) {
                     Task {
-                        await viewModel.register()
+                        guard await viewModel.register() else { return }
                         onRegisterSuccess()
                     }
                 }

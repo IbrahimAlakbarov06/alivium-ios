@@ -44,7 +44,7 @@ struct ForgotPasswordView: View {
                     isLoading: viewModel.isLoading
                 ) {
                     Task {
-                        await viewModel.sendResetLink()
+                        guard await viewModel.sendResetLink() else { return }
                         onSuccess()
                     }
                 }

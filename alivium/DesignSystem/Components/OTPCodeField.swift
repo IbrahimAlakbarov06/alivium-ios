@@ -15,6 +15,14 @@ struct OTPCodeField: View {
     let length: Int
 
     @State private var digits: [String]
+    // Bumped only when a keystroke gets rejected (see `binding(for:)`) — forces that one cell's
+    // TextField to a fresh identity so its underlying UIKit text buffer re-syncs to `digits`.
+    // A SwiftUI TextField doesn't reliably revert its displayed text just because the binding's
+    // setter transformed the value to something other than what was typed (a well-known
+    // TextField/Binding sync gap): without this, a rejected non-digit character (e.g. from a
+    // hardware keyboard, paste, or autofill) can visibly linger in the box even though `digits`
+    // — the actual source of truth used for verification — correctly discarded it.
+    @State private var rejectionTokens: [Int]
     @FocusState private var focusedIndex: Int?
 
     init(code: Binding<String>, length: Int = 6) {
@@ -25,6 +33,7 @@ struct OTPCodeField: View {
         // out empty (that was an index-out-of-range crash waiting to happen).
         let chars = Array(code.wrappedValue.prefix(length)).map { String($0) }
         self._digits = State(initialValue: chars + Array(repeating: "", count: max(0, length - chars.count)))
+        self._rejectionTokens = State(initialValue: Array(repeating: 0, count: length))
     }
 
     var body: some View {
@@ -57,8 +66,23 @@ struct OTPCodeField: View {
             .focused($focusedIndex, equals: index)
             .animation(.easeOut(duration: 0.15), value: focusedIndex)
             .accessibilityIdentifier("otpCell\(index)")
+            .id("otp-\(index)-\(rejectionTokens[index])")
             .onChange(of: digits[index]) { oldValue, newValue in
                 handleDigitChange(at: index, oldValue: oldValue, newValue: newValue)
+            }
+            .onChange(of: rejectionTokens[index]) { _, _ in
+                // The .id() bump above forces this TextField to a fresh UIKit-backed instance
+                // (see `rejectionTokens`' doc comment) — but that recreation can drop keyboard
+                // focus, and `focusedIndex` is already `index` here, so simply re-assigning the
+                // same value is a no-op the focus system won't act on. Force a genuine nil ->
+                // index transition instead, so it actually reclaims first responder on the new
+                // instance. This is a rare, low-frequency path (only on rejected input, not
+                // every keystroke), unlike the per-keystroke advance logic that previously ruled
+                // out DispatchQueue for exactly this reason.
+                focusedIndex = nil
+                DispatchQueue.main.async {
+                    focusedIndex = index
+                }
             }
     }
 
@@ -68,6 +92,9 @@ struct OTPCodeField: View {
             set: { newValue in
                 guard index < digits.count else { return }
                 let filtered = newValue.filter(\.isNumber)
+                if filtered.count != newValue.count {
+                    rejectionTokens[index] += 1
+                }
                 // The field can hand back more than one character if a digit was typed over an
                 // already-filled box — the newest keystroke is what belongs in this cell. Note:
                 // this setter does nothing else — no focus change, no `code` sync — precisely

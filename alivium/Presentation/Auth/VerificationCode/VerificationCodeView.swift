@@ -49,7 +49,7 @@ struct VerificationCodeView: View {
                     isLoading: viewModel.isLoading
                 ) {
                     Task {
-                        await viewModel.verify()
+                        guard await viewModel.verify() else { return }
                         onSuccess()
                     }
                 }

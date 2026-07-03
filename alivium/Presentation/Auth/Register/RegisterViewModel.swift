@@ -23,14 +23,22 @@ final class RegisterViewModel {
 
     /// Awaitable, matching `ForgotPasswordViewModel.sendResetLink()` — the view chains
     /// navigation to the Verification Code screen only once registration actually completes.
-    func register() async {
-        guard state != .loading else { return }
+    ///
+    /// Returns whether this call actually performed the registration (vs. short-circuiting on
+    /// the `isLoading` guard) — a rapid double-tap can fire two `Task { await register() }`
+    /// calls before the first one's `state = .loading` has taken effect, so the caller must
+    /// only navigate on the call that actually ran, not on every call that merely returned.
+    @discardableResult
+    func register() async -> Bool {
+        guard state != .loading else { return false }
         state = .loading
         defer { state = .idle }
         do {
             _ = try await authRepository.register(fullName: fullName, email: email, password: password)
+            return true
         } catch {
             // Error handling comes later.
+            return false
         }
     }
 
