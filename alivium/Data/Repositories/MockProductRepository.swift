@@ -4,16 +4,23 @@
 //
 
 /// Phase 1 stand-in — swapped for a real APIClient-backed implementation once the backend
-/// Product/Collection endpoints are wired (CLAUDE.md Phase 2). Image names below are asset
-/// names to add to Assets.xcassets; until they exist, `CatalogImage` renders a neutral
-/// placeholder in their place, so the app runs correctly either way.
+/// Product/Collection endpoints are wired (CLAUDE.md Phase 2). Image names below reuse the
+/// three real Onboarding photos already in Assets.xcassets, cycling through them repeatedly;
+/// real per-product photography arrives from the backend in Phase 2.
 final class MockProductRepository: ProductRepository {
+    /// The only real photos available in Phase 1 — cycled across every image slot below.
+    private static let stockPhotos = ["Onboarding1", "Onboarding2", "Onboarding3"]
+
+    private static func stockPhoto(_ index: Int) -> String {
+        stockPhotos[index % stockPhotos.count]
+    }
+
     func fetchHeroBanners() async throws -> [HeroBanner] {
         try await Task.sleep(for: .seconds(1))
         return [
-            HeroBanner(id: "hero-1", imageName: "Hero1", kicker: "NEW SEASON", title: "The Autumn Edit", ctaTitle: "Shop the Edit"),
-            HeroBanner(id: "hero-2", imageName: "Hero2", kicker: "LIMITED DROP", title: "Evening, Elevated", ctaTitle: "Discover More"),
-            HeroBanner(id: "hero-3", imageName: "Hero3", kicker: "BOUTIQUE FAVORITES", title: "Timeless Essentials", ctaTitle: "Shop Now")
+            HeroBanner(id: "hero-1", imageName: Self.stockPhoto(0), kicker: "NEW SEASON", title: "The Autumn Edit", ctaTitle: "Shop the Edit"),
+            HeroBanner(id: "hero-2", imageName: Self.stockPhoto(1), kicker: "LIMITED DROP", title: "Evening, Elevated", ctaTitle: "Discover More"),
+            HeroBanner(id: "hero-3", imageName: Self.stockPhoto(2), kicker: "BOUTIQUE FAVORITES", title: "Timeless Essentials", ctaTitle: "Shop Now")
         ]
     }
 
@@ -22,32 +29,32 @@ final class MockProductRepository: ProductRepository {
         return [
             Product(
                 id: "p-1", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: nil,
-                imageNames: ["Product1"], categoryId: "dresses",
+                imageNames: [Self.stockPhoto(0)], categoryId: "dresses",
                 variants: variants(color: "Ivory")
             ),
             Product(
                 id: "p-2", name: "Tailored Wool Coat", price: Money(349.00), discountPrice: Money(279.00),
-                imageNames: ["Product2"], categoryId: "new-in",
+                imageNames: [Self.stockPhoto(1)], categoryId: "new-in",
                 variants: variants(color: "Camel")
             ),
             Product(
                 id: "p-3", name: "Cashmere Blend Sweater", price: Money(159.00), discountPrice: nil,
-                imageNames: ["Product3"], categoryId: "tops",
+                imageNames: [Self.stockPhoto(2)], categoryId: "tops",
                 variants: variants(color: "Oatmeal")
             ),
             Product(
                 id: "p-4", name: "Pleated Satin Skirt", price: Money(129.00), discountPrice: nil,
-                imageNames: ["Product4"], categoryId: "skirts",
+                imageNames: [Self.stockPhoto(3)], categoryId: "skirts",
                 variants: variants(color: "Champagne")
             ),
             Product(
                 id: "p-5", name: "Structured Leather Tote", price: Money(259.00), discountPrice: nil,
-                imageNames: ["Product5"], categoryId: "bags",
+                imageNames: [Self.stockPhoto(4)], categoryId: "bags",
                 variants: variants(color: "Cognac")
             ),
             Product(
                 id: "p-6", name: "Linen Wide-Leg Trousers", price: Money(139.00), discountPrice: nil,
-                imageNames: ["Product6"], categoryId: "pants",
+                imageNames: [Self.stockPhoto(5)], categoryId: "pants",
                 variants: variants(color: "Sand")
             )
         ]
@@ -58,32 +65,32 @@ final class MockProductRepository: ProductRepository {
         return [
             Product(
                 id: "p-7", name: "Belted Trench Coat", price: Money(299.00), discountPrice: nil,
-                imageNames: ["Product7"], categoryId: "new-in",
+                imageNames: [Self.stockPhoto(0)], categoryId: "new-in",
                 variants: variants(color: "Stone")
             ),
             Product(
                 id: "p-8", name: "Ribbed Knit Turtleneck", price: Money(89.00), discountPrice: nil,
-                imageNames: ["Product8"], categoryId: "tops",
+                imageNames: [Self.stockPhoto(1)], categoryId: "tops",
                 variants: variants(color: "Charcoal")
             ),
             Product(
                 id: "p-9", name: "Suede Ankle Boots", price: Money(219.00), discountPrice: Money(175.00),
-                imageNames: ["Product9"], categoryId: "shoes",
+                imageNames: [Self.stockPhoto(2)], categoryId: "shoes",
                 variants: variants(color: "Taupe")
             ),
             Product(
                 id: "p-10", name: "Silk Blouse", price: Money(149.00), discountPrice: nil,
-                imageNames: ["Product10"], categoryId: "tops",
+                imageNames: [Self.stockPhoto(3)], categoryId: "tops",
                 variants: variants(color: "Blush")
             ),
             Product(
                 id: "p-11", name: "Wide Brim Felt Hat", price: Money(79.00), discountPrice: nil,
-                imageNames: ["Product11"], categoryId: "accessories",
+                imageNames: [Self.stockPhoto(4)], categoryId: "accessories",
                 variants: variants(color: "Black")
             ),
             Product(
                 id: "p-12", name: "Gold-Tone Hoop Earrings", price: Money(59.00), discountPrice: nil,
-                imageNames: ["Product12"], categoryId: "accessories",
+                imageNames: [Self.stockPhoto(5)], categoryId: "accessories",
                 variants: []
             )
         ]
@@ -92,10 +99,10 @@ final class MockProductRepository: ProductRepository {
     func fetchCollections() async throws -> [ProductCollection] {
         try await Task.sleep(for: .seconds(1))
         return [
-            ProductCollection(id: "c-1", name: "The Autumn Edit", imageName: "Collection1", productCount: 24),
-            ProductCollection(id: "c-2", name: "Evening Elegance", imageName: "Collection2", productCount: 18),
-            ProductCollection(id: "c-3", name: "Workwear Essentials", imageName: "Collection3", productCount: 32),
-            ProductCollection(id: "c-4", name: "Accessories Edit", imageName: "Collection4", productCount: 27)
+            ProductCollection(id: "c-1", name: "The Autumn Edit", imageName: Self.stockPhoto(0), productCount: 24),
+            ProductCollection(id: "c-2", name: "Evening Elegance", imageName: Self.stockPhoto(1), productCount: 18),
+            ProductCollection(id: "c-3", name: "Workwear Essentials", imageName: Self.stockPhoto(2), productCount: 32),
+            ProductCollection(id: "c-4", name: "Accessories Edit", imageName: Self.stockPhoto(3), productCount: 27)
         ]
     }
 

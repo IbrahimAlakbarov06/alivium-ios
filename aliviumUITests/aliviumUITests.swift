@@ -60,10 +60,12 @@ final class aliviumUITests: XCTestCase {
         sleep(1) // allow mock feed's simulated load to finish rendering images/layout
         save("3_home")
 
-        // Scroll down to exercise the rest of the feed.
-        app.swipeUp()
-        sleep(1)
-        save("4_home_scrolled")
+        // Scroll down to exercise the rest of the feed, capturing each section.
+        for step in 1...4 {
+            app.swipeUp()
+            sleep(1)
+            save("4_home_scrolled_\(step)")
+        }
 
         // Walk the remaining 4 tabs.
         let tabBar = app.tabBars.firstMatch
