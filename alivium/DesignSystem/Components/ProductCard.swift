@@ -19,6 +19,8 @@ enum ProductCardLayout {
 struct ProductCard: View {
     let product: Product
     var layout: ProductCardLayout = .rail
+    /// Wishlist screen passes `true` since everything shown there is, by definition, saved.
+    var isWishlisted: Bool = false
     var onTapWishlist: (() -> Void)? = nil
 
     var body: some View {
@@ -73,14 +75,15 @@ struct ProductCard: View {
 
             if let onTapWishlist {
                 Button(action: onTapWishlist) {
-                    Image(systemName: "heart")
+                    Image(systemName: isWishlisted ? "heart.fill" : "heart")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(AppColor.textPrimary)
+                        .foregroundStyle(isWishlisted ? AppColor.accent : AppColor.textPrimary)
                         .padding(AppSpacing.xs)
                         .background(AppColor.background.opacity(0.85))
                         .clipShape(Circle())
                 }
                 .padding(AppSpacing.xs)
+                .accessibilityIdentifier(isWishlisted ? "wishlistHeartFilled" : "wishlistHeartOutline")
             }
         }
     }

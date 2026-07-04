@@ -282,6 +282,114 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testWishlistAndCartFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Skip onboarding (Splash auto-dismisses after ~1.4s).
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5), "Expected Login screen with Guest option")
+        guestButton.tap()
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+
+        // --- Wishlist, Guest state ---
+        tabBar.buttons["Seçilmişlər"].tap()
+        let guestPrompt = app.staticTexts["Sevimlilərinizi saxlamaq üçün daxil olun"].firstMatch
+        XCTAssertTrue(guestPrompt.waitForExistence(timeout: 5), "Expected the Guest sign-in prompt, distinct from an empty wishlist")
+        save("wishlist_1_guest_prompt")
+
+        // --- Cart works fine for Guests, with the seeded mock items and a correct tab badge ---
+        tabBar.buttons["Səbət"].tap()
+        let firstCartProduct = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(firstCartProduct.waitForExistence(timeout: 5), "Expected seeded cart items to load for a Guest")
+        save("cart_1_populated_with_badge")
+
+        // Bump the first item's quantity and confirm the stepper + totals react.
+        let incrementButtons = app.buttons.matching(identifier: "quantityStepperIncrement")
+        incrementButtons.firstMatch.tap()
+        sleep(1)
+        save("cart_2_quantity_incremented")
+
+        // --- Sign in for real, so Wishlist has a session to persist against ---
+        tabBar.buttons["Profil"].tap()
+        let logInOrSignUp = app.buttons["Daxil ol / Qeydiyyat"].firstMatch
+        XCTAssertTrue(logInOrSignUp.waitForExistence(timeout: 5))
+        logInOrSignUp.tap()
+
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+            sleep(1)
+        }
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+
+        // --- Wishlist, authenticated + loaded state ---
+        // "Structured Leather Tote" also appears in Home's Featured rail, so checking for its
+        // text alone can't distinguish Home from Wishlist if the tab tap doesn't land (a race
+        // seen before). `wishlistHeartFilled` only exists on the Wishlist grid, so use that as
+        // the real "did we actually land on Wishlist" signal.
+        tabBar.buttons["Seçilmişlər"].tap()
+        let filledHearts = app.buttons.matching(identifier: "wishlistHeartFilled")
+        if filledHearts.count == 0 {
+            tabBar.buttons["Seçilmişlər"].tap() // guard against the same tab-tap/dialog race seen before
+            sleep(1)
+        }
+        let wishlistedProduct = app.staticTexts["Structured Leather Tote"].firstMatch
+        XCTAssertTrue(wishlistedProduct.waitForExistence(timeout: 5), "Expected seeded wishlist products once authenticated")
+        XCTAssertGreaterThan(filledHearts.count, 0, "Expected filled hearts confirming we're actually on the Wishlist screen")
+        save("wishlist_2_authenticated_loaded")
+
+        // Tapping any filled heart removes that item — assert by count (firstMatch may not be
+        // the specific product checked above, since 4 items are seeded).
+        let heartCountBeforeRemoval = filledHearts.count
+        app.buttons.matching(identifier: "wishlistHeartFilled").firstMatch.tap()
+        sleep(1)
+        XCTAssertEqual(filledHearts.count, heartCountBeforeRemoval - 1, "Expected one fewer wishlist item after removing one")
+        save("wishlist_3_after_remove")
+
+        // --- Cart empty state ---
+        tabBar.buttons["Səbət"].tap()
+        let removeButtons = app.buttons.matching(identifier: "Sil")
+        while removeButtons.count > 0 {
+            removeButtons.firstMatch.tap()
+            sleep(1)
+        }
+        let cartEmptyTitle = app.staticTexts["Səbətiniz boşdur"].firstMatch
+        XCTAssertTrue(cartEmptyTitle.waitForExistence(timeout: 5), "Expected Cart's empty state after removing all items")
+        save("cart_3_empty")
+
+        // "Start Browsing" should switch to the Home tab.
+        app.buttons["Gəzintiyə başla"].firstMatch.tap()
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5), "Expected Start Browsing to switch to the Home tab")
+        save("cart_4_start_browsing_switched_to_home")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

@@ -17,4 +17,7 @@ struct Product: Identifiable, Equatable {
 
     var isOnSale: Bool { discountPrice != nil }
     var primaryImageName: String? { imageNames.first }
+    /// The price that actually applies (discounted if on sale) — used anywhere math is done
+    /// on price, like Cart's subtotal, so that logic isn't repeated as `discountPrice ?? price`.
+    var effectivePrice: Money { discountPrice ?? price }
 }

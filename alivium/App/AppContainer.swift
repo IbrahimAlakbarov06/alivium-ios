@@ -13,6 +13,8 @@ final class AppContainer {
     let productRepository: ProductRepository
     let categoryRepository: CategoryRepository
     let chatRepository: ChatRepository
+    let wishlistRepository: WishlistRepository
+    let cartRepository: CartRepository
     let localizationManager: LocalizationManager
     let userSession: UserSession
 
@@ -21,6 +23,8 @@ final class AppContainer {
         self.productRepository = MockProductRepository()
         self.categoryRepository = MockCategoryRepository()
         self.chatRepository = MockChatRepository()
+        self.wishlistRepository = MockWishlistRepository()
+        self.cartRepository = MockCartRepository()
         self.localizationManager = LocalizationManager()
         self.userSession = UserSession()
     }
@@ -63,5 +67,13 @@ final class AppContainer {
 
     func makeSearchViewModel() -> SearchViewModel {
         SearchViewModel(categoryRepository: categoryRepository, productRepository: productRepository)
+    }
+
+    func makeWishlistViewModel() -> WishlistViewModel {
+        WishlistViewModel(wishlistRepository: wishlistRepository, userSession: userSession)
+    }
+
+    func makeCartViewModel() -> CartViewModel {
+        CartViewModel(cartRepository: cartRepository)
     }
 }

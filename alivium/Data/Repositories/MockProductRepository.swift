@@ -25,8 +25,10 @@ final class MockProductRepository: ProductRepository {
 
     /// Built once and reused by `fetchFeaturedProducts`/`fetchRecommendedProducts` (each with
     /// their own simulated network delay) and by `searchProducts` (its own, shorter delay) —
-    /// so search-as-you-type isn't stacked behind two separate 1-second fetch delays.
-    private static let featuredProducts: [Product] = [
+    /// so search-as-you-type isn't stacked behind two separate 1-second fetch delays. Not
+    /// `private` so Mock{Wishlist,Cart}Repository can seed from the same real product data
+    /// rather than inventing unrelated sample items.
+    static let featuredProducts: [Product] = [
         Product(
             id: "p-1", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: nil,
             imageNames: [stockPhoto(0)], categoryId: "dresses",
@@ -59,7 +61,7 @@ final class MockProductRepository: ProductRepository {
         )
     ]
 
-    private static let recommendedProducts: [Product] = [
+    static let recommendedProducts: [Product] = [
         Product(
             id: "p-7", name: "Belted Trench Coat", price: Money(299.00), discountPrice: nil,
             imageNames: [stockPhoto(0)], categoryId: "new-in",

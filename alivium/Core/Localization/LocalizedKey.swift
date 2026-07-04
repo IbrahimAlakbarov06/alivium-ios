@@ -95,6 +95,28 @@ enum LocalizedKey: Equatable {
     case noResultsFound
     case items
 
+    // MARK: - Wishlist
+    case wishlistEmptyTitle
+    case wishlistEmptySubtitle
+    case wishlistGuestTitle
+    case wishlistGuestSubtitle
+    case startBrowsing
+
+    // MARK: - Cart
+    case cartEmptyTitle
+    case cartEmptySubtitle
+    case subtotal
+    case voucherCodePlaceholder
+    case apply
+    case voucherApplied
+    case shippingSectionTitle
+    case shippingFree
+    case shippingStandard
+    case shippingFast
+    case total
+    case proceedToCheckout
+    case removeItem
+
     // MARK: - Profile
     case guestLabel
     case logInOrSignUp
@@ -289,6 +311,50 @@ enum LocalizedKey: Equatable {
             return language == .az ? "Nəticə tapılmadı" : "No results found"
         case .items:
             return language == .az ? "məhsul" : "Items"
+
+        // MARK: Wishlist
+        case .wishlistEmptyTitle:
+            return language == .az ? "Seçilmişlər siyahınız boşdur" : "Your Wishlist is Empty"
+        case .wishlistEmptySubtitle:
+            return language == .az
+                ? "Bəyəndiyiniz məhsulları saxlayın və istənilən vaxt burada tapın."
+                : "Save the pieces you love and find them here anytime."
+        case .wishlistGuestTitle:
+            return language == .az ? "Sevimlilərinizi saxlamaq üçün daxil olun" : "Sign in to save your favorites"
+        case .wishlistGuestSubtitle:
+            return language == .az
+                ? "Bəyəndiyiniz məhsulları izləmək üçün hesab yaradın."
+                : "Create an account to keep track of the pieces you love."
+        case .startBrowsing:
+            return language == .az ? "Gəzintiyə başla" : "Start Browsing"
+
+        // MARK: Cart
+        case .cartEmptyTitle:
+            return language == .az ? "Səbətiniz boşdur" : "Your Cart is Empty"
+        case .cartEmptySubtitle:
+            return language == .az ? "Hələ heç nə əlavə etməmisiniz." : "Looks like you haven't added anything yet."
+        case .subtotal:
+            return language == .az ? "Ara cəm" : "Subtotal"
+        case .voucherCodePlaceholder:
+            return language == .az ? "Endirim kodu daxil edin" : "Enter voucher code"
+        case .apply:
+            return language == .az ? "Tətbiq et" : "Apply"
+        case .voucherApplied:
+            return language == .az ? "Kod tətbiq edildi!" : "Voucher applied!"
+        case .shippingSectionTitle:
+            return language == .az ? "Çatdırılma" : "Shipping"
+        case .shippingFree:
+            return language == .az ? "Pulsuz" : "Free"
+        case .shippingStandard:
+            return language == .az ? "Standart" : "Standard"
+        case .shippingFast:
+            return language == .az ? "Sürətli" : "Fast"
+        case .total:
+            return language == .az ? "Cəmi" : "Total"
+        case .proceedToCheckout:
+            return language == .az ? "Sifarişi tamamla" : "Proceed to Checkout"
+        case .removeItem:
+            return language == .az ? "Sil" : "Remove"
 
         // MARK: Profile
         case .guestLabel:
