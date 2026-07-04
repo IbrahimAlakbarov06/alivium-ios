@@ -137,12 +137,17 @@ final class aliviumUITests: XCTestCase {
         let notNowButton = app.sheets.buttons["Not Now"].firstMatch
         if notNowButton.waitForExistence(timeout: 3) {
             notNowButton.tap()
+            sleep(1) // let the sheet's dismiss animation finish before the next tap
         }
 
         XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
         tabBar.buttons["Profil"].tap()
 
         let logOutRow = app.buttons["Çıxış et"].firstMatch
+        if !logOutRow.waitForExistence(timeout: 3) {
+            // The tab tap can occasionally race the sheet's dismiss animation; retry once.
+            tabBar.buttons["Profil"].tap()
+        }
         XCTAssertTrue(logOutRow.waitForExistence(timeout: 5), "Expected authenticated Profile header with Log Out row")
         save("profile_3_authenticated")
 
@@ -166,6 +171,53 @@ final class aliviumUITests: XCTestCase {
 
         XCTAssertTrue(emailField.waitForExistence(timeout: 5), "Expected Log Out to return to the Auth flow")
         save("profile_6_after_logout")
+    }
+
+    @MainActor
+    func testProfileCurrencyRemovedAndSupportChatFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Skip onboarding (Splash auto-dismisses after ~1.4s).
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5), "Expected Login screen with Guest option")
+        guestButton.tap()
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let liveChatRow = app.buttons["Canlı Dəstək"].firstMatch
+        XCTAssertTrue(liveChatRow.waitForExistence(timeout: 5), "Expected Live Chat row in Support section")
+        XCTAssertFalse(app.staticTexts["Valyuta"].exists, "Currency row should be removed from Preferences")
+        XCTAssertFalse(app.staticTexts["Currency"].exists, "Currency row should be removed from Preferences")
+        save("chat_1_profile_no_currency")
+
+        liveChatRow.tap()
+        let welcomeMessage = app.staticTexts["Hi, this is Alivium Support — how can we help you today?"].firstMatch
+        XCTAssertTrue(welcomeMessage.waitForExistence(timeout: 5), "Expected the seeded support welcome message")
+        save("chat_2_opened_with_seed_message")
+
+        let messageField = app.textFields["Mesajınızı yazın..."].firstMatch
+        XCTAssertTrue(messageField.waitForExistence(timeout: 5))
+        messageField.tap()
+        messageField.typeText("I have a question about my order")
+
+        app.buttons["chatSendButton"].firstMatch.tap()
+        let sentBubble = app.staticTexts["I have a question about my order"].firstMatch
+        XCTAssertTrue(sentBubble.waitForExistence(timeout: 5), "Expected the typed message to appear as a new bubble")
+        save("chat_3_message_sent")
     }
 
     @MainActor

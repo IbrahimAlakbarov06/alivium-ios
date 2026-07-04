@@ -12,11 +12,13 @@ struct MainTabView: View {
     @Environment(LocalizationManager.self) private var localization
     @State private var homeViewModel: HomeViewModel
     @State private var profileViewModel: ProfileViewModel
+    @State private var chatViewModel: ChatViewModel
     let onLogOut: () -> Void
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
         _homeViewModel = State(initialValue: container.makeHomeViewModel())
         _profileViewModel = State(initialValue: container.makeProfileViewModel())
+        _chatViewModel = State(initialValue: container.makeChatViewModel())
         self.onLogOut = onLogOut
     }
 
@@ -34,7 +36,7 @@ struct MainTabView: View {
             ComingSoonView(title: localization.string(.cartTab), systemImage: "bag")
                 .tabItem { Label(localization.string(.cartTab), systemImage: "bag") }
 
-            ProfileView(viewModel: profileViewModel, onRequestAuthFlow: onLogOut)
+            ProfileView(viewModel: profileViewModel, chatViewModel: chatViewModel, onRequestAuthFlow: onLogOut)
                 .tabItem { Label(localization.string(.profileTab), systemImage: "person") }
         }
         .tint(AppColor.primary)

@@ -12,6 +12,7 @@ final class AppContainer {
     let authRepository: AuthRepository
     let productRepository: ProductRepository
     let categoryRepository: CategoryRepository
+    let chatRepository: ChatRepository
     let localizationManager: LocalizationManager
     let userSession: UserSession
 
@@ -19,6 +20,7 @@ final class AppContainer {
         self.authRepository = MockAuthRepository()
         self.productRepository = MockProductRepository()
         self.categoryRepository = MockCategoryRepository()
+        self.chatRepository = MockChatRepository()
         self.localizationManager = LocalizationManager()
         self.userSession = UserSession()
     }
@@ -53,5 +55,9 @@ final class AppContainer {
 
     func makeProfileViewModel() -> ProfileViewModel {
         ProfileViewModel(authRepository: authRepository, userSession: userSession)
+    }
+
+    func makeChatViewModel() -> ChatViewModel {
+        ChatViewModel(chatRepository: chatRepository)
     }
 }

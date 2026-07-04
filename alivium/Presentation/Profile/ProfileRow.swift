@@ -5,18 +5,12 @@
 
 import SwiftUI
 
-/// Grouped-list-style row (icon + label + trailing chevron/value) used across Profile's
+/// Grouped-list-style row (icon + label + trailing chevron) used across Profile's
 /// Account/Preferences/Support sections. Kept local to Profile rather than promoted to
 /// DesignSystem/Components since nothing else needs this exact shape yet.
 struct ProfileRow: View {
-    enum Trailing {
-        case chevron
-        case value(String)
-    }
-
     let icon: String
     let title: String
-    var trailing: Trailing = .chevron
     var titleColor: Color = AppColor.textPrimary
     var iconColor: Color = AppColor.primary
     let action: () -> Void
@@ -34,12 +28,6 @@ struct ProfileRow: View {
                     .foregroundStyle(titleColor)
 
                 Spacer()
-
-                if case .value(let value) = trailing {
-                    Text(value)
-                        .font(AppTypography.body)
-                        .foregroundStyle(AppColor.textSecondary)
-                }
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))

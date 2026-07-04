@@ -99,9 +99,11 @@ enum LocalizedKey: Equatable {
     case paymentMethods
     case preferencesSection
     case language
-    case currency
     case notifications
     case supportSection
+    case liveChat
+    case supportChatTitle
+    case chatInputPlaceholder
     case helpCenter
     case contactUs
     case rateTheApp
@@ -291,12 +293,16 @@ enum LocalizedKey: Equatable {
             return language == .az ? "TƏRCİHLƏR" : "PREFERENCES"
         case .language:
             return language == .az ? "Dil" : "Language"
-        case .currency:
-            return language == .az ? "Valyuta" : "Currency"
         case .notifications:
             return language == .az ? "Bildirişlər" : "Notifications"
         case .supportSection:
             return language == .az ? "DƏSTƏK" : "SUPPORT"
+        case .liveChat:
+            return language == .az ? "Canlı Dəstək" : "Live Chat"
+        case .supportChatTitle:
+            return language == .az ? "Dəstək Söhbəti" : "Support Chat"
+        case .chatInputPlaceholder:
+            return language == .az ? "Mesajınızı yazın..." : "Type a message..."
         case .helpCenter:
             return language == .az ? "Kömək Mərkəzi" : "Help Center"
         case .contactUs:

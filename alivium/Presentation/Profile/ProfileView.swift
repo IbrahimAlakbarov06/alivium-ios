@@ -8,9 +8,11 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: ProfileViewModel
+    @State var chatViewModel: ChatViewModel
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var isShowingLogOutConfirm = false
     @State private var isShowingDeleteAccountConfirm = false
+    @State private var isShowingChat = false
 
     /// Fires once we should drop back to the Auth flow — from a confirmed Log Out, a confirmed
     /// Delete Account, or Guest tapping the header's "Log In / Sign Up" CTA directly (which
@@ -18,20 +20,25 @@ struct ProfileView: View {
     let onRequestAuthFlow: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: AppSpacing.xxl) {
-                headerCard
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: AppSpacing.xxl) {
+                    headerCard
 
-                accountSection
-                preferencesSection
-                supportSection
-                sessionSection
+                    accountSection
+                    preferencesSection
+                    supportSection
+                    sessionSection
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
+                .padding(.bottom, AppSpacing.xl)
             }
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.top, AppSpacing.md)
-            .padding(.bottom, AppSpacing.xl)
+            .background(AppColor.backgroundOffWhite)
+            .navigationDestination(isPresented: $isShowingChat) {
+                ChatView(viewModel: chatViewModel)
+            }
         }
-        .background(AppColor.backgroundOffWhite)
         .confirmationDialog(
             localization.string(.logOutConfirmTitle),
             isPresented: $isShowingLogOutConfirm,
@@ -171,10 +178,6 @@ struct ProfileView: View {
                 LanguageToggle()
             }
             ProfileRowDivider()
-            ProfileRow(icon: "dollarsign.circle", title: localization.string(.currency), trailing: .value("USD")) {
-                // TODO: real multi-currency selection once supported.
-            }
-            ProfileRowDivider()
             preferenceRow(icon: "bell", title: localization.string(.notifications)) {
                 Toggle("", isOn: $pushNotificationsEnabled)
                     .labelsHidden()
@@ -212,6 +215,10 @@ struct ProfileView: View {
 
     private var supportSection: some View {
         ProfileSectionCard(title: localization.string(.supportSection)) {
+            ProfileRow(icon: "bubble.left.and.bubble.right.fill", title: localization.string(.liveChat)) {
+                isShowingChat = true
+            }
+            ProfileRowDivider()
             ProfileRow(icon: "questionmark.circle", title: localization.string(.helpCenter)) {
                 // TODO: navigate to Help Center once it exists.
             }
@@ -259,6 +266,7 @@ struct ProfileView: View {
     session.signIn(User(id: "1", fullName: "Aysel Məmmədova", email: "aysel@alivium.com"))
     return ProfileView(
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
+        chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
         onRequestAuthFlow: {}
     )
     .environment(LocalizationManager())
@@ -267,6 +275,7 @@ struct ProfileView: View {
 #Preview("Guest") {
     ProfileView(
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: UserSession()),
+        chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
         onRequestAuthFlow: {}
     )
     .environment(LocalizationManager())
