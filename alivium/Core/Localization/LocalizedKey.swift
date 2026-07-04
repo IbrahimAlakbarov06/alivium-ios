@@ -8,7 +8,7 @@ import Foundation
 /// Every user-facing string in the app, resolved per `AppLanguage`. Enum-driven like
 /// `BaseButton`'s style enum — one centralized catalog instead of strings scattered across
 /// views, so every screen stays in sync and nothing gets translated inconsistently or missed.
-enum LocalizedKey {
+enum LocalizedKey: Equatable {
     // MARK: - Onboarding
     case skip
     case next
@@ -72,6 +72,22 @@ enum LocalizedKey {
     case newPassword
     case savePassword
     case passwordsDontMatch
+
+    // MARK: - Home
+    case featuredProducts
+    case recommended
+    case topCollections
+    case showAll
+    case somethingWentWrong
+    case tryAgain
+    case comingSoon
+
+    // MARK: - Tab bar
+    case homeTab
+    case searchTab
+    case wishlistTab
+    case cartTab
+    case profileTab
 
     func value(for language: AppLanguage) -> String {
         switch self {
@@ -202,6 +218,34 @@ enum LocalizedKey {
             return language == .az ? "Şifrəni yadda saxla" : "Save Password"
         case .passwordsDontMatch:
             return language == .az ? "Şifrələr uyğun gəlmir" : "Passwords don't match"
+
+        // MARK: Home
+        case .featuredProducts:
+            return language == .az ? "Seçilmiş Məhsullar" : "Featured Products"
+        case .recommended:
+            return language == .az ? "Tövsiyə olunan" : "Recommended"
+        case .topCollections:
+            return language == .az ? "Ən Yaxşı Kolleksiyalar" : "Top Collections"
+        case .showAll:
+            return language == .az ? "Hamısına bax" : "Show all"
+        case .somethingWentWrong:
+            return language == .az ? "Nəsə səhv getdi. Yeniləmək üçün çəkin." : "Something went wrong. Pull to refresh."
+        case .tryAgain:
+            return language == .az ? "Yenidən cəhd edin" : "Try Again"
+        case .comingSoon:
+            return language == .az ? "Tezliklə" : "Coming Soon"
+
+        // MARK: Tab bar
+        case .homeTab:
+            return language == .az ? "Əsas" : "Home"
+        case .searchTab:
+            return language == .az ? "Axtar" : "Search"
+        case .wishlistTab:
+            return language == .az ? "Seçilmişlər" : "Wishlist"
+        case .cartTab:
+            return language == .az ? "Səbət" : "Cart"
+        case .profileTab:
+            return language == .az ? "Profil" : "Profile"
         }
     }
 }

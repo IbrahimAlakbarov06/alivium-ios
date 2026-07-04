@@ -15,6 +15,7 @@ struct AuthFlowView: View {
     @State private var forgotPasswordViewModel: ForgotPasswordViewModel
     @State private var verificationCodeViewModel: VerificationCodeViewModel
     @State private var createNewPasswordViewModel: CreateNewPasswordViewModel
+    let onAuthenticated: () -> Void
 
     private enum AuthRoute {
         case login
@@ -24,12 +25,13 @@ struct AuthFlowView: View {
         case createNewPassword
     }
 
-    init(container: AppContainer) {
+    init(container: AppContainer, onAuthenticated: @escaping () -> Void) {
         _loginViewModel = State(initialValue: container.makeLoginViewModel())
         _registerViewModel = State(initialValue: container.makeRegisterViewModel())
         _forgotPasswordViewModel = State(initialValue: container.makeForgotPasswordViewModel())
         _verificationCodeViewModel = State(initialValue: container.makeVerificationCodeViewModel())
         _createNewPasswordViewModel = State(initialValue: container.makeCreateNewPasswordViewModel())
+        self.onAuthenticated = onAuthenticated
     }
 
     var body: some View {
@@ -43,7 +45,8 @@ struct AuthFlowView: View {
                     },
                     onNavigateToForgotPassword: {
                         withAnimation { route = .forgotPassword }
-                    }
+                    },
+                    onAuthenticated: onAuthenticated
                 )
             case .register:
                 RegisterView(
@@ -55,7 +58,8 @@ struct AuthFlowView: View {
                         withAnimation {
                             route = .verification(purpose: .emailVerification, email: registerViewModel.email)
                         }
-                    }
+                    },
+                    onAuthenticated: onAuthenticated
                 )
             case .forgotPassword:
                 ForgotPasswordView(
@@ -82,8 +86,7 @@ struct AuthFlowView: View {
                     onSuccess: {
                         switch purpose {
                         case .emailVerification:
-                            // TODO: navigate to Home/main app once it exists.
-                            print("Email verified — TODO: navigate to Home")
+                            onAuthenticated()
                         case .passwordReset:
                             withAnimation { route = .createNewPassword }
                         }
@@ -110,6 +113,6 @@ struct AuthFlowView: View {
 
 #Preview {
     let container = AppContainer()
-    AuthFlowView(container: container)
+    AuthFlowView(container: container, onAuthenticated: {})
         .environment(container.localizationManager)
 }

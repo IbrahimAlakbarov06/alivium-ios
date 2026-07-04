@@ -19,49 +19,52 @@ final class LoginViewModel {
         self.authRepository = authRepository
     }
 
-    func login() {
-        guard state != .loading else { return }
+    /// Awaitable, matching `RegisterViewModel.register()` — the view only navigates to the
+    /// main app once login actually completes, and only on the call that actually ran (guards
+    /// against a rapid double-tap firing `onAuthenticated()` from a short-circuited call).
+    @discardableResult
+    func login() async -> Bool {
+        guard state != .loading else { return false }
         state = .loading
-        Task {
-            defer { state = .idle }
-            do {
-                _ = try await authRepository.login(email: email, password: password)
-                print("Login succeeded — TODO: navigate to next screen")
-            } catch {
-                // Error handling comes later.
-            }
+        defer { state = .idle }
+        do {
+            _ = try await authRepository.login(email: email, password: password)
+            return true
+        } catch {
+            // Error handling comes later.
+            return false
         }
     }
 
-    func continueWithGoogle() {
-        guard state != .loading else { return }
+    @discardableResult
+    func continueWithGoogle() async -> Bool {
+        guard state != .loading else { return false }
         state = .loading
-        Task {
-            defer { state = .idle }
-            do {
-                _ = try await authRepository.loginWithGoogle()
-                print("Google sign-in succeeded — TODO: navigate to next screen")
-            } catch {
-                // Error handling comes later.
-            }
+        defer { state = .idle }
+        do {
+            _ = try await authRepository.loginWithGoogle()
+            return true
+        } catch {
+            // Error handling comes later.
+            return false
         }
     }
 
-    func continueWithApple() {
-        guard state != .loading else { return }
+    @discardableResult
+    func continueWithApple() async -> Bool {
+        guard state != .loading else { return false }
         state = .loading
-        Task {
-            defer { state = .idle }
-            do {
-                _ = try await authRepository.loginWithApple()
-                print("Apple sign-in succeeded — TODO: navigate to next screen")
-            } catch {
-                // Error handling comes later.
-            }
+        defer { state = .idle }
+        do {
+            _ = try await authRepository.loginWithApple()
+            return true
+        } catch {
+            // Error handling comes later.
+            return false
         }
     }
 
-    func continueAsGuest() {
-        print("Continuing as guest — TODO: navigate to next screen")
+    func continueAsGuest() -> Bool {
+        true
     }
 }

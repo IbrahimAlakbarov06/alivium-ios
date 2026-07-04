@@ -10,10 +10,14 @@ import Foundation
 @MainActor
 final class AppContainer {
     let authRepository: AuthRepository
+    let productRepository: ProductRepository
+    let categoryRepository: CategoryRepository
     let localizationManager: LocalizationManager
 
     init() {
         self.authRepository = MockAuthRepository()
+        self.productRepository = MockProductRepository()
+        self.categoryRepository = MockCategoryRepository()
         self.localizationManager = LocalizationManager()
     }
 
@@ -35,5 +39,13 @@ final class AppContainer {
 
     func makeCreateNewPasswordViewModel() -> CreateNewPasswordViewModel {
         CreateNewPasswordViewModel(authRepository: authRepository)
+    }
+
+    func makeHomeViewModel() -> HomeViewModel {
+        let useCase = DefaultFetchHomeFeedUseCase(
+            productRepository: productRepository,
+            categoryRepository: categoryRepository
+        )
+        return HomeViewModel(fetchHomeFeedUseCase: useCase)
     }
 }

@@ -42,35 +42,35 @@ final class RegisterViewModel {
         }
     }
 
-    func continueWithGoogle() {
-        guard state != .loading else { return }
+    @discardableResult
+    func continueWithGoogle() async -> Bool {
+        guard state != .loading else { return false }
         state = .loading
-        Task {
-            defer { state = .idle }
-            do {
-                _ = try await authRepository.loginWithGoogle()
-                print("Google sign-in succeeded — TODO: navigate to next screen")
-            } catch {
-                // Error handling comes later.
-            }
+        defer { state = .idle }
+        do {
+            _ = try await authRepository.loginWithGoogle()
+            return true
+        } catch {
+            // Error handling comes later.
+            return false
         }
     }
 
-    func continueWithApple() {
-        guard state != .loading else { return }
+    @discardableResult
+    func continueWithApple() async -> Bool {
+        guard state != .loading else { return false }
         state = .loading
-        Task {
-            defer { state = .idle }
-            do {
-                _ = try await authRepository.loginWithApple()
-                print("Apple sign-in succeeded — TODO: navigate to next screen")
-            } catch {
-                // Error handling comes later.
-            }
+        defer { state = .idle }
+        do {
+            _ = try await authRepository.loginWithApple()
+            return true
+        } catch {
+            // Error handling comes later.
+            return false
         }
     }
 
-    func continueAsGuest() {
-        print("Continuing as guest — TODO: navigate to next screen")
+    func continueAsGuest() -> Bool {
+        true
     }
 }

@@ -10,6 +10,7 @@ struct LoginView: View {
     @State var viewModel: LoginViewModel
     let onNavigateToRegister: () -> Void
     let onNavigateToForgotPassword: () -> Void
+    let onAuthenticated: () -> Void
 
     var body: some View {
         ScrollView {
@@ -31,7 +32,10 @@ struct LoginView: View {
                     size: .large,
                     isLoading: viewModel.isLoading
                 ) {
-                    viewModel.login()
+                    Task {
+                        guard await viewModel.login() else { return }
+                        onAuthenticated()
+                    }
                 }
                 .padding(.top, AppSpacing.lg)
 
@@ -88,14 +92,20 @@ struct LoginView: View {
                 title: localization.string(.continueWithGoogle),
                 isLoading: viewModel.isLoading
             ) {
-                viewModel.continueWithGoogle()
+                Task {
+                    guard await viewModel.continueWithGoogle() else { return }
+                    onAuthenticated()
+                }
             }
             SocialSignInButton(
                 provider: .apple,
                 title: localization.string(.continueWithApple),
                 isLoading: viewModel.isLoading
             ) {
-                viewModel.continueWithApple()
+                Task {
+                    guard await viewModel.continueWithApple() else { return }
+                    onAuthenticated()
+                }
             }
             guestButton
         }
@@ -103,7 +113,8 @@ struct LoginView: View {
 
     private var guestButton: some View {
         Button {
-            viewModel.continueAsGuest()
+            guard viewModel.continueAsGuest() else { return }
+            onAuthenticated()
         } label: {
             Text(localization.string(.continueAsGuest))
                 .font(AppTypography.bodyEmphasis)
@@ -133,7 +144,8 @@ struct LoginView: View {
     LoginView(
         viewModel: LoginViewModel(authRepository: MockAuthRepository()),
         onNavigateToRegister: {},
-        onNavigateToForgotPassword: {}
+        onNavigateToForgotPassword: {},
+        onAuthenticated: {}
     )
     .environment(LocalizationManager())
 }
