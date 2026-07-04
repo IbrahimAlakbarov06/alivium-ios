@@ -11,4 +11,6 @@ protocol AuthRepository {
     func forgotPassword(email: String) async throws
     func verifyCode(_ code: String) async throws
     func resetPassword(newPassword: String) async throws
+    func logOut() async throws
+    func deleteAccount() async throws
 }

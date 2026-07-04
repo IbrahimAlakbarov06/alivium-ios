@@ -86,6 +86,89 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testProfileGuestAndAuthenticatedFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Skip onboarding (Splash auto-dismisses after ~1.4s).
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        // --- Guest path ---
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5), "Expected Login screen with Guest option")
+        guestButton.tap()
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let logInOrSignUp = app.buttons["Daxil ol / Qeydiyyat"].firstMatch
+        XCTAssertTrue(logInOrSignUp.waitForExistence(timeout: 5), "Expected Guest CTA on Profile header")
+        save("profile_1_guest")
+
+        // Tapping the Guest CTA should drop straight back to the Auth flow.
+        logInOrSignUp.tap()
+        let emailFieldAfterGuestCTA = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailFieldAfterGuestCTA.waitForExistence(timeout: 5), "Expected Guest CTA to return to Login")
+        save("profile_2_guest_cta_returned_to_login")
+
+        // --- Authenticated path ---
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        // The simulator's "Save Password?" sheet can appear after a real (non-guest) login and
+        // will swallow the next tap if left up.
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+        }
+
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let logOutRow = app.buttons["Çıxış et"].firstMatch
+        XCTAssertTrue(logOutRow.waitForExistence(timeout: 5), "Expected authenticated Profile header with Log Out row")
+        save("profile_3_authenticated")
+
+        // Toggle language and confirm Profile's own strings update, matching Auth's toggle.
+        // LanguageToggle's "AZ"/"EN" labels are plain Text under a gesture, not Buttons.
+        app.staticTexts["EN"].firstMatch.tap()
+        sleep(1)
+        XCTAssertTrue(app.buttons["Log Out"].firstMatch.waitForExistence(timeout: 5), "Expected Profile strings to switch to English")
+        save("profile_4_english")
+        app.staticTexts["AZ"].firstMatch.tap()
+        sleep(1)
+
+        // Log Out should require confirmation, then return to the Auth flow. The dialog's own
+        // destructive button shares its label with the row that triggered it, but only the
+        // dialog's copy lives under `app.sheets`.
+        logOutRow.tap()
+        let confirmLogOut = app.sheets.buttons["Çıxış et"].firstMatch
+        XCTAssertTrue(confirmLogOut.waitForExistence(timeout: 5), "Expected Log Out confirmation dialog")
+        save("profile_5_logout_confirm")
+        confirmLogOut.tap()
+
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5), "Expected Log Out to return to the Auth flow")
+        save("profile_6_after_logout")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

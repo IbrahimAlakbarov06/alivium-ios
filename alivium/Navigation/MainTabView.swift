@@ -11,9 +11,13 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(LocalizationManager.self) private var localization
     @State private var homeViewModel: HomeViewModel
+    @State private var profileViewModel: ProfileViewModel
+    let onLogOut: () -> Void
 
-    init(container: AppContainer) {
+    init(container: AppContainer, onLogOut: @escaping () -> Void) {
         _homeViewModel = State(initialValue: container.makeHomeViewModel())
+        _profileViewModel = State(initialValue: container.makeProfileViewModel())
+        self.onLogOut = onLogOut
     }
 
     var body: some View {
@@ -30,7 +34,7 @@ struct MainTabView: View {
             ComingSoonView(title: localization.string(.cartTab), systemImage: "bag")
                 .tabItem { Label(localization.string(.cartTab), systemImage: "bag") }
 
-            ComingSoonView(title: localization.string(.profileTab), systemImage: "person")
+            ProfileView(viewModel: profileViewModel, onRequestAuthFlow: onLogOut)
                 .tabItem { Label(localization.string(.profileTab), systemImage: "person") }
         }
         .tint(AppColor.primary)
@@ -39,6 +43,6 @@ struct MainTabView: View {
 
 #Preview {
     let container = AppContainer()
-    MainTabView(container: container)
+    MainTabView(container: container, onLogOut: {})
         .environment(container.localizationManager)
 }

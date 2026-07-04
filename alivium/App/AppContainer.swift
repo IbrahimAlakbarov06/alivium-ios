@@ -13,20 +13,22 @@ final class AppContainer {
     let productRepository: ProductRepository
     let categoryRepository: CategoryRepository
     let localizationManager: LocalizationManager
+    let userSession: UserSession
 
     init() {
         self.authRepository = MockAuthRepository()
         self.productRepository = MockProductRepository()
         self.categoryRepository = MockCategoryRepository()
         self.localizationManager = LocalizationManager()
+        self.userSession = UserSession()
     }
 
     func makeLoginViewModel() -> LoginViewModel {
-        LoginViewModel(authRepository: authRepository)
+        LoginViewModel(authRepository: authRepository, userSession: userSession)
     }
 
     func makeRegisterViewModel() -> RegisterViewModel {
-        RegisterViewModel(authRepository: authRepository)
+        RegisterViewModel(authRepository: authRepository, userSession: userSession)
     }
 
     func makeForgotPasswordViewModel() -> ForgotPasswordViewModel {
@@ -47,5 +49,9 @@ final class AppContainer {
             categoryRepository: categoryRepository
         )
         return HomeViewModel(fetchHomeFeedUseCase: useCase)
+    }
+
+    func makeProfileViewModel() -> ProfileViewModel {
+        ProfileViewModel(authRepository: authRepository, userSession: userSession)
     }
 }

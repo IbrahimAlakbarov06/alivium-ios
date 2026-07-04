@@ -142,7 +142,7 @@ struct LoginView: View {
 
 #Preview {
     LoginView(
-        viewModel: LoginViewModel(authRepository: MockAuthRepository()),
+        viewModel: LoginViewModel(authRepository: MockAuthRepository(), userSession: UserSession()),
         onNavigateToRegister: {},
         onNavigateToForgotPassword: {},
         onAuthenticated: {}

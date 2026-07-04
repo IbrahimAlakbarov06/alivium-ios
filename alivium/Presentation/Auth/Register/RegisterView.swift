@@ -179,7 +179,7 @@ struct RegisterView: View {
 
 #Preview {
     RegisterView(
-        viewModel: RegisterViewModel(authRepository: MockAuthRepository()),
+        viewModel: RegisterViewModel(authRepository: MockAuthRepository(), userSession: UserSession()),
         onNavigateToLogin: {},
         onRegisterSuccess: {},
         onAuthenticated: {}

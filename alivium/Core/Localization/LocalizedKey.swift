@@ -89,6 +89,31 @@ enum LocalizedKey: Equatable {
     case cartTab
     case profileTab
 
+    // MARK: - Profile
+    case guestLabel
+    case logInOrSignUp
+    case editProfile
+    case accountSection
+    case orderHistory
+    case addresses
+    case paymentMethods
+    case preferencesSection
+    case language
+    case currency
+    case notifications
+    case supportSection
+    case helpCenter
+    case contactUs
+    case rateTheApp
+    case termsAndPrivacyPolicy
+    case logOut
+    case logOutConfirmTitle
+    case logOutConfirmMessage
+    case deleteAccount
+    case deleteAccountConfirmTitle
+    case deleteAccountConfirmMessage
+    case cancel
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -246,6 +271,56 @@ enum LocalizedKey: Equatable {
             return language == .az ? "Səbət" : "Cart"
         case .profileTab:
             return language == .az ? "Profil" : "Profile"
+
+        // MARK: Profile
+        case .guestLabel:
+            return language == .az ? "Qonaq" : "Guest"
+        case .logInOrSignUp:
+            return language == .az ? "Daxil ol / Qeydiyyat" : "Log In / Sign Up"
+        case .editProfile:
+            return language == .az ? "Profili redaktə et" : "Edit Profile"
+        case .accountSection:
+            return language == .az ? "HESAB" : "ACCOUNT"
+        case .orderHistory:
+            return language == .az ? "Sifariş tarixçəsi" : "Order History"
+        case .addresses:
+            return language == .az ? "Ünvanlar" : "Addresses"
+        case .paymentMethods:
+            return language == .az ? "Ödəniş üsulları" : "Payment Methods"
+        case .preferencesSection:
+            return language == .az ? "TƏRCİHLƏR" : "PREFERENCES"
+        case .language:
+            return language == .az ? "Dil" : "Language"
+        case .currency:
+            return language == .az ? "Valyuta" : "Currency"
+        case .notifications:
+            return language == .az ? "Bildirişlər" : "Notifications"
+        case .supportSection:
+            return language == .az ? "DƏSTƏK" : "SUPPORT"
+        case .helpCenter:
+            return language == .az ? "Kömək Mərkəzi" : "Help Center"
+        case .contactUs:
+            return language == .az ? "Bizimlə əlaqə" : "Contact Us"
+        case .rateTheApp:
+            return language == .az ? "Tətbiqi qiymətləndirin" : "Rate the App"
+        case .termsAndPrivacyPolicy:
+            return language == .az ? "Şərtlər və Məxfilik Siyasəti" : "Terms & Privacy Policy"
+        case .logOut:
+            return language == .az ? "Çıxış et" : "Log Out"
+        case .logOutConfirmTitle:
+            return language == .az ? "Çıxış edilsin?" : "Log Out?"
+        case .logOutConfirmMessage:
+            return language == .az ? "Hesabınızdan çıxmaq istədiyinizə əminsiniz?" : "Are you sure you want to log out?"
+        case .deleteAccount:
+            return language == .az ? "Hesabı sil" : "Delete Account"
+        case .deleteAccountConfirmTitle:
+            return language == .az ? "Hesab silinsin?" : "Delete Account?"
+        case .deleteAccountConfirmMessage:
+            return language == .az
+                ? "Bu, hesabınızı həmişəlik siləcək. Bu əməliyyat geri qaytarıla bilməz."
+                : "This will permanently delete your account. This action cannot be undone."
+        case .cancel:
+            return language == .az ? "Ləğv et" : "Cancel"
         }
     }
 }

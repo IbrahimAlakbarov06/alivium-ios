@@ -39,4 +39,12 @@ final class MockAuthRepository: AuthRepository {
     func resetPassword(newPassword: String) async throws {
         try await Task.sleep(for: .seconds(1))
     }
+
+    func logOut() async throws {
+        try await Task.sleep(for: .seconds(0.3))
+    }
+
+    func deleteAccount() async throws {
+        try await Task.sleep(for: .seconds(0.3))
+    }
 }

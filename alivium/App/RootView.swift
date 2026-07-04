@@ -18,7 +18,9 @@ struct RootView: View {
             if isShowingSplash {
                 SplashView()
             } else if isAuthenticated {
-                MainTabView(container: container)
+                MainTabView(container: container) {
+                    withAnimation { isAuthenticated = false }
+                }
             } else if hasCompletedOnboarding {
                 AuthFlowView(container: container) {
                     withAnimation { isAuthenticated = true }

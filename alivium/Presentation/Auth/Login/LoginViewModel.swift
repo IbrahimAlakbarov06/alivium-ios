@@ -14,9 +14,11 @@ final class LoginViewModel {
     var isLoading: Bool { state == .loading }
 
     private let authRepository: AuthRepository
+    private let userSession: UserSession
 
-    init(authRepository: AuthRepository) {
+    init(authRepository: AuthRepository, userSession: UserSession) {
         self.authRepository = authRepository
+        self.userSession = userSession
     }
 
     /// Awaitable, matching `RegisterViewModel.register()` — the view only navigates to the
@@ -28,7 +30,8 @@ final class LoginViewModel {
         state = .loading
         defer { state = .idle }
         do {
-            _ = try await authRepository.login(email: email, password: password)
+            let user = try await authRepository.login(email: email, password: password)
+            userSession.signIn(user)
             return true
         } catch {
             // Error handling comes later.
@@ -42,7 +45,8 @@ final class LoginViewModel {
         state = .loading
         defer { state = .idle }
         do {
-            _ = try await authRepository.loginWithGoogle()
+            let user = try await authRepository.loginWithGoogle()
+            userSession.signIn(user)
             return true
         } catch {
             // Error handling comes later.
@@ -56,7 +60,8 @@ final class LoginViewModel {
         state = .loading
         defer { state = .idle }
         do {
-            _ = try await authRepository.loginWithApple()
+            let user = try await authRepository.loginWithApple()
+            userSession.signIn(user)
             return true
         } catch {
             // Error handling comes later.
@@ -65,6 +70,7 @@ final class LoginViewModel {
     }
 
     func continueAsGuest() -> Bool {
-        true
+        userSession.signOut()
+        return true
     }
 }
