@@ -221,6 +221,67 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testSearchBrowsingAndQueryFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Skip onboarding (Splash auto-dismisses after ~1.4s).
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5), "Expected Login screen with Guest option")
+        guestButton.tap()
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Axtar"].tap()
+
+        // Browsing state: banners + expandable subcategory list, driven by the mock category tree.
+        // CategoryBanner uppercases its label ("CLOTHING"); the expandable row below uses the
+        // category's real name ("Clothing") — distinct elements.
+        let clothingBanner = app.buttons["CLOTHING"].firstMatch
+        XCTAssertTrue(clothingBanner.waitForExistence(timeout: 5), "Expected the Clothing category banner")
+        save("search_1_browsing")
+
+        let clothingExpandRow = app.buttons["Clothing"].firstMatch
+        XCTAssertTrue(clothingExpandRow.waitForExistence(timeout: 5), "Expected the expandable Clothing row")
+        clothingExpandRow.tap()
+        let dressesSubcategory = app.staticTexts["Dresses"].firstMatch
+        XCTAssertTrue(dressesSubcategory.waitForExistence(timeout: 5), "Expected Clothing to expand into its subcategories")
+        save("search_2_expanded_subcategories")
+
+        // Search-as-you-type: a query matching a real mock product name.
+        let searchField = app.textFields["Don, ayaqqabı, çanta axtarın..."].firstMatch
+        XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+        searchField.tap()
+        searchField.typeText("Silk")
+
+        let matchedProduct = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(matchedProduct.waitForExistence(timeout: 5), "Expected search results filtered by 'Silk'")
+        save("search_3_query_results")
+
+        // Clear (BaseTextField has no built-in clear button, so backspace the existing value)
+        // and type a nonsense query — expect the empty-results state.
+        if let existingValue = searchField.value as? String {
+            searchField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+        }
+        searchField.typeText("zzzznonexistentproduct")
+
+        let noResults = app.staticTexts["Nəticə tapılmadı"].firstMatch
+        XCTAssertTrue(noResults.waitForExistence(timeout: 5), "Expected the No Results Found empty state")
+        save("search_4_no_results")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

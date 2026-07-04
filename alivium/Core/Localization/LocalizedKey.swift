@@ -89,6 +89,12 @@ enum LocalizedKey: Equatable {
     case cartTab
     case profileTab
 
+    // MARK: - Search / Discover
+    case discoverTitle
+    case searchPlaceholder
+    case noResultsFound
+    case items
+
     // MARK: - Profile
     case guestLabel
     case logInOrSignUp
@@ -273,6 +279,16 @@ enum LocalizedKey: Equatable {
             return language == .az ? "Səbət" : "Cart"
         case .profileTab:
             return language == .az ? "Profil" : "Profile"
+
+        // MARK: Search / Discover
+        case .discoverTitle:
+            return language == .az ? "Kəşf et" : "Discover"
+        case .searchPlaceholder:
+            return language == .az ? "Don, ayaqqabı, çanta axtarın..." : "Search dresses, shoes, bags..."
+        case .noResultsFound:
+            return language == .az ? "Nəticə tapılmadı" : "No results found"
+        case .items:
+            return language == .az ? "məhsul" : "Items"
 
         // MARK: Profile
         case .guestLabel:

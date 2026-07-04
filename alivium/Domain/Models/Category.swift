@@ -11,4 +11,7 @@ struct Category: Identifiable, Equatable {
     let name: String
     let parentId: String?
     let subcategories: [Category]
+    /// Product count for this specific category (not a sum of its subcategories') — used by
+    /// Discover's subcategory list (e.g. "Dresses (36 Items)").
+    let itemCount: Int
 }

@@ -11,4 +11,7 @@ protocol ProductRepository {
     func fetchFeaturedProducts() async throws -> [Product]
     func fetchRecommendedProducts() async throws -> [Product]
     func fetchCollections() async throws -> [ProductCollection]
+    /// Simple substring match on product name in Phase 1 (Discover's search-as-you-type);
+    /// becomes a real search endpoint call in Phase 2.
+    func searchProducts(query: String) async throws -> [Product]
 }

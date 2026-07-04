@@ -60,4 +60,8 @@ final class AppContainer {
     func makeChatViewModel() -> ChatViewModel {
         ChatViewModel(chatRepository: chatRepository)
     }
+
+    func makeSearchViewModel() -> SearchViewModel {
+        SearchViewModel(categoryRepository: categoryRepository, productRepository: productRepository)
+    }
 }

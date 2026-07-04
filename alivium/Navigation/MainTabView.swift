@@ -11,12 +11,14 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(LocalizationManager.self) private var localization
     @State private var homeViewModel: HomeViewModel
+    @State private var searchViewModel: SearchViewModel
     @State private var profileViewModel: ProfileViewModel
     @State private var chatViewModel: ChatViewModel
     let onLogOut: () -> Void
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
         _homeViewModel = State(initialValue: container.makeHomeViewModel())
+        _searchViewModel = State(initialValue: container.makeSearchViewModel())
         _profileViewModel = State(initialValue: container.makeProfileViewModel())
         _chatViewModel = State(initialValue: container.makeChatViewModel())
         self.onLogOut = onLogOut
@@ -27,7 +29,7 @@ struct MainTabView: View {
             HomeView(viewModel: homeViewModel)
                 .tabItem { Label(localization.string(.homeTab), systemImage: "house.fill") }
 
-            ComingSoonView(title: localization.string(.searchTab), systemImage: "magnifyingglass")
+            SearchView(viewModel: searchViewModel)
                 .tabItem { Label(localization.string(.searchTab), systemImage: "magnifyingglass") }
 
             ComingSoonView(title: localization.string(.wishlistTab), systemImage: "heart")
