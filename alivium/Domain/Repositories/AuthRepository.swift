@@ -10,4 +10,5 @@ protocol AuthRepository {
     func loginWithApple() async throws -> User
     func forgotPassword(email: String) async throws
     func verifyCode(_ code: String) async throws
+    func resetPassword(newPassword: String) async throws
 }

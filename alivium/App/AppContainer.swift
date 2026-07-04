@@ -32,4 +32,8 @@ final class AppContainer {
     func makeVerificationCodeViewModel() -> VerificationCodeViewModel {
         VerificationCodeViewModel(authRepository: authRepository)
     }
+
+    func makeCreateNewPasswordViewModel() -> CreateNewPasswordViewModel {
+        CreateNewPasswordViewModel(authRepository: authRepository)
+    }
 }

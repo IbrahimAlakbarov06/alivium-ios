@@ -66,6 +66,13 @@ enum LocalizedKey {
     case didntReceiveCode
     case resend
 
+    // MARK: - Create New Password
+    case setNewPassword
+    case setNewPasswordSubtitle
+    case newPassword
+    case savePassword
+    case passwordsDontMatch
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -181,6 +188,20 @@ enum LocalizedKey {
             return language == .az ? "Kodu almadınız?" : "Didn't receive the code?"
         case .resend:
             return language == .az ? "Yenidən göndər" : "Resend"
+
+        // MARK: Create New Password
+        case .setNewPassword:
+            return language == .az ? "Yeni şifrə təyin edin" : "Set a New Password"
+        case .setNewPasswordSubtitle:
+            return language == .az
+                ? "Hesabınızı qorumaq üçün güclü bir şifrə seçin."
+                : "Choose a strong password to secure your account."
+        case .newPassword:
+            return language == .az ? "Yeni şifrə" : "New Password"
+        case .savePassword:
+            return language == .az ? "Şifrəni yadda saxla" : "Save Password"
+        case .passwordsDontMatch:
+            return language == .az ? "Şifrələr uyğun gəlmir" : "Passwords don't match"
         }
     }
 }

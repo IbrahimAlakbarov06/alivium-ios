@@ -14,12 +14,14 @@ struct AuthFlowView: View {
     @State private var registerViewModel: RegisterViewModel
     @State private var forgotPasswordViewModel: ForgotPasswordViewModel
     @State private var verificationCodeViewModel: VerificationCodeViewModel
+    @State private var createNewPasswordViewModel: CreateNewPasswordViewModel
 
     private enum AuthRoute {
         case login
         case register
         case forgotPassword
         case verification(purpose: VerificationPurpose, email: String)
+        case createNewPassword
     }
 
     init(container: AppContainer) {
@@ -27,6 +29,7 @@ struct AuthFlowView: View {
         _registerViewModel = State(initialValue: container.makeRegisterViewModel())
         _forgotPasswordViewModel = State(initialValue: container.makeForgotPasswordViewModel())
         _verificationCodeViewModel = State(initialValue: container.makeVerificationCodeViewModel())
+        _createNewPasswordViewModel = State(initialValue: container.makeCreateNewPasswordViewModel())
     }
 
     var body: some View {
@@ -82,9 +85,21 @@ struct AuthFlowView: View {
                             // TODO: navigate to Home/main app once it exists.
                             print("Email verified — TODO: navigate to Home")
                         case .passwordReset:
-                            // TODO: navigate to Create New Password screen once it's built.
-                            print("Code verified — TODO: navigate to Create New Password screen")
+                            withAnimation { route = .createNewPassword }
                         }
+                    }
+                )
+            case .createNewPassword:
+                CreateNewPasswordView(
+                    viewModel: createNewPasswordViewModel,
+                    onNavigateBack: {
+                        withAnimation {
+                            route = .verification(purpose: .passwordReset, email: forgotPasswordViewModel.email)
+                        }
+                    },
+                    onSuccess: {
+                        // Password-reset flow is complete — back to a fresh Login.
+                        withAnimation { route = .login }
                     }
                 )
             }

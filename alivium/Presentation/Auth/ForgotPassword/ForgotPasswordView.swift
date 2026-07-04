@@ -14,7 +14,7 @@ struct ForgotPasswordView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                backButton
+                BackChevronButton(action: onNavigateBack)
                     .padding(.bottom, AppSpacing.xl)
 
                 Text(localization.string(.resetYourPassword))
@@ -59,18 +59,6 @@ struct ForgotPasswordView: View {
         }
         .background(AuthBackground())
         .scrollDismissesKeyboard(.interactively)
-    }
-
-    private var backButton: some View {
-        HStack {
-            Button(action: onNavigateBack) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(AppColor.textPrimary)
-            }
-            .accessibilityLabel(localization.string(.back))
-            Spacer()
-        }
     }
 
     private var backToLoginLink: some View {
