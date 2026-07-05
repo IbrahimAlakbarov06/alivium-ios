@@ -12,9 +12,9 @@ final class WishlistViewModel {
     /// its own loading/confirmation state without affecting the others.
     private(set) var addingToCartProductIds: Set<String> = []
     private(set) var addedToCartProductIds: Set<String> = []
-    /// Set while a multi-size product's Add to Cart is waiting on the shopper to pick a size —
-    /// the View presents a size picker bound to this instead of guessing a variant.
-    private(set) var productPendingSizeSelection: Product?
+    /// Keyed by product id — each row owns an inline size dropdown (not a shared sheet/dialog),
+    /// so more than one row's selection can coexist independently.
+    private(set) var selectedSizes: [String: String] = [:]
 
     private let wishlistRepository: WishlistRepository
     private let cartRepository: CartRepository
@@ -68,19 +68,6 @@ final class WishlistViewModel {
         }
     }
 
-    /// Entry point for the row's Add to Cart button. A product with 0 or exactly 1 variant has
-    /// nothing to choose between, so it adds directly; a product with more than one variant
-    /// requires a real size choice (no compact row has a color/size picker built in, and
-    /// silently guessing — the previous bug — could add the wrong size), so this instead sets
-    /// `productPendingSizeSelection` and lets the View present a size picker.
-    func requestAddToCart(_ product: Product) {
-        guard product.variants.count > 1 else {
-            Task { await addToCart(product, variant: product.variants.first) }
-            return
-        }
-        productPendingSizeSelection = product
-    }
-
     /// In display order (S/M/L), matching `ProductDetailViewModel.availableSizes`.
     func availableSizes(for product: Product) -> [String] {
         let order = ["S", "M", "L"]
@@ -88,21 +75,39 @@ final class WishlistViewModel {
         return order.filter { present.contains($0) }
     }
 
-    /// Color is descriptive metadata, not a shopper choice (CLAUDE.md/product notes) — the first
-    /// variant matching the chosen size is used, same resolution Product Detail applies when no
-    /// color has been picked.
-    func confirmSizeSelection(_ size: String, for product: Product) {
-        let variant = product.variants.first { $0.size == size }
-        productPendingSizeSelection = nil
-        Task { await addToCart(product, variant: variant) }
+    func selectedSize(for product: Product) -> String? {
+        selectedSizes[product.id]
     }
 
-    func cancelSizeSelection() {
-        productPendingSizeSelection = nil
+    /// Inline dropdown selection (Trendyol-style row control) — replaces the size, not toggles
+    /// it, since only one size makes sense selected at a time per row.
+    func selectSize(_ size: String, for product: Product) {
+        selectedSizes[product.id] = size
+    }
+
+    /// A product with 0 or exactly 1 variant has nothing to choose between; a product with more
+    /// than one variant needs a real size choice first — matches Product Detail's own gating,
+    /// and avoids the earlier bug of silently guessing a variant.
+    func canAddToCart(_ product: Product) -> Bool {
+        product.variants.count <= 1 || selectedSizes[product.id] != nil
+    }
+
+    /// Entry point for the row's Add to Cart button — the row itself only enables the button
+    /// once `canAddToCart` is true, so this can resolve the variant directly rather than
+    /// re-checking or presenting anything.
+    func addToCart(_ product: Product) {
+        guard canAddToCart(product) else { return }
+        let variant: ProductVariant?
+        if product.variants.count <= 1 {
+            variant = product.variants.first
+        } else {
+            variant = product.variants.first { $0.size == selectedSizes[product.id] }
+        }
+        Task { await performAddToCart(product, variant: variant) }
     }
 
     @discardableResult
-    private func addToCart(_ product: Product, variant: ProductVariant?) async -> Bool {
+    private func performAddToCart(_ product: Product, variant: ProductVariant?) async -> Bool {
         addingToCartProductIds.insert(product.id)
         defer { addingToCartProductIds.remove(product.id) }
         do {

@@ -422,6 +422,96 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testWishlistInlineSizeDropdown() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Skip onboarding, then sign in directly (Login's own fields, no need to go via Guest).
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+            sleep(1)
+        }
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        let wishlistTabButton = tabBar.buttons["Seçilmişlər"]
+        wishlistTabButton.tap()
+        sleep(1)
+        // The very first tap right after the post-login transition is occasionally swallowed
+        // (the tab bar button still reports as existing but never becomes selected) — one retry
+        // tap reliably lands once the transition has settled.
+        if !wishlistTabButton.isSelected {
+            wishlistTabButton.tap()
+            sleep(1)
+        }
+
+        // Scoped to Wishlist's own scroll view (not just `app`) — TabView keeps every tab's view
+        // mounted, and "Structured Leather Tote" (p-5) also appears in Home's off-screen Featured
+        // Products rail, so an unscoped query can match that copy instead while Wishlist's own
+        // (slower, repository-backed) row is still loading.
+        let wishlistScroll = app.scrollViews["wishlistScrollView"]
+
+        // "Structured Leather Tote" (p-5) is seeded with 2 colors x 3 sizes, so it's a genuine
+        // multi-size row — the dropdown should appear and gate Add to Cart.
+        let toteName = wishlistScroll.staticTexts["Structured Leather Tote"].firstMatch
+        XCTAssertTrue(toteName.waitForExistence(timeout: 5), "Expected seeded wishlist products once authenticated")
+
+        // The whole row is one NavigationLink-wrapped Button (see `WishlistRow`'s own comment on
+        // why), so SwiftUI exposes it as a single accessibility container whose label carries the
+        // product name — scope through it rather than correlating rows by frame position, since
+        // the size dropdown and Add to Cart button have different heights and are never exactly
+        // vertically centered to the same point once SwiftUI lays them out.
+        let toteRow = wishlistScroll.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Structured Leather Tote")).firstMatch
+        XCTAssertTrue(toteRow.waitForExistence(timeout: 5), "Expected the Structured Leather Tote row as a single row container")
+
+        let sizeMenu = toteRow.buttons["wishlistRowSizeMenu-p-5"].firstMatch
+        XCTAssertTrue(sizeMenu.waitForExistence(timeout: 5), "Expected an inline size dropdown next to Add to Cart for a multi-size product")
+        XCTAssertTrue(sizeMenu.label.contains("Ölçü"), "Expected the dropdown's placeholder label before a size is picked")
+
+        let toteAddToCartButton = toteRow.buttons["Səbətə əlavə et"].firstMatch
+        XCTAssertTrue(toteAddToCartButton.waitForExistence(timeout: 5), "Expected an Add to Cart button in the same row as the size dropdown")
+        XCTAssertFalse(toteAddToCartButton.isEnabled, "Expected Add to Cart disabled before a size is picked")
+        save("wishlist_size_dropdown_1_before_selection")
+
+        // Tapping the dropdown reveals the size options inline (a Menu, not a full-screen sheet).
+        sizeMenu.tap()
+        let mSizeOption = app.buttons["M"].firstMatch
+        XCTAssertTrue(mSizeOption.waitForExistence(timeout: 5), "Expected the Menu to reveal size options")
+        mSizeOption.tap()
+
+        XCTAssertTrue(sizeMenu.label.contains("M"), "Expected the dropdown's label to update to the picked size")
+        XCTAssertTrue(toteAddToCartButton.isEnabled, "Expected Add to Cart enabled once a size is picked")
+        save("wishlist_size_dropdown_2_size_selected")
+
+        toteAddToCartButton.tap()
+        sleep(1)
+        save("wishlist_size_dropdown_3_added_to_cart")
+    }
+
+    @MainActor
     func testProductDetailFlow() throws {
         let app = XCUIApplication()
         app.launch()

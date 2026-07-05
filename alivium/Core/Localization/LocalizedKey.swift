@@ -117,6 +117,9 @@ enum LocalizedKey: Equatable {
     case wishlistGuestSubtitle
     case startBrowsing
     case wishlistSavedCountSuffix
+    /// Compact placeholder for the inline size dropdown on a Wishlist row — distinct from
+    /// `.selectSize`'s full "Select Size" phrase, which reads as too long next to "Add to Cart".
+    case sizePlaceholder
 
     // MARK: - Cart
     case cartEmptyTitle
@@ -385,6 +388,8 @@ enum LocalizedKey: Equatable {
             return language == .az ? "Gəzintiyə başla" : "Start Browsing"
         case .wishlistSavedCountSuffix:
             return language == .az ? "məhsul seçilib" : "items saved"
+        case .sizePlaceholder:
+            return language == .az ? "Ölçü" : "Size"
 
         // MARK: Cart
         case .cartEmptyTitle:

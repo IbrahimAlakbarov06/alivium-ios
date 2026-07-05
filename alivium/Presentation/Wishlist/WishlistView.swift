@@ -33,23 +33,6 @@ struct WishlistView: View {
                 onRequestAuthFlow: onRequestAuthFlow
             )
         }
-        .confirmationDialog(
-            localization.string(.selectSize),
-            isPresented: Binding(
-                get: { viewModel.productPendingSizeSelection != nil },
-                set: { isPresented in
-                    if !isPresented { viewModel.cancelSizeSelection() }
-                }
-            ),
-            titleVisibility: .visible
-        ) {
-            if let product = viewModel.productPendingSizeSelection {
-                ForEach(viewModel.availableSizes(for: product), id: \.self) { size in
-                    Button(size) { viewModel.confirmSizeSelection(size, for: product) }
-                }
-                Button(localization.string(.cancel), role: .cancel) { viewModel.cancelSizeSelection() }
-            }
-        }
     }
 
     /// Editorial treatment: the tab title plus a saved-count subtitle when there's something to
@@ -116,10 +99,14 @@ struct WishlistView: View {
                     NavigationLink(value: product) {
                         WishlistRow(
                             product: product,
+                            availableSizes: viewModel.availableSizes(for: product),
+                            selectedSize: viewModel.selectedSize(for: product),
+                            canAddToCart: viewModel.canAddToCart(product),
                             isAddingToCart: viewModel.addingToCartProductIds.contains(product.id),
                             didAddToCart: viewModel.addedToCartProductIds.contains(product.id),
                             onRemove: { Task { await viewModel.remove(product) } },
-                            onAddToCart: { viewModel.requestAddToCart(product) }
+                            onSelectSize: { size in viewModel.selectSize(size, for: product) },
+                            onAddToCart: { viewModel.addToCart(product) }
                         )
                     }
                     .buttonStyle(.plain)
