@@ -18,6 +18,7 @@ struct MainTabView: View {
     @State private var chatViewModel: ChatViewModel
     let onLogOut: () -> Void
     private let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    private let cartBadgeStore: CartBadgeStore
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
         _homeViewModel = State(initialValue: container.makeHomeViewModel())
@@ -28,18 +29,19 @@ struct MainTabView: View {
         _chatViewModel = State(initialValue: container.makeChatViewModel())
         self.onLogOut = onLogOut
         self.makeProductDetailViewModel = { container.makeProductDetailViewModel(for: $0) }
+        self.cartBadgeStore = container.cartBadgeStore
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                HomeView(viewModel: homeViewModel, makeProductDetailViewModel: makeProductDetailViewModel)
+                HomeView(viewModel: homeViewModel, makeProductDetailViewModel: makeProductDetailViewModel, onRequestAuthFlow: onLogOut)
             }
             .tabItem { Label(localization.string(.homeTab), systemImage: "house.fill") }
             .tag(AppTab.home)
 
             NavigationStack {
-                SearchView(viewModel: searchViewModel, makeProductDetailViewModel: makeProductDetailViewModel)
+                SearchView(viewModel: searchViewModel, makeProductDetailViewModel: makeProductDetailViewModel, onRequestAuthFlow: onLogOut)
             }
             .tabItem { Label(localization.string(.searchTab), systemImage: "magnifyingglass") }
             .tag(AppTab.search)
@@ -59,12 +61,16 @@ struct MainTabView: View {
                 CartView(
                     viewModel: cartViewModel,
                     makeProductDetailViewModel: makeProductDetailViewModel,
-                    onBrowseHome: { selectedTab = .home }
+                    onBrowseHome: { selectedTab = .home },
+                    onRequestAuthFlow: onLogOut
                 )
             }
             .tabItem { Label(localization.string(.cartTab), systemImage: "bag") }
             .tag(AppTab.cart)
-            .badge(cartViewModel.itemCount)
+            .badge(cartBadgeStore.itemCount)
+            // A quick spring "bump" whenever the count changes (matches PageIndicator's own
+            // spring-driven dot transition) rather than an instant static number swap.
+            .animation(.spring(response: 0.35, dampingFraction: 0.55), value: cartBadgeStore.itemCount)
 
             ProfileView(viewModel: profileViewModel, chatViewModel: chatViewModel, onRequestAuthFlow: onLogOut)
                 .tabItem { Label(localization.string(.profileTab), systemImage: "person") }

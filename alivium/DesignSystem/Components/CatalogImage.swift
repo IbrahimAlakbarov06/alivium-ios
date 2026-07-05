@@ -15,10 +15,30 @@ struct CatalogImage: View {
     let name: String?
 
     var body: some View {
+        content
+            // Purely decorative — without this, `Image` swallows touches that land on it
+            // instead of passing them through to a tap gesture/NavigationLink sitting behind
+            // or around it (e.g. a card's hidden background link), unlike Text/Color which
+            // already pass taps through when they carry no gesture of their own.
+            .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if let name, UIImage(named: name) != nil {
-            Image(name)
-                .resizable()
-                .scaledToFill()
+            // `scaledToFill()` alone crops to dead-center, which for portrait source photos in
+            // small/square frames (Cart's 80x80 row thumbnail, a grid card) can cut off the actual
+            // subject and leave mostly background. Anchoring the crop to the top keeps the
+            // subject in frame instead, since these photos are all composed with their subject in
+            // the upper two-thirds. `GeometryReader` is needed to know the frame the caller
+            // actually assigned before `.clipped()` can crop to it.
+            GeometryReader { proxy in
+                Image(name)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                    .clipped()
+            }
         } else {
             ZStack {
                 AppColor.surface

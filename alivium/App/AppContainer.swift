@@ -18,6 +18,7 @@ final class AppContainer {
     let reviewRepository: ReviewRepository
     let localizationManager: LocalizationManager
     let userSession: UserSession
+    let cartBadgeStore: CartBadgeStore
 
     init() {
         self.authRepository = MockAuthRepository()
@@ -29,6 +30,7 @@ final class AppContainer {
         self.reviewRepository = MockReviewRepository()
         self.localizationManager = LocalizationManager()
         self.userSession = UserSession()
+        self.cartBadgeStore = CartBadgeStore()
     }
 
     func makeLoginViewModel() -> LoginViewModel {
@@ -56,7 +58,7 @@ final class AppContainer {
             productRepository: productRepository,
             categoryRepository: categoryRepository
         )
-        return HomeViewModel(fetchHomeFeedUseCase: useCase)
+        return HomeViewModel(fetchHomeFeedUseCase: useCase, wishlistRepository: wishlistRepository, userSession: userSession)
     }
 
     func makeProfileViewModel() -> ProfileViewModel {
@@ -68,15 +70,25 @@ final class AppContainer {
     }
 
     func makeSearchViewModel() -> SearchViewModel {
-        SearchViewModel(categoryRepository: categoryRepository, productRepository: productRepository)
+        SearchViewModel(
+            categoryRepository: categoryRepository,
+            productRepository: productRepository,
+            wishlistRepository: wishlistRepository,
+            userSession: userSession
+        )
     }
 
     func makeWishlistViewModel() -> WishlistViewModel {
-        WishlistViewModel(wishlistRepository: wishlistRepository, userSession: userSession)
+        WishlistViewModel(
+            wishlistRepository: wishlistRepository,
+            cartRepository: cartRepository,
+            userSession: userSession,
+            cartBadgeStore: cartBadgeStore
+        )
     }
 
     func makeCartViewModel() -> CartViewModel {
-        CartViewModel(cartRepository: cartRepository)
+        CartViewModel(cartRepository: cartRepository, cartBadgeStore: cartBadgeStore)
     }
 
     func makeProductDetailViewModel(for product: Product) -> ProductDetailViewModel {
@@ -85,7 +97,9 @@ final class AppContainer {
             productRepository: productRepository,
             reviewRepository: reviewRepository,
             cartRepository: cartRepository,
-            wishlistRepository: wishlistRepository
+            wishlistRepository: wishlistRepository,
+            cartBadgeStore: cartBadgeStore,
+            userSession: userSession
         )
     }
 }

@@ -13,6 +13,9 @@ struct CartView: View {
 
     /// Wired to the tab shell's Home tab — "Start Browsing" from the empty state.
     let onBrowseHome: () -> Void
+    /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow, needed
+    /// here so a pushed Product Detail's wishlist-heart sign-in prompt has somewhere to go.
+    let onRequestAuthFlow: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,7 +31,8 @@ struct CartView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(
                 viewModel: makeProductDetailViewModel(product),
-                makeProductDetailViewModel: makeProductDetailViewModel
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
             )
         }
     }
@@ -81,15 +85,18 @@ struct CartView: View {
     private var lineItems: some View {
         VStack(spacing: AppSpacing.md) {
             ForEach(viewModel.items) { item in
-                CartLineItemRow(
-                    item: item,
-                    onQuantityChange: { newQuantity in
-                        viewModel.updateQuantity(for: item, to: newQuantity)
-                    },
-                    onRemove: {
-                        Task { await viewModel.remove(item) }
-                    }
-                )
+                NavigationLink(value: item.product) {
+                    CartLineItemRow(
+                        item: item,
+                        onQuantityChange: { newQuantity in
+                            viewModel.updateQuantity(for: item, to: newQuantity)
+                        },
+                        onRemove: {
+                            Task { await viewModel.remove(item) }
+                        }
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -264,17 +271,20 @@ struct CartView: View {
 #Preview {
     NavigationStack {
         CartView(
-            viewModel: CartViewModel(cartRepository: MockCartRepository()),
+            viewModel: CartViewModel(cartRepository: MockCartRepository(), cartBadgeStore: CartBadgeStore()),
             makeProductDetailViewModel: { product in
                 ProductDetailViewModel(
                     product: product,
                     productRepository: MockProductRepository(),
                     reviewRepository: MockReviewRepository(),
                     cartRepository: MockCartRepository(),
-                    wishlistRepository: MockWishlistRepository()
+                    wishlistRepository: MockWishlistRepository(),
+                    cartBadgeStore: CartBadgeStore(),
+                    userSession: UserSession()
                 )
             },
-            onBrowseHome: {}
+            onBrowseHome: {},
+            onRequestAuthFlow: {}
         )
     }
     .environment(LocalizationManager())

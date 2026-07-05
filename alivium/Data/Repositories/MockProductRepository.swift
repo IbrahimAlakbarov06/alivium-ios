@@ -35,7 +35,9 @@ final class MockProductRepository: ProductRepository {
     static let featuredProducts: [Product] = [
         Product(
             id: "p-1", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: nil,
-            imageNames: [stockPhoto(0)], categoryId: "dresses",
+            // Three images (reusing the Onboarding stock photos) so this product's gallery can
+            // actually be tested with real multi-image paging/dot-pagination.
+            imageNames: ["Onboarding1", "Onboarding2", "Onboarding3"], categoryId: "dresses",
             variants: variants(colors: ["Ivory", "Blush"]),
             description: "Cut from fluid silk with a self-tie waist, this wrap dress moves beautifully from day into evening. Fully lined.",
             averageRating: 4.7, reviewCount: 132

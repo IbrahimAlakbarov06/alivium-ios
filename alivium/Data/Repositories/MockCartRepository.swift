@@ -6,30 +6,11 @@
 import Foundation
 
 /// Phase 1 stand-in — swapped for a real APIClient-backed implementation once the backend Cart
-/// endpoints are wired (CLAUDE.md Phase 2). Seeded from `MockProductRepository`'s real product
-/// data; quantity/removal mutations are kept in memory so the screen behaves believably across
-/// a session without a backend.
+/// endpoints are wired (CLAUDE.md Phase 2). Starts empty — there's no real backend session yet,
+/// so a fresh Guest (or any fresh launch) must start with an empty cart rather than a hardcoded
+/// seed list; items only appear once something is actually added during the session.
 final class MockCartRepository: CartRepository {
-    private lazy var items: [CartItem] = [
-        CartItem(
-            id: "cart-1",
-            product: MockProductRepository.featuredProducts[0],
-            selectedVariant: MockProductRepository.featuredProducts[0].variants.first,
-            quantity: 1
-        ),
-        CartItem(
-            id: "cart-2",
-            product: MockProductRepository.featuredProducts[1],
-            selectedVariant: MockProductRepository.featuredProducts[1].variants.first,
-            quantity: 2
-        ),
-        CartItem(
-            id: "cart-3",
-            product: MockProductRepository.recommendedProducts[2],
-            selectedVariant: nil,
-            quantity: 1
-        )
-    ]
+    private var items: [CartItem] = []
 
     func fetchCartItems() async throws -> [CartItem] {
         try await Task.sleep(for: .seconds(0.6))

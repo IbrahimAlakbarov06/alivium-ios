@@ -20,6 +20,10 @@ final class SearchViewModel {
     }
     private(set) var searchResults: [Product] = []
     private(set) var isSearchLoading = false
+    private(set) var wishlistedProductIds: Set<String> = []
+    /// Set when a Guest taps a result card's heart — the View shows a sign-in prompt instead of
+    /// toggling the wishlist.
+    var needsSignInForWishlist = false
 
     /// Non-empty, non-whitespace query — the View switches from category browsing to search
     /// results the moment this flips, without waiting on the debounce below.
@@ -30,15 +34,58 @@ final class SearchViewModel {
     private var searchTask: Task<Void, Never>?
     private let categoryRepository: CategoryRepository
     private let productRepository: ProductRepository
+    private let wishlistRepository: WishlistRepository
+    private let userSession: UserSession
 
-    init(categoryRepository: CategoryRepository, productRepository: ProductRepository) {
+    init(
+        categoryRepository: CategoryRepository,
+        productRepository: ProductRepository,
+        wishlistRepository: WishlistRepository,
+        userSession: UserSession
+    ) {
         self.categoryRepository = categoryRepository
         self.productRepository = productRepository
+        self.wishlistRepository = wishlistRepository
+        self.userSession = userSession
     }
 
     func onAppear() {
         guard state == .idle else { return }
-        Task { await loadCategories() }
+        Task {
+            await loadWishlistedIds()
+            await loadCategories()
+        }
+    }
+
+    private func loadWishlistedIds() async {
+        guard case .authenticated = userSession.state else { return }
+        if let items = try? await wishlistRepository.fetchWishlistItems() {
+            wishlistedProductIds = Set(items.map(\.id))
+        }
+    }
+
+    func isWishlisted(_ product: Product) -> Bool {
+        wishlistedProductIds.contains(product.id)
+    }
+
+    func toggleWishlist(for product: Product) {
+        guard case .authenticated = userSession.state else {
+            needsSignInForWishlist = true
+            return
+        }
+        Task {
+            do {
+                if wishlistedProductIds.contains(product.id) {
+                    try await wishlistRepository.removeFromWishlist(productId: product.id)
+                    wishlistedProductIds.remove(product.id)
+                } else {
+                    try await wishlistRepository.addToWishlist(productId: product.id)
+                    wishlistedProductIds.insert(product.id)
+                }
+            } catch {
+                // Phase 1 mock never actually throws here.
+            }
+        }
     }
 
     func loadCategories() async {

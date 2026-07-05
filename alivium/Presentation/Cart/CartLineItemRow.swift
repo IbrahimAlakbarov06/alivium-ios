@@ -8,6 +8,10 @@ import SwiftUI
 /// Image + details (tappable, pushes Product Detail) with remove tucked into the top-trailing
 /// corner (small, muted, out of the way) and the quantity stepper anchored under the price — so
 /// the two controls sit apart diagonally instead of competing for attention on the same line.
+/// The caller wraps this whole row directly in a `NavigationLink` (see `ProductCard`'s heart
+/// comment) — a hidden background link here was found not to reliably navigate at all (even
+/// tapping the plain name text did nothing), so this uses the same wrapping approach already
+/// proven to work for every other product card/row.
 struct CartLineItemRow: View {
     @Environment(LocalizationManager.self) private var localization
     let item: CartItem
@@ -55,14 +59,6 @@ struct CartLineItemRow: View {
         .background(AppColor.background)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
         .shadow(color: AppColor.primaryDeep.opacity(0.06), radius: 10, x: 0, y: 4)
-        // A hidden background link, not a wrapping one — the stepper and remove button above
-        // stay plain, un-nested `Button`s instead of being embedded inside another interactive
-        // control's accessibility subtree (see `ProductCard`'s heart for why that's avoided).
-        .background {
-            // `Color.clear`, not `EmptyView()` — EmptyView has zero intrinsic size, so the link
-            // had no actual tappable area at all despite sitting in `.background`.
-            NavigationLink(value: item.product) { Color.clear }
-        }
     }
 }
 

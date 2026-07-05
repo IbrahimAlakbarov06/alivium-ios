@@ -9,6 +9,8 @@ struct SearchView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: SearchViewModel
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
+    let onRequestAuthFlow: () -> Void
 
     /// Top-level categories with a big banner — leaf categories that also work as full-width
     /// browse entry points. Ids, not names, so this stays correct if copy changes.
@@ -34,8 +36,15 @@ struct SearchView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(
                 viewModel: makeProductDetailViewModel(product),
-                makeProductDetailViewModel: makeProductDetailViewModel
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
             )
+        }
+        .alert(localization.string(.wishlistGuestTitle), isPresented: $viewModel.needsSignInForWishlist) {
+            Button(localization.string(.logInOrSignUp)) { onRequestAuthFlow() }
+            Button(localization.string(.cancel), role: .cancel) {}
+        } message: {
+            Text(localization.string(.wishlistGuestSubtitle))
         }
     }
 
@@ -177,7 +186,15 @@ struct SearchView: View {
                 ) {
                     ForEach(viewModel.searchResults) { product in
                         NavigationLink(value: product) {
-                            ProductCard(product: product, layout: .grid)
+                            ProductCard(product: product, layout: .grid, isWishlisted: viewModel.isWishlisted(product)) {
+                                viewModel.toggleWishlist(for: product)
+                            }
+                                // `CatalogImage` opts out of hit-testing (elsewhere, that lets a
+                                // hidden background NavigationLink receive the tap instead) —
+                                // here the Link wraps the card directly, so without an explicit
+                                // content shape its tappable region would shrink to just the
+                                // name/price text, since the image no longer contributes one.
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -205,7 +222,9 @@ struct SearchView: View {
         SearchView(
             viewModel: SearchViewModel(
                 categoryRepository: MockCategoryRepository(),
-                productRepository: MockProductRepository()
+                productRepository: MockProductRepository(),
+                wishlistRepository: MockWishlistRepository(),
+                userSession: UserSession()
             ),
             makeProductDetailViewModel: { product in
                 ProductDetailViewModel(
@@ -213,9 +232,12 @@ struct SearchView: View {
                     productRepository: MockProductRepository(),
                     reviewRepository: MockReviewRepository(),
                     cartRepository: MockCartRepository(),
-                    wishlistRepository: MockWishlistRepository()
+                    wishlistRepository: MockWishlistRepository(),
+                    cartBadgeStore: CartBadgeStore(),
+                    userSession: UserSession()
                 )
-            }
+            },
+            onRequestAuthFlow: {}
         )
     }
     .environment(LocalizationManager())

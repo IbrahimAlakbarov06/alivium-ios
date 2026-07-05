@@ -9,6 +9,8 @@ struct HomeView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: HomeViewModel
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
+    let onRequestAuthFlow: () -> Void
 
     var body: some View {
         ScrollView {
@@ -26,8 +28,15 @@ struct HomeView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(
                 viewModel: makeProductDetailViewModel(product),
-                makeProductDetailViewModel: makeProductDetailViewModel
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
             )
+        }
+        .alert(localization.string(.wishlistGuestTitle), isPresented: $viewModel.needsSignInForWishlist) {
+            Button(localization.string(.logInOrSignUp)) { onRequestAuthFlow() }
+            Button(localization.string(.cancel), role: .cancel) {}
+        } message: {
+            Text(localization.string(.wishlistGuestSubtitle))
         }
     }
 
@@ -126,7 +135,7 @@ struct HomeView: View {
                         // A hidden background link, not a wrapping one — the heart stays a
                         // plain, un-nested `Button` instead of racing the NavigationLink's own
                         // tap gesture for taps landing on it (see ProductCard's heart comment).
-                        ProductCard(product: product, layout: layout) {
+                        ProductCard(product: product, layout: layout, isWishlisted: viewModel.isWishlisted(product)) {
                             viewModel.toggleWishlist(for: product)
                         }
                         .background {
@@ -187,7 +196,9 @@ struct HomeView: View {
                 fetchHomeFeedUseCase: DefaultFetchHomeFeedUseCase(
                     productRepository: MockProductRepository(),
                     categoryRepository: MockCategoryRepository()
-                )
+                ),
+                wishlistRepository: MockWishlistRepository(),
+                userSession: UserSession()
             ),
             makeProductDetailViewModel: { product in
                 ProductDetailViewModel(
@@ -195,9 +206,12 @@ struct HomeView: View {
                     productRepository: MockProductRepository(),
                     reviewRepository: MockReviewRepository(),
                     cartRepository: MockCartRepository(),
-                    wishlistRepository: MockWishlistRepository()
+                    wishlistRepository: MockWishlistRepository(),
+                    cartBadgeStore: CartBadgeStore(),
+                    userSession: UserSession()
                 )
-            }
+            },
+            onRequestAuthFlow: {}
         )
     }
     .environment(LocalizationManager())

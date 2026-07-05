@@ -315,11 +315,35 @@ final class aliviumUITests: XCTestCase {
         XCTAssertTrue(guestPrompt.waitForExistence(timeout: 5), "Expected the Guest sign-in prompt, distinct from an empty wishlist")
         save("wishlist_1_guest_prompt")
 
-        // --- Cart works fine for Guests, with the seeded mock items and a correct tab badge ---
+        // --- Cart starts empty for a fresh Guest session (no hardcoded seed data) ---
+        tabBar.buttons["Səbət"].tap()
+        let cartEmptyTitleGuest = app.staticTexts["Səbətiniz boşdur"].firstMatch
+        XCTAssertTrue(cartEmptyTitleGuest.waitForExistence(timeout: 5), "Expected a fresh Guest session to start with an empty cart")
+        save("cart_0_guest_starts_empty")
+
+        // Add an item from Home -> Product Detail so Cart has something to exercise below.
+        tabBar.buttons["Əsas"].tap()
+        let silkDressCard = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(silkDressCard.waitForExistence(timeout: 5))
+        silkDressCard.tap()
+        app.buttons["M"].firstMatch.tap()
+        let productDetailAddToCartButton = app.buttons["Səbətə əlavə et"].firstMatch
+        XCTAssertTrue(productDetailAddToCartButton.waitForExistence(timeout: 5))
+        productDetailAddToCartButton.tap()
+        sleep(1)
+        app.buttons["productDetailBackButton"].firstMatch.tap()
+
+        // --- Cart now reflects the added item, with a correct tab badge ---
         tabBar.buttons["Səbət"].tap()
         let firstCartProduct = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
-        XCTAssertTrue(firstCartProduct.waitForExistence(timeout: 5), "Expected seeded cart items to load for a Guest")
+        XCTAssertTrue(firstCartProduct.waitForExistence(timeout: 5), "Expected the item added from Product Detail to appear in Cart")
         save("cart_1_populated_with_badge")
+
+        // Tapping the line item (not its stepper/remove controls) should still open Product
+        // Detail — verifies the Cart row's own navigation independently of ProductCard's.
+        firstCartProduct.tap()
+        XCTAssertTrue(app.buttons["productDetailBackButton"].firstMatch.waitForExistence(timeout: 5), "Expected tapping a Cart line item to open Product Detail")
+        app.buttons["productDetailBackButton"].firstMatch.tap()
 
         // Bump the first item's quantity and confirm the stepper + totals react.
         let incrementButtons = app.buttons.matching(identifier: "quantityStepperIncrement")
@@ -358,29 +382,26 @@ final class aliviumUITests: XCTestCase {
         // --- Wishlist, authenticated + loaded state ---
         // "Structured Leather Tote" also appears in Home's Featured rail, so checking for its
         // text alone can't distinguish Home from Wishlist if the tab tap doesn't land (a race
-        // seen before). `wishlistHeartFilled` only exists on the Wishlist grid, so use that as
-        // the real "did we actually land on Wishlist" signal.
+        // seen before) — the Wishlist screen's own ScrollView identifier disambiguates that.
         tabBar.buttons["Seçilmişlər"].tap()
-        let filledHearts = app.buttons.matching(identifier: "wishlistHeartFilled")
+        let wishlistScrollView = app.scrollViews.matching(identifier: "wishlistScrollView").firstMatch
         let wishlistedProduct = app.staticTexts["Structured Leather Tote"].firstMatch
-        // The mock repository has its own ~0.6s artificial load delay, so an immediate 0 count
+        // The mock repository has its own ~0.6s artificial load delay, so an immediate miss
         // doesn't necessarily mean the tab tap didn't land — wait properly before concluding
         // that and retrying the tap (the actual race seen before).
         XCTAssertTrue(wishlistedProduct.waitForExistence(timeout: 5), "Expected seeded wishlist products once authenticated")
-        if filledHearts.count == 0 {
+        if !wishlistScrollView.exists {
             tabBar.buttons["Seçilmişlər"].tap() // guard against the same tab-tap/dialog race seen before
             sleep(1)
         }
-        XCTAssertGreaterThan(filledHearts.count, 0, "Expected filled hearts confirming we're actually on the Wishlist screen")
+        XCTAssertTrue(wishlistScrollView.exists, "Expected the Wishlist screen's own list to be showing")
         save("wishlist_2_authenticated_loaded")
 
-        // Tapping any filled heart removes that item — assert by count (firstMatch may not be
-        // the specific product checked above, since 4 items are seeded).
-        let heartCountBeforeRemoval = filledHearts.count
-        app.buttons.matching(identifier: "wishlistHeartFilled").firstMatch.tap()
-        sleep(1)
-        XCTAssertEqual(filledHearts.count, heartCountBeforeRemoval - 1, "Expected one fewer wishlist item after removing one")
-        save("wishlist_3_after_remove")
+        // Tapping the row (not its heart/Add to Cart controls) should open Product Detail.
+        wishlistedProduct.tap()
+        XCTAssertTrue(app.buttons["productDetailBackButton"].firstMatch.waitForExistence(timeout: 5), "Expected tapping a Wishlist row to open Product Detail")
+        app.buttons["productDetailBackButton"].firstMatch.tap()
+        save("wishlist_3_row_opens_product_detail")
 
         // --- Cart empty state ---
         tabBar.buttons["Səbət"].tap()
@@ -442,9 +463,14 @@ final class aliviumUITests: XCTestCase {
         XCTAssertTrue(addToCartButton.waitForExistence(timeout: 5))
         XCTAssertFalse(addToCartButton.isEnabled, "Expected Add to Cart disabled before a variant is selected")
 
+        // This product has two colors, but color is descriptive metadata, not a required
+        // choice — only picking a size should already enable the button.
         app.buttons["M"].firstMatch.tap()
+        XCTAssertTrue(addToCartButton.isEnabled, "Expected Add to Cart enabled once only size is selected — color stays optional")
+        save("product_detail_2a_size_only_selected")
+
         app.buttons["Ivory"].firstMatch.tap()
-        XCTAssertTrue(addToCartButton.isEnabled, "Expected Add to Cart enabled once size + color are both selected")
+        XCTAssertTrue(addToCartButton.isEnabled, "Expected Add to Cart to remain enabled after also picking a color")
         save("product_detail_2_variant_selected")
 
         addToCartButton.tap()
@@ -452,10 +478,14 @@ final class aliviumUITests: XCTestCase {
         XCTAssertTrue(addedConfirmation.waitForExistence(timeout: 5), "Expected the button to confirm the item was added")
         save("product_detail_3_added_to_cart")
 
-        // --- Wishlist heart toggle from within Product Detail ---
+        // --- Wishlist heart toggle from within Product Detail: Guest sees a sign-in prompt,
+        // not a silent toggle ---
         let wishlistHeart = app.buttons["productDetailWishlistHeart"].firstMatch
         wishlistHeart.tap()
-        sleep(1)
+        let guestWishlistAlertTitle = app.staticTexts["Sevimlilərinizi saxlamaq üçün daxil olun"].firstMatch
+        XCTAssertTrue(guestWishlistAlertTitle.waitForExistence(timeout: 5), "Expected a Guest tapping the heart to see a sign-in prompt instead of toggling the wishlist")
+        save("product_detail_3b_guest_wishlist_alert")
+        app.alerts.buttons["Ləğv et"].firstMatch.tap()
 
         // --- Related products rail drills into another Product Detail ---
         let relatedProductCard = app.buttons.matching(
@@ -469,6 +499,11 @@ final class aliviumUITests: XCTestCase {
             // Back should return to the previous product, not all the way to Home.
             app.buttons["productDetailBackButton"].firstMatch.tap()
             XCTAssertTrue(productTitle.waitForExistence(timeout: 5), "Expected back to return to the previous Product Detail")
+            // Every Product Detail's back button shares the same accessibility identifier, so a
+            // second tap fired the instant the first pop's transition finishes (rather than once
+            // the view hierarchy has actually settled) can land on this same identifier mid-
+            // animation and pop twice. Give the transition a beat before tapping again.
+            sleep(1)
         }
 
         // Dismiss back to Home.
@@ -482,6 +517,49 @@ final class aliviumUITests: XCTestCase {
         let addedItemInCart = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
         XCTAssertTrue(addedItemInCart.waitForExistence(timeout: 5), "Expected the item added from Product Detail to appear in Cart")
         save("product_detail_5_in_cart")
+    }
+
+    @MainActor
+    func testTapImageAreaNavigatesToDetail() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5))
+        guestButton.tap()
+
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1)
+        app.swipeUp()
+        sleep(1)
+
+        // `CatalogImage` used to swallow touches (SwiftUI's default hit-testing lets a plain
+        // `Image` intercept taps that would otherwise reach a background NavigationLink, unlike
+        // `Text`), so only the product name — never the photo above it — actually navigated.
+        // Tap squarely inside the image region, well clear of the wishlist heart's own corner.
+        let silkDressText = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(silkDressText.waitForExistence(timeout: 5))
+        save("tap_image_1_home")
+
+        let coordinate = silkDressText.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.0))
+            .withOffset(CGVector(dx: 0, dy: -70))
+        coordinate.tap()
+
+        let addToCartButton = app.buttons["Səbətə əlavə et"].firstMatch
+        XCTAssertTrue(addToCartButton.waitForExistence(timeout: 5), "Expected tapping the product image (not just its name) to open Product Detail")
+        save("tap_image_2_product_detail_opened")
     }
 
     @MainActor

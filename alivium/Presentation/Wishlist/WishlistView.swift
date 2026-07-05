@@ -29,8 +29,26 @@ struct WishlistView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(
                 viewModel: makeProductDetailViewModel(product),
-                makeProductDetailViewModel: makeProductDetailViewModel
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
             )
+        }
+        .confirmationDialog(
+            localization.string(.selectSize),
+            isPresented: Binding(
+                get: { viewModel.productPendingSizeSelection != nil },
+                set: { isPresented in
+                    if !isPresented { viewModel.cancelSizeSelection() }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let product = viewModel.productPendingSizeSelection {
+                ForEach(viewModel.availableSizes(for: product), id: \.self) { size in
+                    Button(size) { viewModel.confirmSizeSelection(size, for: product) }
+                }
+                Button(localization.string(.cancel), role: .cancel) { viewModel.cancelSizeSelection() }
+            }
         }
     }
 
@@ -68,7 +86,7 @@ struct WishlistView: View {
                     .tint(AppColor.primary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .loaded(let products):
-                grid(products)
+                list(products)
             case .empty:
                 EmptyStateView(
                     icon: "heart",
@@ -83,41 +101,37 @@ struct WishlistView: View {
         }
     }
 
-    private func grid(_ products: [Product]) -> some View {
+    /// Horizontal rows (image + name/price + a direct Add to Cart action) rather than a 2-column
+    /// grid — a saved item is something the shopper is already sold on, so the priority is
+    /// getting it into the cart in one tap, not another round of browsing-style thumbnails.
+    private func list(_ products: [Product]) -> some View {
         ScrollView {
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: AppSpacing.lg), GridItem(.flexible())],
-                spacing: AppSpacing.xl
-            ) {
+            // A plain VStack, not `LazyVStack` — a saved-items list is always small (a handful
+            // of products at most), so laziness buys nothing here, and `LazyVStack` cell reuse
+            // was observed to occasionally misattribute a row's accessibility frame to a
+            // different row after scrolling, making a specific row's controls untappable by UI
+            // tests.
+            VStack(spacing: AppSpacing.md) {
                 ForEach(products) { product in
-                    wishlistCard(product)
-                        .transition(.scale(scale: 0.85).combined(with: .opacity))
+                    NavigationLink(value: product) {
+                        WishlistRow(
+                            product: product,
+                            isAddingToCart: viewModel.addingToCartProductIds.contains(product.id),
+                            didAddToCart: viewModel.addedToCartProductIds.contains(product.id),
+                            onRemove: { Task { await viewModel.remove(product) } },
+                            onAddToCart: { viewModel.requestAddToCart(product) }
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.opacity)
                 }
             }
-            // Watching the id list (not just count) means additions/removals both animate
-            // in/out via each card's `.transition`, instead of an instant reflow.
+            // Watching the id list (not just count) means removals animate out instead of an
+            // instant reflow.
             .animation(.easeOut(duration: 0.25), value: products.map(\.id))
             .padding(AppSpacing.md)
         }
-    }
-
-    /// Gives each card its own soft, warm-toned elevation — a subtle lift off the off-white
-    /// background rather than the bare grid `ProductCard` reads as on Home/Search. Navigation is
-    /// a hidden background link, not a wrapping one, so the heart stays a plain, un-nested
-    /// `Button` instead of racing the NavigationLink's own tap gesture (see ProductCard's heart).
-    private func wishlistCard(_ product: Product) -> some View {
-        ProductCard(product: product, layout: .grid, isWishlisted: true) {
-            Task { await viewModel.remove(product) }
-        }
-        .padding(AppSpacing.sm)
-        .background(AppColor.background)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
-        .shadow(color: AppColor.primaryDeep.opacity(0.08), radius: 12, x: 0, y: 6)
-        .background {
-            // `Color.clear`, not `EmptyView()` — EmptyView has zero intrinsic size, so the link
-            // had no actual tappable area at all despite sitting in `.background`.
-            NavigationLink(value: product) { Color.clear }
-        }
+        .accessibilityIdentifier("wishlistScrollView")
     }
 
     private func errorState(_ key: LocalizedKey) -> some View {
@@ -142,7 +156,9 @@ private func previewMakeProductDetailViewModel(_ product: Product) -> ProductDet
         productRepository: MockProductRepository(),
         reviewRepository: MockReviewRepository(),
         cartRepository: MockCartRepository(),
-        wishlistRepository: MockWishlistRepository()
+        wishlistRepository: MockWishlistRepository(),
+        cartBadgeStore: CartBadgeStore(),
+        userSession: UserSession()
     )
 }
 
@@ -151,7 +167,7 @@ private func previewMakeProductDetailViewModel(_ product: Product) -> ProductDet
     session.signIn(User(id: "1", fullName: "Aysel Məmmədova", email: "aysel@alivium.com"))
     return NavigationStack {
         WishlistView(
-            viewModel: WishlistViewModel(wishlistRepository: MockWishlistRepository(), userSession: session),
+            viewModel: WishlistViewModel(wishlistRepository: MockWishlistRepository(), cartRepository: MockCartRepository(), userSession: session, cartBadgeStore: CartBadgeStore()),
             makeProductDetailViewModel: previewMakeProductDetailViewModel,
             onBrowseHome: {},
             onRequestAuthFlow: {}
@@ -163,7 +179,7 @@ private func previewMakeProductDetailViewModel(_ product: Product) -> ProductDet
 #Preview("Guest") {
     NavigationStack {
         WishlistView(
-            viewModel: WishlistViewModel(wishlistRepository: MockWishlistRepository(), userSession: UserSession()),
+            viewModel: WishlistViewModel(wishlistRepository: MockWishlistRepository(), cartRepository: MockCartRepository(), userSession: UserSession(), cartBadgeStore: CartBadgeStore()),
             makeProductDetailViewModel: previewMakeProductDetailViewModel,
             onBrowseHome: {},
             onRequestAuthFlow: {}

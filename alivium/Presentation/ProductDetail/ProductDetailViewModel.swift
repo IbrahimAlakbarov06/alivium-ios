@@ -17,11 +17,16 @@ final class ProductDetailViewModel {
     private(set) var isWishlisted = false
     private(set) var isAddingToCart = false
     private(set) var didAddToCart = false
+    /// Set when a Guest taps the wishlist heart — the View shows a sign-in prompt instead of
+    /// toggling the wishlist.
+    var needsSignInForWishlist = false
 
     private let productRepository: ProductRepository
     private let reviewRepository: ReviewRepository
     private let cartRepository: CartRepository
     private let wishlistRepository: WishlistRepository
+    private let cartBadgeStore: CartBadgeStore
+    private let userSession: UserSession
 
     /// In display order (S/M/L), not just whatever order the mock data happens to list.
     var availableSizes: [String] {
@@ -38,14 +43,23 @@ final class ProductDetailViewModel {
         return seen
     }
 
+    /// Size is the real variant dimension for this boutique (mostly one color per product) —
+    /// color is descriptive metadata for browsing/filtering, not something the shopper must
+    /// deliberately choose. So once a size is picked, resolve a variant by size alone when no
+    /// color has been (or needs to be) chosen, rather than requiring an exact size+color match.
     var selectedVariant: ProductVariant? {
-        guard let selectedSize, let selectedColor else { return nil }
-        return product.variants.first { $0.size == selectedSize && $0.color == selectedColor }
+        guard let selectedSize else { return product.variants.first }
+        if let selectedColor {
+            return product.variants.first { $0.size == selectedSize && $0.color == selectedColor }
+        }
+        return product.variants.first { $0.size == selectedSize }
     }
 
-    /// Products with no variants at all (e.g. earrings) skip the selection requirement entirely.
+    /// Only size gates the button — products with no variants at all (e.g. earrings) skip the
+    /// requirement entirely, and color (even when a product has more than one) stays optional.
     var canAddToCart: Bool {
-        (product.variants.isEmpty || selectedVariant != nil) && !isAddingToCart
+        guard !isAddingToCart else { return false }
+        return availableSizes.isEmpty || selectedSize != nil
     }
 
     init(
@@ -53,13 +67,17 @@ final class ProductDetailViewModel {
         productRepository: ProductRepository,
         reviewRepository: ReviewRepository,
         cartRepository: CartRepository,
-        wishlistRepository: WishlistRepository
+        wishlistRepository: WishlistRepository,
+        cartBadgeStore: CartBadgeStore,
+        userSession: UserSession
     ) {
         self.product = product
         self.productRepository = productRepository
         self.reviewRepository = reviewRepository
         self.cartRepository = cartRepository
         self.wishlistRepository = wishlistRepository
+        self.cartBadgeStore = cartBadgeStore
+        self.userSession = userSession
 
         // No forced choice when there's nothing to choose.
         if availableSizes.count == 1 { selectedSize = availableSizes.first }
@@ -111,6 +129,10 @@ final class ProductDetailViewModel {
 
     @discardableResult
     func toggleWishlist() async -> Bool {
+        guard case .authenticated = userSession.state else {
+            needsSignInForWishlist = true
+            return false
+        }
         do {
             if isWishlisted {
                 try await wishlistRepository.removeFromWishlist(productId: product.id)
@@ -132,6 +154,7 @@ final class ProductDetailViewModel {
         do {
             _ = try await cartRepository.addItem(product: product, variant: selectedVariant, quantity: 1)
             didAddToCart = true
+            cartBadgeStore.increment(by: 1)
             return true
         } catch {
             return false
