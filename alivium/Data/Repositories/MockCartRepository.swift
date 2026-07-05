@@ -3,6 +3,8 @@
 //  alivium
 //
 
+import Foundation
+
 /// Phase 1 stand-in — swapped for a real APIClient-backed implementation once the backend Cart
 /// endpoints are wired (CLAUDE.md Phase 2). Seeded from `MockProductRepository`'s real product
 /// data; quantity/removal mutations are kept in memory so the screen behaves believably across
@@ -32,6 +34,17 @@ final class MockCartRepository: CartRepository {
     func fetchCartItems() async throws -> [CartItem] {
         try await Task.sleep(for: .seconds(0.6))
         return items
+    }
+
+    func addItem(product: Product, variant: ProductVariant?, quantity: Int) async throws -> CartItem {
+        try await Task.sleep(for: .milliseconds(300))
+        if let index = items.firstIndex(where: { $0.product.id == product.id && $0.selectedVariant == variant }) {
+            items[index].quantity += quantity
+            return items[index]
+        }
+        let newItem = CartItem(id: UUID().uuidString, product: product, selectedVariant: variant, quantity: quantity)
+        items.append(newItem)
+        return newItem
     }
 
     func updateQuantity(itemId: String, quantity: Int) async throws {

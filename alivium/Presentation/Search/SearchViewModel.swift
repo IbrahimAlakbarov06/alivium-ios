@@ -10,6 +10,10 @@ import Observation
 final class SearchViewModel {
     private(set) var state: SearchViewState = .idle
     private(set) var categories: [Category] = []
+    /// Which top-level category's subcategory list is currently expanded — accordion-style,
+    /// so opening one closes any other. `nil` when none is expanded, or for leaf categories
+    /// that navigate directly instead of expanding.
+    private(set) var expandedCategoryId: String?
 
     var query: String = "" {
         didSet { scheduleSearch(for: query) }
@@ -45,6 +49,13 @@ final class SearchViewModel {
         } catch {
             state = .error(.somethingWentWrong)
         }
+    }
+
+    /// Leaf categories (no subcategories) have nothing to expand — the View routes those taps
+    /// to navigation instead of calling this.
+    func toggleCategoryExpansion(_ category: Category) {
+        guard !category.subcategories.isEmpty else { return }
+        expandedCategoryId = (expandedCategoryId == category.id) ? nil : category.id
     }
 
     /// Simple `Task` + `Task.sleep` debounce — cancels any in-flight wait/search when the query

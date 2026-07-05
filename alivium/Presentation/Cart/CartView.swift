@@ -8,6 +8,8 @@ import SwiftUI
 struct CartView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: CartViewModel
+    @State private var isPromoCodeExpanded = false
+    let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
 
     /// Wired to the tab shell's Home tab — "Start Browsing" from the empty state.
     let onBrowseHome: () -> Void
@@ -23,6 +25,12 @@ struct CartView: View {
         }
         .background(AppColor.backgroundOffWhite)
         .task { viewModel.onAppear() }
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(
+                viewModel: makeProductDetailViewModel(product),
+                makeProductDetailViewModel: makeProductDetailViewModel
+            )
+        }
     }
 
     private var topBar: some View {
@@ -56,105 +64,184 @@ struct CartView: View {
         }
     }
 
+    // MARK: - Loaded
+
     private var loadedContent: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.md) {
-                ForEach(viewModel.items) { item in
-                    CartLineItemRow(
-                        item: item,
-                        onQuantityChange: { newQuantity in
-                            viewModel.updateQuantity(for: item, to: newQuantity)
-                        },
-                        onRemove: {
-                            Task { await viewModel.remove(item) }
-                        }
-                    )
-                }
-
-                orderSummary
+            VStack(spacing: AppSpacing.xl) {
+                lineItems
+                promoCodeCard
+                shippingCard
+                summaryCard
             }
             .padding(AppSpacing.md)
         }
     }
 
-    private var orderSummary: some View {
+    private var lineItems: some View {
         VStack(spacing: AppSpacing.md) {
-            voucherRow
-            shippingPicker
+            ForEach(viewModel.items) { item in
+                CartLineItemRow(
+                    item: item,
+                    onQuantityChange: { newQuantity in
+                        viewModel.updateQuantity(for: item, to: newQuantity)
+                    },
+                    onRemove: {
+                        Task { await viewModel.remove(item) }
+                    }
+                )
+            }
+        }
+    }
 
-            Divider()
+    // MARK: - Promo code
 
-            summaryRow(title: localization.string(.subtotal), value: viewModel.subtotal.formatted)
-            summaryRow(title: localization.string(.total), value: viewModel.total.formatted, emphasized: true)
+    /// Collapsed by default so an empty code field doesn't compete for attention — expands into
+    /// the input only once the shopper actually wants to use one.
+    private var promoCodeCard: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isPromoCodeExpanded.toggle() }
+            } label: {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "tag")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(AppColor.accent)
+
+                    Text(localization.string(.havePromoCode))
+                        .font(AppTypography.bodyEmphasis)
+                        .foregroundStyle(AppColor.textPrimary)
+
+                    Spacer()
+
+                    Image(systemName: isPromoCodeExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppColor.textSecondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isPromoCodeExpanded {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    HStack(spacing: AppSpacing.sm) {
+                        BaseTextField(
+                            placeholder: localization.string(.voucherCodePlaceholder),
+                            text: $viewModel.voucherCode
+                        )
+
+                        BaseButton(title: localization.string(.apply), kind: .secondary, size: .medium) {
+                            viewModel.applyVoucher()
+                        }
+                    }
+
+                    if viewModel.isVoucherApplied {
+                        Label(localization.string(.voucherApplied), systemImage: "checkmark.circle.fill")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColor.accent)
+                    }
+                }
+            }
+        }
+        .padding(AppSpacing.md)
+        .background(AppColor.background)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
+        .shadow(color: AppColor.primaryDeep.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    // MARK: - Shipping
+
+    private var shippingCard: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(localization.string(.shippingSectionTitle))
+                .font(AppTypography.bodyEmphasis)
+                .foregroundStyle(AppColor.textPrimary)
+
+            VStack(spacing: AppSpacing.xxs) {
+                ForEach(ShippingMethod.allCases) { method in
+                    shippingRow(method)
+                }
+            }
+        }
+        .padding(AppSpacing.md)
+        .background(AppColor.background)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
+        .shadow(color: AppColor.primaryDeep.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    private func shippingRow(_ method: ShippingMethod) -> some View {
+        let isSelected = viewModel.selectedShippingMethod == method
+
+        return Button {
+            viewModel.selectedShippingMethod = method
+        } label: {
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18))
+                    .foregroundStyle(isSelected ? AppColor.primary : AppColor.textSecondary.opacity(0.35))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(shippingName(for: method))
+                        .font(AppTypography.bodyEmphasis)
+                        .foregroundStyle(AppColor.textPrimary)
+                    Text("\(method.days) \(localization.string(.shippingDaysSuffix))")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColor.textSecondary)
+                }
+
+                Spacer()
+
+                if method.price.minorUnits > 0 {
+                    Text(method.price.formatted)
+                        .font(AppTypography.bodyEmphasis)
+                        .foregroundStyle(AppColor.textPrimary)
+                }
+            }
+            .padding(.vertical, AppSpacing.sm)
+            .padding(.horizontal, AppSpacing.sm)
+            .background(isSelected ? AppColor.primary.opacity(0.06) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func shippingName(for method: ShippingMethod) -> String {
+        switch method {
+        case .free: return localization.string(.shippingFree)
+        case .standard: return localization.string(.shippingStandard)
+        case .fast: return localization.string(.shippingFast)
+        }
+    }
+
+    // MARK: - Summary
+
+    private var summaryCard: some View {
+        VStack(spacing: AppSpacing.md) {
+            VStack(spacing: AppSpacing.sm) {
+                summaryRow(title: localization.string(.subtotal), value: viewModel.subtotal.formatted)
+                Divider()
+                summaryRow(title: localization.string(.total), value: viewModel.total.formatted, emphasized: true)
+            }
 
             BaseButton(title: localization.string(.proceedToCheckout), kind: .primary, size: .large) {
                 // TODO: navigate to Checkout once it exists.
             }
         }
         .padding(AppSpacing.md)
-        .background(AppColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
-    }
-
-    private var voucherRow: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            HStack(spacing: AppSpacing.sm) {
-                BaseTextField(
-                    placeholder: localization.string(.voucherCodePlaceholder),
-                    text: $viewModel.voucherCode
-                )
-
-                BaseButton(title: localization.string(.apply), kind: .secondary, size: .medium) {
-                    viewModel.applyVoucher()
-                }
-            }
-
-            if viewModel.isVoucherApplied {
-                Text(localization.string(.voucherApplied))
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColor.accent)
-            }
-        }
-    }
-
-    private var shippingPicker: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            Text(localization.string(.shippingSectionTitle))
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColor.textSecondary)
-
-            HStack(spacing: AppSpacing.xs) {
-                ForEach(ShippingMethod.allCases) { method in
-                    CategoryChip(
-                        title: shippingLabel(for: method),
-                        isSelected: viewModel.selectedShippingMethod == method
-                    ) {
-                        viewModel.selectedShippingMethod = method
-                    }
-                }
-            }
-        }
-    }
-
-    private func shippingLabel(for method: ShippingMethod) -> String {
-        let name: String
-        switch method {
-        case .free: name = localization.string(.shippingFree)
-        case .standard: name = localization.string(.shippingStandard)
-        case .fast: name = localization.string(.shippingFast)
-        }
-        return method.price.minorUnits == 0 ? name : "\(name) \(method.price.formatted)"
+        .background(AppColor.background)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
+        .shadow(color: AppColor.primaryDeep.opacity(0.06), radius: 10, x: 0, y: 4)
     }
 
     private func summaryRow(title: String, value: String, emphasized: Bool = false) -> some View {
         HStack {
             Text(title)
                 .font(emphasized ? AppTypography.headline : AppTypography.body)
-                .foregroundStyle(AppColor.textPrimary)
+                .foregroundStyle(emphasized ? AppColor.textPrimary : AppColor.textSecondary)
             Spacer()
             Text(value)
-                .font(emphasized ? AppTypography.headline : AppTypography.bodyEmphasis)
-                .foregroundStyle(AppColor.textPrimary)
+                .font(emphasized ? AppTypography.title : AppTypography.bodyEmphasis)
+                .foregroundStyle(emphasized ? AppColor.primary : AppColor.textPrimary)
         }
     }
 
@@ -175,9 +262,20 @@ struct CartView: View {
 }
 
 #Preview {
-    CartView(
-        viewModel: CartViewModel(cartRepository: MockCartRepository()),
-        onBrowseHome: {}
-    )
+    NavigationStack {
+        CartView(
+            viewModel: CartViewModel(cartRepository: MockCartRepository()),
+            makeProductDetailViewModel: { product in
+                ProductDetailViewModel(
+                    product: product,
+                    productRepository: MockProductRepository(),
+                    reviewRepository: MockReviewRepository(),
+                    cartRepository: MockCartRepository(),
+                    wishlistRepository: MockWishlistRepository()
+                )
+            },
+            onBrowseHome: {}
+        )
+    }
     .environment(LocalizationManager())
 }

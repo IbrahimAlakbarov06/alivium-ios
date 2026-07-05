@@ -3,7 +3,7 @@
 //  alivium
 //
 
-struct Product: Identifiable, Equatable {
+struct Product: Identifiable, Equatable, Hashable {
     let id: String
     let name: String
     let price: Money
@@ -14,6 +14,12 @@ struct Product: Identifiable, Equatable {
     let imageNames: [String]
     let categoryId: String
     let variants: [ProductVariant]
+    let description: String
+    /// Aggregate rating shown in Product Detail's summary line (e.g. "4.6 (128 reviews)") —
+    /// distinct from the handful of individual `Review`s actually fetched/displayed, matching
+    /// how most storefronts show a total count alongside only a sample of full reviews.
+    let averageRating: Double
+    let reviewCount: Int
 
     var isOnSale: Bool { discountPrice != nil }
     var primaryImageName: String? { imageNames.first }

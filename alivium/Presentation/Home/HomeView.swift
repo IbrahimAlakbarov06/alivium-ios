@@ -8,6 +8,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: HomeViewModel
+    let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
 
     var body: some View {
         ScrollView {
@@ -22,6 +23,12 @@ struct HomeView: View {
         }
         .background(AppColor.backgroundOffWhite)
         .task { viewModel.onAppear() }
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(
+                viewModel: makeProductDetailViewModel(product),
+                makeProductDetailViewModel: makeProductDetailViewModel
+            )
+        }
     }
 
     @ViewBuilder
@@ -97,7 +104,7 @@ struct HomeView: View {
             HStack(spacing: AppSpacing.xs) {
                 ForEach(categories) { category in
                     CategoryChip(
-                        title: category.name,
+                        title: localization.string(forCategory: category),
                         isSelected: viewModel.selectedCategoryId == category.id
                     ) {
                         viewModel.selectCategory(category.id)
@@ -116,8 +123,17 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: AppSpacing.md) {
                     ForEach(products) { product in
+                        // A hidden background link, not a wrapping one — the heart stays a
+                        // plain, un-nested `Button` instead of racing the NavigationLink's own
+                        // tap gesture for taps landing on it (see ProductCard's heart comment).
                         ProductCard(product: product, layout: layout) {
                             viewModel.toggleWishlist(for: product)
+                        }
+                        .background {
+                            // `Color.clear`, not `EmptyView()` — EmptyView has zero intrinsic
+                            // size, so the link had no actual tappable area at all despite
+                            // sitting in `.background`.
+                            NavigationLink(value: product) { Color.clear }
                         }
                     }
                 }
@@ -165,13 +181,24 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView(
-        viewModel: HomeViewModel(
-            fetchHomeFeedUseCase: DefaultFetchHomeFeedUseCase(
-                productRepository: MockProductRepository(),
-                categoryRepository: MockCategoryRepository()
-            )
+    NavigationStack {
+        HomeView(
+            viewModel: HomeViewModel(
+                fetchHomeFeedUseCase: DefaultFetchHomeFeedUseCase(
+                    productRepository: MockProductRepository(),
+                    categoryRepository: MockCategoryRepository()
+                )
+            ),
+            makeProductDetailViewModel: { product in
+                ProductDetailViewModel(
+                    product: product,
+                    productRepository: MockProductRepository(),
+                    reviewRepository: MockReviewRepository(),
+                    cartRepository: MockCartRepository(),
+                    wishlistRepository: MockWishlistRepository()
+                )
+            }
         )
-    )
+    }
     .environment(LocalizationManager())
 }

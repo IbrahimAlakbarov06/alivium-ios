@@ -95,17 +95,34 @@ enum LocalizedKey: Equatable {
     case noResultsFound
     case items
 
+    // MARK: - Category names (mock data's stable ids -> display names)
+    case categoryNewIn
+    case categoryClothing
+    case categoryDresses
+    case categorySkirts
+    case categoryJackets
+    case categorySweaters
+    case categoryJeans
+    case categoryTShirts
+    case categoryPants
+    case categoryShoes
+    case categoryBags
+    case categoryAccessories
+    case categorySale
+
     // MARK: - Wishlist
     case wishlistEmptyTitle
     case wishlistEmptySubtitle
     case wishlistGuestTitle
     case wishlistGuestSubtitle
     case startBrowsing
+    case wishlistSavedCountSuffix
 
     // MARK: - Cart
     case cartEmptyTitle
     case cartEmptySubtitle
     case subtotal
+    case havePromoCode
     case voucherCodePlaceholder
     case apply
     case voucherApplied
@@ -113,9 +130,20 @@ enum LocalizedKey: Equatable {
     case shippingFree
     case shippingStandard
     case shippingFast
+    case shippingDaysSuffix
     case total
     case proceedToCheckout
     case removeItem
+
+    // MARK: - Product Detail
+    case selectSize
+    case selectColor
+    case addToCart
+    case addedToCart
+    case descriptionSectionTitle
+    case reviewsSectionTitle
+    case reviewsCountSuffix
+    case youMightAlsoLike
 
     // MARK: - Profile
     case guestLabel
@@ -312,6 +340,34 @@ enum LocalizedKey: Equatable {
         case .items:
             return language == .az ? "məhsul" : "Items"
 
+        // MARK: Category names
+        case .categoryNewIn:
+            return language == .az ? "Yenilər" : "New In"
+        case .categoryClothing:
+            return language == .az ? "Geyim" : "Clothing"
+        case .categoryDresses:
+            return language == .az ? "Donlar" : "Dresses"
+        case .categorySkirts:
+            return language == .az ? "Ətəklər" : "Skirts"
+        case .categoryJackets:
+            return language == .az ? "Gödəkçələr" : "Jackets"
+        case .categorySweaters:
+            return language == .az ? "Sviterlər" : "Sweaters"
+        case .categoryJeans:
+            return language == .az ? "Cinslər" : "Jeans"
+        case .categoryTShirts:
+            return language == .az ? "Tişörtlər" : "T-Shirts"
+        case .categoryPants:
+            return language == .az ? "Şalvarlar" : "Pants"
+        case .categoryShoes:
+            return language == .az ? "Ayaqqabılar" : "Shoes"
+        case .categoryBags:
+            return language == .az ? "Çantalar" : "Bags"
+        case .categoryAccessories:
+            return language == .az ? "Aksesuarlar" : "Accessories"
+        case .categorySale:
+            return language == .az ? "Endirim" : "Sale"
+
         // MARK: Wishlist
         case .wishlistEmptyTitle:
             return language == .az ? "Seçilmişlər siyahınız boşdur" : "Your Wishlist is Empty"
@@ -327,6 +383,8 @@ enum LocalizedKey: Equatable {
                 : "Create an account to keep track of the pieces you love."
         case .startBrowsing:
             return language == .az ? "Gəzintiyə başla" : "Start Browsing"
+        case .wishlistSavedCountSuffix:
+            return language == .az ? "məhsul seçilib" : "items saved"
 
         // MARK: Cart
         case .cartEmptyTitle:
@@ -335,6 +393,8 @@ enum LocalizedKey: Equatable {
             return language == .az ? "Hələ heç nə əlavə etməmisiniz." : "Looks like you haven't added anything yet."
         case .subtotal:
             return language == .az ? "Ara cəm" : "Subtotal"
+        case .havePromoCode:
+            return language == .az ? "Endirim kodunuz var?" : "Have a promo code?"
         case .voucherCodePlaceholder:
             return language == .az ? "Endirim kodu daxil edin" : "Enter voucher code"
         case .apply:
@@ -349,12 +409,32 @@ enum LocalizedKey: Equatable {
             return language == .az ? "Standart" : "Standard"
         case .shippingFast:
             return language == .az ? "Sürətli" : "Fast"
+        case .shippingDaysSuffix:
+            return language == .az ? "gün ərzində çatdırılma" : "day delivery"
         case .total:
             return language == .az ? "Cəmi" : "Total"
         case .proceedToCheckout:
             return language == .az ? "Sifarişi tamamla" : "Proceed to Checkout"
         case .removeItem:
             return language == .az ? "Sil" : "Remove"
+
+        // MARK: Product Detail
+        case .selectSize:
+            return language == .az ? "Ölçü seçin" : "Select Size"
+        case .selectColor:
+            return language == .az ? "Rəng seçin" : "Select Color"
+        case .addToCart:
+            return language == .az ? "Səbətə əlavə et" : "Add to Cart"
+        case .addedToCart:
+            return language == .az ? "Səbətə əlavə edildi" : "Added to Cart"
+        case .descriptionSectionTitle:
+            return language == .az ? "Təsvir" : "Description"
+        case .reviewsSectionTitle:
+            return language == .az ? "Rəylər" : "Reviews"
+        case .reviewsCountSuffix:
+            return language == .az ? "rəy" : "reviews"
+        case .youMightAlsoLike:
+            return language == .az ? "Bunlar da xoşunuza gələ bilər" : "You Might Also Like"
 
         // MARK: Profile
         case .guestLabel:
@@ -409,6 +489,28 @@ enum LocalizedKey: Equatable {
                 : "This will permanently delete your account. This action cannot be undone."
         case .cancel:
             return language == .az ? "Ləğv et" : "Cancel"
+        }
+    }
+
+    /// Maps a mock category's stable id to its catalog key — `Category.name` itself stays a
+    /// plain fallback string (matching what a real backend might send pre-resolved in one
+    /// field), while views that need real AZ/EN switching resolve through this instead.
+    static func categoryName(forId id: String) -> LocalizedKey? {
+        switch id {
+        case "new-in": return .categoryNewIn
+        case "clothing": return .categoryClothing
+        case "dresses": return .categoryDresses
+        case "skirts": return .categorySkirts
+        case "jackets": return .categoryJackets
+        case "sweaters": return .categorySweaters
+        case "jeans": return .categoryJeans
+        case "t-shirts": return .categoryTShirts
+        case "pants": return .categoryPants
+        case "shoes": return .categoryShoes
+        case "bags": return .categoryBags
+        case "accessories": return .categoryAccessories
+        case "sale": return .categorySale
+        default: return nil
         }
     }
 }

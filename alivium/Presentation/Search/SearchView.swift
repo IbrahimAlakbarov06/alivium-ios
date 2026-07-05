@@ -8,6 +8,7 @@ import SwiftUI
 struct SearchView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: SearchViewModel
+    let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
 
     /// Top-level categories with a big banner — leaf categories that also work as full-width
     /// browse entry points. Ids, not names, so this stays correct if copy changes.
@@ -30,6 +31,12 @@ struct SearchView: View {
         }
         .background(AppColor.backgroundOffWhite)
         .task { viewModel.onAppear() }
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(
+                viewModel: makeProductDetailViewModel(product),
+                makeProductDetailViewModel: makeProductDetailViewModel
+            )
+        }
     }
 
     private var topBar: some View {
@@ -87,13 +94,10 @@ struct SearchView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded:
             ScrollView {
-                VStack(alignment: .leading, spacing: AppSpacing.xxl) {
-                    categoryBanners
-                    subcategorySection
-                }
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.top, AppSpacing.sm)
-                .padding(.bottom, AppSpacing.xl)
+                categoryBanners
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.top, AppSpacing.sm)
+                    .padding(.bottom, AppSpacing.xl)
             }
         case .error(let key):
             errorState(key)
@@ -103,13 +107,32 @@ struct SearchView: View {
     private var categoryBanners: some View {
         VStack(spacing: AppSpacing.md) {
             ForEach(Array(bannerCategories.enumerated()), id: \.element.id) { index, category in
-                CategoryBanner(
-                    title: category.name,
-                    imageName: Self.bannerImages[index % Self.bannerImages.count],
-                    tint: Self.bannerTints[index % Self.bannerTints.count],
-                    imageLeading: index % 2 == 1
-                ) {
-                    // TODO: navigate to Category/Product Listing once it exists.
+                let isExpandable = !category.subcategories.isEmpty
+                let isExpanded = viewModel.expandedCategoryId == category.id
+
+                VStack(spacing: AppSpacing.sm) {
+                    CategoryBanner(
+                        title: localization.string(forCategory: category),
+                        imageName: Self.bannerImages[index % Self.bannerImages.count],
+                        tint: Self.bannerTints[index % Self.bannerTints.count],
+                        imageLeading: index % 2 == 1,
+                        isExpandable: isExpandable,
+                        isExpanded: isExpanded
+                    ) {
+                        if isExpandable {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                viewModel.toggleCategoryExpansion(category)
+                            }
+                        } else {
+                            // TODO: navigate to Category/Product Listing once it exists.
+                        }
+                    }
+
+                    if isExpanded {
+                        SubcategoryList(subcategories: category.subcategories) { _ in
+                            // TODO: navigate to Category/Product Listing once it exists.
+                        }
+                    }
                 }
             }
         }
@@ -118,22 +141,6 @@ struct SearchView: View {
     private var bannerCategories: [Category] {
         Self.bannerCategoryIds.compactMap { id in
             viewModel.categories.first { $0.id == id }
-        }
-    }
-
-    @ViewBuilder
-    private var subcategorySection: some View {
-        let expandable = viewModel.categories.filter { !$0.subcategories.isEmpty }
-        if !expandable.isEmpty {
-            VStack(spacing: 0) {
-                ForEach(Array(expandable.enumerated()), id: \.element.id) { index, category in
-                    if index > 0 { Divider() }
-                    ExpandableCategoryRow(category: category)
-                }
-            }
-            .padding(.horizontal, AppSpacing.md)
-            .background(AppColor.surface)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
         }
     }
 
@@ -169,7 +176,10 @@ struct SearchView: View {
                     spacing: AppSpacing.lg
                 ) {
                     ForEach(viewModel.searchResults) { product in
-                        ProductCard(product: product, layout: .grid)
+                        NavigationLink(value: product) {
+                            ProductCard(product: product, layout: .grid)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(AppSpacing.md)
@@ -191,11 +201,22 @@ struct SearchView: View {
 }
 
 #Preview {
-    SearchView(
-        viewModel: SearchViewModel(
-            categoryRepository: MockCategoryRepository(),
-            productRepository: MockProductRepository()
+    NavigationStack {
+        SearchView(
+            viewModel: SearchViewModel(
+                categoryRepository: MockCategoryRepository(),
+                productRepository: MockProductRepository()
+            ),
+            makeProductDetailViewModel: { product in
+                ProductDetailViewModel(
+                    product: product,
+                    productRepository: MockProductRepository(),
+                    reviewRepository: MockReviewRepository(),
+                    cartRepository: MockCartRepository(),
+                    wishlistRepository: MockWishlistRepository()
+                )
+            }
         )
-    )
+    }
     .environment(LocalizationManager())
 }

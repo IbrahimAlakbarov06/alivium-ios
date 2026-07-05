@@ -17,9 +17,13 @@ final class MockProductRepository: ProductRepository {
         stockPhotos[index % stockPhotos.count]
     }
 
-    private static func variants(color: String) -> [ProductVariant] {
-        ["S", "M", "L"].map { size in
-            ProductVariant(id: "\(color)-\(size)", size: size, color: color, stockQuantity: 8)
+    /// Two colors x three sizes per product — gives Product Detail's variant selector a real
+    /// second axis to choose from, rather than a color "choice" of exactly one option.
+    private static func variants(colors: [String]) -> [ProductVariant] {
+        colors.flatMap { color in
+            ["S", "M", "L"].map { size in
+                ProductVariant(id: "\(color)-\(size)", size: size, color: color, stockQuantity: 8)
+            }
         }
     }
 
@@ -32,32 +36,44 @@ final class MockProductRepository: ProductRepository {
         Product(
             id: "p-1", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: nil,
             imageNames: [stockPhoto(0)], categoryId: "dresses",
-            variants: variants(color: "Ivory")
+            variants: variants(colors: ["Ivory", "Blush"]),
+            description: "Cut from fluid silk with a self-tie waist, this wrap dress moves beautifully from day into evening. Fully lined.",
+            averageRating: 4.7, reviewCount: 132
         ),
         Product(
             id: "p-2", name: "Tailored Wool Coat", price: Money(349.00), discountPrice: Money(279.00),
             imageNames: [stockPhoto(1)], categoryId: "new-in",
-            variants: variants(color: "Camel")
+            variants: variants(colors: ["Camel", "Charcoal"]),
+            description: "A structured, wool-blend coat with a clean lapel and horn-style buttons — built to be the one coat you reach for all season.",
+            averageRating: 4.8, reviewCount: 96
         ),
         Product(
             id: "p-3", name: "Cashmere Blend Sweater", price: Money(159.00), discountPrice: nil,
             imageNames: [stockPhoto(2)], categoryId: "sweaters",
-            variants: variants(color: "Oatmeal")
+            variants: variants(colors: ["Oatmeal", "Black"]),
+            description: "Soft cashmere-blend knit with a relaxed fit and ribbed trim — an everyday layer that still feels a little special.",
+            averageRating: 4.6, reviewCount: 84
         ),
         Product(
             id: "p-4", name: "Pleated Satin Skirt", price: Money(129.00), discountPrice: nil,
             imageNames: [stockPhoto(3)], categoryId: "skirts",
-            variants: variants(color: "Champagne")
+            variants: variants(colors: ["Champagne", "Ivory"]),
+            description: "Fine knife pleats in a fluid satin finish, finished with a hidden side zip for a clean silhouette.",
+            averageRating: 4.5, reviewCount: 58
         ),
         Product(
             id: "p-5", name: "Structured Leather Tote", price: Money(259.00), discountPrice: nil,
             imageNames: [stockPhoto(4)], categoryId: "bags",
-            variants: variants(color: "Cognac")
+            variants: variants(colors: ["Cognac", "Black"]),
+            description: "Full-grain leather tote with a structured base, interior zip pocket, and room for a 13\" laptop.",
+            averageRating: 4.9, reviewCount: 211
         ),
         Product(
             id: "p-6", name: "Linen Wide-Leg Trousers", price: Money(139.00), discountPrice: nil,
             imageNames: [stockPhoto(5)], categoryId: "pants",
-            variants: variants(color: "Sand")
+            variants: variants(colors: ["Sand", "White"]),
+            description: "Breathable linen-blend trousers with a high rise and wide leg — dresses up or down with equal ease.",
+            averageRating: 4.4, reviewCount: 47
         )
     ]
 
@@ -65,32 +81,44 @@ final class MockProductRepository: ProductRepository {
         Product(
             id: "p-7", name: "Belted Trench Coat", price: Money(299.00), discountPrice: nil,
             imageNames: [stockPhoto(0)], categoryId: "new-in",
-            variants: variants(color: "Stone")
+            variants: variants(colors: ["Stone", "Camel"]),
+            description: "A classic double-breasted trench in water-resistant cotton twill, with a fully adjustable belt.",
+            averageRating: 4.7, reviewCount: 103
         ),
         Product(
             id: "p-8", name: "Ribbed Knit Turtleneck", price: Money(89.00), discountPrice: nil,
             imageNames: [stockPhoto(1)], categoryId: "sweaters",
-            variants: variants(color: "Charcoal")
+            variants: variants(colors: ["Charcoal", "Ivory"]),
+            description: "A close-fitting ribbed turtleneck in a soft mid-weight knit — the layer every capsule wardrobe needs.",
+            averageRating: 4.5, reviewCount: 66
         ),
         Product(
             id: "p-9", name: "Suede Ankle Boots", price: Money(219.00), discountPrice: Money(175.00),
             imageNames: [stockPhoto(2)], categoryId: "shoes",
-            variants: variants(color: "Taupe")
+            variants: variants(colors: ["Taupe", "Black"]),
+            description: "Soft suede ankle boots on a stacked block heel, with a cushioned footbed built for all-day wear.",
+            averageRating: 4.6, reviewCount: 178
         ),
         Product(
             id: "p-10", name: "Silk Blouse", price: Money(149.00), discountPrice: nil,
             imageNames: [stockPhoto(3)], categoryId: "t-shirts",
-            variants: variants(color: "Blush")
+            variants: variants(colors: ["Blush", "White"]),
+            description: "A relaxed silk blouse with mother-of-pearl buttons and a soft drape — equally at home at a desk or dinner.",
+            averageRating: 4.6, reviewCount: 72
         ),
         Product(
             id: "p-11", name: "Wide Brim Felt Hat", price: Money(79.00), discountPrice: nil,
             imageNames: [stockPhoto(4)], categoryId: "accessories",
-            variants: variants(color: "Black")
+            variants: variants(colors: ["Black", "Camel"]),
+            description: "A wide-brim wool felt hat with a grosgrain band — the finishing touch for cooler-weather styling.",
+            averageRating: 4.3, reviewCount: 29
         ),
         Product(
             id: "p-12", name: "Gold-Tone Hoop Earrings", price: Money(59.00), discountPrice: nil,
             imageNames: [stockPhoto(5)], categoryId: "accessories",
-            variants: []
+            variants: [],
+            description: "Lightweight gold-tone hoops with a polished finish — a everyday staple that layers well with other pieces.",
+            averageRating: 4.7, reviewCount: 154
         )
     ]
 

@@ -245,19 +245,23 @@ final class aliviumUITests: XCTestCase {
         XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
         tabBar.buttons["Axtar"].tap()
 
-        // Browsing state: banners + expandable subcategory list, driven by the mock category tree.
-        // CategoryBanner uppercases its label ("CLOTHING"); the expandable row below uses the
-        // category's real name ("Clothing") — distinct elements.
-        let clothingBanner = app.buttons["CLOTHING"].firstMatch
-        XCTAssertTrue(clothingBanner.waitForExistence(timeout: 5), "Expected the Clothing category banner")
+        // Browsing state: banners are localized (AZ "GEYIM" = Clothing) and the Clothing banner
+        // itself is the accordion trigger — tapping it expands its subcategories directly below.
+        let clothingBanner = app.buttons["GEYIM"].firstMatch
+        XCTAssertTrue(clothingBanner.waitForExistence(timeout: 5), "Expected the localized Clothing category banner")
         save("search_1_browsing")
 
-        let clothingExpandRow = app.buttons["Clothing"].firstMatch
-        XCTAssertTrue(clothingExpandRow.waitForExistence(timeout: 5), "Expected the expandable Clothing row")
-        clothingExpandRow.tap()
-        let dressesSubcategory = app.staticTexts["Dresses"].firstMatch
-        XCTAssertTrue(dressesSubcategory.waitForExistence(timeout: 5), "Expected Clothing to expand into its subcategories")
+        clothingBanner.tap()
+        let dressesSubcategory = app.staticTexts["Donlar"].firstMatch
+        XCTAssertTrue(dressesSubcategory.waitForExistence(timeout: 5), "Expected Clothing to expand into its localized subcategories")
         save("search_2_expanded_subcategories")
+
+        // Tapping again collapses it (accordion, not a permanent static list).
+        clothingBanner.tap()
+        sleep(1)
+        XCTAssertFalse(dressesSubcategory.exists, "Expected the subcategory list to collapse on second tap")
+        clothingBanner.tap()
+        _ = dressesSubcategory.waitForExistence(timeout: 3)
 
         // Search-as-you-type: a query matching a real mock product name.
         let searchField = app.textFields["Don, ayaqqabı, çanta axtarın..."].firstMatch
@@ -323,6 +327,10 @@ final class aliviumUITests: XCTestCase {
         sleep(1)
         save("cart_2_quantity_incremented")
 
+        app.swipeUp()
+        sleep(1)
+        save("cart_2b_summary_scrolled")
+
         // --- Sign in for real, so Wishlist has a session to persist against ---
         tabBar.buttons["Profil"].tap()
         let logInOrSignUp = app.buttons["Daxil ol / Qeydiyyat"].firstMatch
@@ -354,12 +362,15 @@ final class aliviumUITests: XCTestCase {
         // the real "did we actually land on Wishlist" signal.
         tabBar.buttons["Seçilmişlər"].tap()
         let filledHearts = app.buttons.matching(identifier: "wishlistHeartFilled")
+        let wishlistedProduct = app.staticTexts["Structured Leather Tote"].firstMatch
+        // The mock repository has its own ~0.6s artificial load delay, so an immediate 0 count
+        // doesn't necessarily mean the tab tap didn't land — wait properly before concluding
+        // that and retrying the tap (the actual race seen before).
+        XCTAssertTrue(wishlistedProduct.waitForExistence(timeout: 5), "Expected seeded wishlist products once authenticated")
         if filledHearts.count == 0 {
             tabBar.buttons["Seçilmişlər"].tap() // guard against the same tab-tap/dialog race seen before
             sleep(1)
         }
-        let wishlistedProduct = app.staticTexts["Structured Leather Tote"].firstMatch
-        XCTAssertTrue(wishlistedProduct.waitForExistence(timeout: 5), "Expected seeded wishlist products once authenticated")
         XCTAssertGreaterThan(filledHearts.count, 0, "Expected filled hearts confirming we're actually on the Wishlist screen")
         save("wishlist_2_authenticated_loaded")
 
@@ -387,6 +398,90 @@ final class aliviumUITests: XCTestCase {
         let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
         XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5), "Expected Start Browsing to switch to the Home tab")
         save("cart_4_start_browsing_switched_to_home")
+    }
+
+    @MainActor
+    func testProductDetailFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5), "Expected Login screen with Guest option")
+        guestButton.tap()
+
+        // --- Tap a product on Home ---
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1)
+
+        // Navigation on Home/Wishlist is a hidden background NavigationLink (not a wrapping one,
+        // so the wishlist heart stays a plain un-nested Button — see ProductCard) — the product
+        // name renders as its own plain StaticText rather than folding into a composite Button
+        // label. Tapping the StaticText still hits the invisible link behind it.
+        let silkDressCard = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(silkDressCard.waitForExistence(timeout: 5), "Expected the Silk Wrap Midi Dress card on Home")
+        silkDressCard.tap()
+
+        // --- Product Detail: gallery, rating, variant selection, Add to Cart ---
+        let productTitle = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(productTitle.waitForExistence(timeout: 5), "Expected Product Detail to open")
+        save("product_detail_1_initial")
+
+        let addToCartButton = app.buttons["Səbətə əlavə et"].firstMatch
+        XCTAssertTrue(addToCartButton.waitForExistence(timeout: 5))
+        XCTAssertFalse(addToCartButton.isEnabled, "Expected Add to Cart disabled before a variant is selected")
+
+        app.buttons["M"].firstMatch.tap()
+        app.buttons["Ivory"].firstMatch.tap()
+        XCTAssertTrue(addToCartButton.isEnabled, "Expected Add to Cart enabled once size + color are both selected")
+        save("product_detail_2_variant_selected")
+
+        addToCartButton.tap()
+        let addedConfirmation = app.buttons["Səbətə əlavə edildi"].firstMatch
+        XCTAssertTrue(addedConfirmation.waitForExistence(timeout: 5), "Expected the button to confirm the item was added")
+        save("product_detail_3_added_to_cart")
+
+        // --- Wishlist heart toggle from within Product Detail ---
+        let wishlistHeart = app.buttons["productDetailWishlistHeart"].firstMatch
+        wishlistHeart.tap()
+        sleep(1)
+
+        // --- Related products rail drills into another Product Detail ---
+        let relatedProductCard = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "US$")
+        ).allElementsBoundByIndex.last
+        if let relatedProductCard, relatedProductCard.exists {
+            relatedProductCard.tap()
+            sleep(1)
+            save("product_detail_4_related_product_drilldown")
+
+            // Back should return to the previous product, not all the way to Home.
+            app.buttons["productDetailBackButton"].firstMatch.tap()
+            XCTAssertTrue(productTitle.waitForExistence(timeout: 5), "Expected back to return to the previous Product Detail")
+        }
+
+        // Dismiss back to Home.
+        app.buttons["productDetailBackButton"].firstMatch.tap()
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5), "Expected back to return to Home")
+
+        // --- Confirm the added item reflects in Cart ---
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Səbət"].tap()
+        let addedItemInCart = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(addedItemInCart.waitForExistence(timeout: 5), "Expected the item added from Product Detail to appear in Cart")
+        save("product_detail_5_in_cart")
     }
 
     @MainActor

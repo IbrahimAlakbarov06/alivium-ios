@@ -15,6 +15,7 @@ final class AppContainer {
     let chatRepository: ChatRepository
     let wishlistRepository: WishlistRepository
     let cartRepository: CartRepository
+    let reviewRepository: ReviewRepository
     let localizationManager: LocalizationManager
     let userSession: UserSession
 
@@ -25,6 +26,7 @@ final class AppContainer {
         self.chatRepository = MockChatRepository()
         self.wishlistRepository = MockWishlistRepository()
         self.cartRepository = MockCartRepository()
+        self.reviewRepository = MockReviewRepository()
         self.localizationManager = LocalizationManager()
         self.userSession = UserSession()
     }
@@ -75,5 +77,15 @@ final class AppContainer {
 
     func makeCartViewModel() -> CartViewModel {
         CartViewModel(cartRepository: cartRepository)
+    }
+
+    func makeProductDetailViewModel(for product: Product) -> ProductDetailViewModel {
+        ProductDetailViewModel(
+            product: product,
+            productRepository: productRepository,
+            reviewRepository: reviewRepository,
+            cartRepository: cartRepository,
+            wishlistRepository: wishlistRepository
+        )
     }
 }

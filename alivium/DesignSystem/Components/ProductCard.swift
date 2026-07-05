@@ -74,6 +74,10 @@ struct ProductCard: View {
             CatalogImage(name: product.primaryImageName)
 
             if let onTapWishlist {
+                // A real `Button`, not `.onTapGesture` — callers wrap the whole card in a
+                // `NavigationLink` to push Product Detail, and only an actual UIControl-backed
+                // `Button` reliably wins hit-testing precedence over the ancestor NavigationLink's
+                // own tap gesture. `.onTapGesture` here raced the NavigationLink and sometimes lost.
                 Button(action: onTapWishlist) {
                     Image(systemName: isWishlisted ? "heart.fill" : "heart")
                         .font(.system(size: 13, weight: .semibold))
@@ -92,9 +96,10 @@ struct ProductCard: View {
 #Preview {
     let sample = Product(
         id: "preview", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: Money(149.00),
-        imageNames: [], categoryId: "dresses", variants: []
+        imageNames: [], categoryId: "dresses", variants: [],
+        description: "A fluid silk wrap dress.", averageRating: 4.7, reviewCount: 132
     )
-    return ScrollView(.horizontal) {
+    ScrollView(.horizontal) {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             ProductCard(product: sample, layout: .rail, onTapWishlist: {})
             ProductCard(product: sample, layout: .wide, onTapWishlist: {})

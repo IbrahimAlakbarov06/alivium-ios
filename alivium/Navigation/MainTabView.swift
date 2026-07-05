@@ -17,6 +17,7 @@ struct MainTabView: View {
     @State private var profileViewModel: ProfileViewModel
     @State private var chatViewModel: ChatViewModel
     let onLogOut: () -> Void
+    private let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
         _homeViewModel = State(initialValue: container.makeHomeViewModel())
@@ -26,30 +27,44 @@ struct MainTabView: View {
         _profileViewModel = State(initialValue: container.makeProfileViewModel())
         _chatViewModel = State(initialValue: container.makeChatViewModel())
         self.onLogOut = onLogOut
+        self.makeProductDetailViewModel = { container.makeProductDetailViewModel(for: $0) }
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView(viewModel: homeViewModel)
-                .tabItem { Label(localization.string(.homeTab), systemImage: "house.fill") }
-                .tag(AppTab.home)
+            NavigationStack {
+                HomeView(viewModel: homeViewModel, makeProductDetailViewModel: makeProductDetailViewModel)
+            }
+            .tabItem { Label(localization.string(.homeTab), systemImage: "house.fill") }
+            .tag(AppTab.home)
 
-            SearchView(viewModel: searchViewModel)
-                .tabItem { Label(localization.string(.searchTab), systemImage: "magnifyingglass") }
-                .tag(AppTab.search)
+            NavigationStack {
+                SearchView(viewModel: searchViewModel, makeProductDetailViewModel: makeProductDetailViewModel)
+            }
+            .tabItem { Label(localization.string(.searchTab), systemImage: "magnifyingglass") }
+            .tag(AppTab.search)
 
-            WishlistView(
-                viewModel: wishlistViewModel,
-                onBrowseHome: { selectedTab = .home },
-                onRequestAuthFlow: onLogOut
-            )
+            NavigationStack {
+                WishlistView(
+                    viewModel: wishlistViewModel,
+                    makeProductDetailViewModel: makeProductDetailViewModel,
+                    onBrowseHome: { selectedTab = .home },
+                    onRequestAuthFlow: onLogOut
+                )
+            }
             .tabItem { Label(localization.string(.wishlistTab), systemImage: "heart") }
             .tag(AppTab.wishlist)
 
-            CartView(viewModel: cartViewModel, onBrowseHome: { selectedTab = .home })
-                .tabItem { Label(localization.string(.cartTab), systemImage: "bag") }
-                .tag(AppTab.cart)
-                .badge(cartViewModel.itemCount)
+            NavigationStack {
+                CartView(
+                    viewModel: cartViewModel,
+                    makeProductDetailViewModel: makeProductDetailViewModel,
+                    onBrowseHome: { selectedTab = .home }
+                )
+            }
+            .tabItem { Label(localization.string(.cartTab), systemImage: "bag") }
+            .tag(AppTab.cart)
+            .badge(cartViewModel.itemCount)
 
             ProfileView(viewModel: profileViewModel, chatViewModel: chatViewModel, onRequestAuthFlow: onLogOut)
                 .tabItem { Label(localization.string(.profileTab), systemImage: "person") }
@@ -59,6 +74,14 @@ struct MainTabView: View {
         // Loaded proactively (not just on first tab appearance) so the badge above is correct
         // the moment the tab shell shows, regardless of which tab the user visits first.
         .task { cartViewModel.onAppear() }
+        // TabView keeps every tab's view alive after its first appearance, so Cart's `.task`
+        // only fires once — without this, adding an item from Product Detail and switching to
+        // Cart wouldn't show it until the next cold launch.
+        .onChange(of: selectedTab) { _, newValue in
+            if newValue == .cart {
+                Task { await cartViewModel.loadCart() }
+            }
+        }
     }
 }
 

@@ -35,4 +35,12 @@ final class LocalizationManager {
     func string(_ key: LocalizedKey) -> String {
         key.value(for: currentLanguage)
     }
+
+    /// Resolves a mock `Category`'s display name through the catalog when a matching key
+    /// exists, falling back to the raw `name` field otherwise — so category chips/banners
+    /// actually switch language instead of staying stuck in whatever the mock data hardcoded.
+    func string(forCategory category: Category) -> String {
+        guard let key = LocalizedKey.categoryName(forId: category.id) else { return category.name }
+        return string(key)
+    }
 }

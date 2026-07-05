@@ -14,6 +14,10 @@ struct CategoryBanner: View {
     let imageName: String
     let tint: Color
     var imageLeading: Bool = false
+    /// Shows a small expand/collapse chevron badge — only categories with real subcategories
+    /// (e.g. Clothing) expand in place; leaf categories navigate directly on tap.
+    var isExpandable: Bool = false
+    var isExpanded: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -33,6 +37,17 @@ struct CategoryBanner: View {
             .frame(height: 116)
             .background(tint)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
+            .overlay(alignment: .bottomTrailing) {
+                if isExpandable {
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(6)
+                        .background(.black.opacity(0.18))
+                        .clipShape(Circle())
+                        .padding(10)
+                }
+            }
         }
         .buttonStyle(.plain)
     }

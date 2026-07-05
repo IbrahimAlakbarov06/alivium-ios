@@ -3,7 +3,7 @@
 //  alivium
 //
 
-struct ProductVariant: Identifiable, Equatable {
+struct ProductVariant: Identifiable, Equatable, Hashable {
     let id: String
     let size: String
     let color: String
