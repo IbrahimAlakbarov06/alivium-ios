@@ -25,6 +25,11 @@ struct BaseButton: View {
     var size: AppButtonSize = .large
     var isLoading: Bool = false
     var isEnabled: Bool = true
+    /// Floors the button at this width instead of letting it hug the label — for a `.small`
+    /// button whose title text changes (e.g. localized, or swaps to a "done" state) and needs to
+    /// stay visually stable rather than resizing. `nil` (default) preserves the normal
+    /// content-hugging behavior everywhere else.
+    var minWidth: CGFloat? = nil
     let action: () -> Void
 
     var body: some View {
@@ -40,7 +45,7 @@ struct BaseButton: View {
                         .font(font)
                 }
             }
-            .frame(maxWidth: size == .small ? nil : .infinity)
+            .frame(minWidth: minWidth, maxWidth: size == .small ? nil : .infinity)
             .padding(.vertical, verticalPadding)
             .padding(.horizontal, horizontalPadding)
             .foregroundStyle(foregroundColor)

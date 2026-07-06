@@ -28,7 +28,9 @@ struct WishlistRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
-            CatalogImage(name: product.primaryImageName)
+            // `.fit` (not the usual grid/rail `.fill` crop) — a saved item's own photo matters
+            // more here than a uniform thumbnail, so the whole product should stay visible.
+            CatalogImage(name: product.primaryImageName, contentMode: .fit)
                 .frame(width: 100, height: 100)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
 
@@ -56,12 +58,16 @@ struct WishlistRow: View {
                         kind: .primary,
                         size: .small,
                         isLoading: isAddingToCart,
-                        isEnabled: canAddToCart
+                        isEnabled: canAddToCart,
+                        // Fixed floor so the pill doesn't visibly resize switching between the
+                        // "Add to Cart"/"Added to Cart" states, in either language — sized to fit
+                        // the longest of the four (AZ "Səbətə əlavə edildi" is the widest).
+                        minWidth: 150
                     ) {
                         onAddToCart()
                     }
                 }
-                .padding(.top, AppSpacing.xs)
+                .padding(.top, AppSpacing.sm)
             }
 
             Spacer(minLength: 0)
@@ -104,6 +110,10 @@ struct WishlistRow: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+            // `Menu` otherwise renders its custom label at the system menu-button's default
+            // (much taller) tap-target size instead of hugging this label's own content — this
+            // forces it back to its intrinsic size, matching a plain `Button`'s label.
+            .fixedSize()
         }
         .accessibilityIdentifier("wishlistRowSizeMenu-\(product.id)")
     }

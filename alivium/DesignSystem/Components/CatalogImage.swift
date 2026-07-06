@@ -13,6 +13,12 @@ import UIKit
 /// rendering automatically with no code change.
 struct CatalogImage: View {
     let name: String?
+    /// `.fill` (default) crops to the frame, top-anchored so a portrait photo's subject (composed
+    /// in the upper two-thirds) survives the crop — right for dense grids/rails where every cell
+    /// must be visually uniform. `.fit` letterboxes on `AppColor.surface` instead, showing the
+    /// whole photo uncropped — right for a row like Wishlist's where the product itself (e.g. a
+    /// bag or a full-length garment) matters more than a uniform thumbnail.
+    var contentMode: ContentMode = .fill
 
     var body: some View {
         content
@@ -26,18 +32,27 @@ struct CatalogImage: View {
     @ViewBuilder
     private var content: some View {
         if let name, UIImage(named: name) != nil {
-            // `scaledToFill()` alone crops to dead-center, which for portrait source photos in
-            // small/square frames (Cart's 80x80 row thumbnail, a grid card) can cut off the actual
-            // subject and leave mostly background. Anchoring the crop to the top keeps the
-            // subject in frame instead, since these photos are all composed with their subject in
-            // the upper two-thirds. `GeometryReader` is needed to know the frame the caller
-            // actually assigned before `.clipped()` can crop to it.
-            GeometryReader { proxy in
-                Image(name)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-                    .clipped()
+            switch contentMode {
+            case .fill:
+                // `scaledToFill()` alone crops to dead-center, which for portrait source photos in
+                // small/square frames (Cart's 80x80 row thumbnail, a grid card) can cut off the
+                // actual subject and leave mostly background. Anchoring the crop to the top keeps
+                // the subject in frame instead. `GeometryReader` is needed to know the frame the
+                // caller actually assigned before `.clipped()` can crop to it.
+                GeometryReader { proxy in
+                    Image(name)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                        .clipped()
+                }
+            case .fit:
+                ZStack {
+                    AppColor.surface
+                    Image(name)
+                        .resizable()
+                        .scaledToFit()
+                }
             }
         } else {
             ZStack {
