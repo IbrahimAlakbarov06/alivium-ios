@@ -56,26 +56,12 @@ struct WishlistRow: View {
                         kind: .primary,
                         size: .small,
                         isLoading: isAddingToCart,
-                        isEnabled: canAddToCart,
-                        // Fixed floor, not content-hugging — without it, the pill's width tracks
-                        // whichever of the four (2 states x 2 languages) strings is currently
-                        // showing, so it visibly resizes on state/language change and AZ's
-                        // "Səbətə əlavə edildi" (the widest, ~139pt including this padding) reads
-                        // as oversized next to EN's much shorter "Added to Cart". This floors it
-                        // at that widest string's width so every state/language renders the same
-                        // considered size instead of cramped in one and ballooning in the other.
-                        minWidth: 145
+                        isEnabled: canAddToCart
                     ) {
                         onAddToCart()
                     }
                 }
-                // Bumped from `.xs` to `.md` for more air below the price than the previous
-                // cramped spacing. A `Spacer()` here (to also anchor this row toward the card's
-                // bottom) was tried and reverted — this VStack sits in a `ScrollView`, an
-                // unbounded-height context, where `Spacer` doesn't distribute leftover space the
-                // way it does in a fixed-height container; it broke the name text and the size
-                // menu's label sizing instead.
-                .padding(.top, AppSpacing.md)
+                .padding(.top, AppSpacing.xs)
             }
 
             Spacer(minLength: 0)
@@ -118,12 +104,6 @@ struct WishlistRow: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
-            // `Menu` otherwise renders its custom label at the system menu-button's default
-            // (much taller) tap-target size instead of hugging this label's own content — this
-            // forces it back to its intrinsic size, matching a plain `Button`'s label. Matters
-            // even more now that the sibling Add to Cart button has a wider `minWidth`, leaving
-            // this less horizontal room to fall back into that broken tall/narrow default.
-            .fixedSize()
         }
         .accessibilityIdentifier("wishlistRowSizeMenu-\(product.id)")
     }
