@@ -6,12 +6,13 @@
 import SwiftUI
 
 /// Horizontal row treatment for a saved item — image, name/price, and a direct "Add to Cart"
-/// action, plus a heart in the trailing corner to un-save it. Mirrors `CartLineItemRow`'s
-/// structure rather than reusing `ProductCard`, since this needs its own Add to Cart action that
-/// ProductCard's model doesn't carry. The caller wraps this whole row directly in a
-/// `NavigationLink` (see `ProductCard`'s heart comment) — a hidden background link here was
-/// found not to reliably navigate at all (even tapping the plain name text did nothing), so this
-/// uses the same wrapping approach already proven to work for every other product card/row.
+/// action, plus a heart badge overlaid on the image's own corner to un-save it. Mirrors
+/// `CartLineItemRow`'s structure rather than reusing `ProductCard`, since this needs its own Add
+/// to Cart action that ProductCard's model doesn't carry. The caller wraps this whole row
+/// directly in a `NavigationLink` (see `ProductCard`'s heart comment) — a hidden background link
+/// here was found not to reliably navigate at all (even tapping the plain name text did nothing),
+/// so this uses the same wrapping approach already proven to work for every other product
+/// card/row.
 struct WishlistRow: View {
     @Environment(LocalizationManager.self) private var localization
     let product: Product
@@ -27,21 +28,17 @@ struct WishlistRow: View {
     let onAddToCart: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: AppSpacing.md) {
-            // `.fit` (not the usual grid/rail `.fill` crop) — a saved item's own photo matters
-            // more here than a uniform thumbnail, so the whole product should stay visible.
-            CatalogImage(name: product.primaryImageName, contentMode: .fit)
-                .frame(width: 100, height: 100)
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+        HStack(alignment: .center, spacing: AppSpacing.md) {
+            image
 
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(product.name)
                     .font(AppTypography.bodyEmphasis)
                     .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
 
                 PriceLabel(price: product.price, discountPrice: product.discountPrice)
-                    .padding(.top, 2)
 
                 // Inline, row-level control (Trendyol-style) rather than a sheet/dialog over the
                 // whole screen — the size dropdown sits directly beside Add to Cart so picking a
@@ -67,26 +64,41 @@ struct WishlistRow: View {
                         onAddToCart()
                     }
                 }
-                .padding(.top, AppSpacing.sm)
+                .padding(.top, AppSpacing.xs)
             }
 
             Spacer(minLength: 0)
-
-            Button(action: onRemove) {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(AppColor.accent)
-            }
-            // Scoped per-product (unlike `ProductCard`'s generic "wishlistHeartFilled") — Home's
-            // rail can show the same seeded products with a filled heart too, and `TabView` keeps
-            // every tab's view mounted (even off-screen), so a bare "wishlistHeartFilled" query
-            // from a UI test can't tell this screen's row apart from Home's off-screen copy.
-            .accessibilityIdentifier("wishlistRowHeart-\(product.id)")
         }
         .padding(AppSpacing.sm)
         .background(AppColor.background)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
         .shadow(color: AppColor.primaryDeep.opacity(0.08), radius: 12, x: 0, y: 6)
+    }
+
+    /// `.fit` (not the usual grid/rail `.fill` crop) — a saved item's own photo matters more here
+    /// than a uniform thumbnail, so the whole product should stay visible. The heart sits as a
+    /// small overlay badge on the image's own top-right corner (Trendyol-style) rather than out
+    /// in the row's outer corner, disconnected from the product it belongs to.
+    private var image: some View {
+        CatalogImage(name: product.primaryImageName, contentMode: .fit)
+            .frame(width: 96, height: 96)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+            .overlay(alignment: .topTrailing) {
+                Button(action: onRemove) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(AppColor.accent)
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(Color.white.opacity(0.85)))
+                }
+                .padding(5)
+                // Scoped per-product (unlike `ProductCard`'s generic "wishlistHeartFilled") —
+                // Home's rail can show the same seeded products with a filled heart too, and
+                // `TabView` keeps every tab's view mounted (even off-screen), so a bare
+                // "wishlistHeartFilled" query from a UI test can't tell this screen's row apart
+                // from Home's off-screen copy.
+                .accessibilityIdentifier("wishlistRowHeart-\(product.id)")
+            }
     }
 
     /// Compact dropdown, not a full-screen sheet/dialog — tap to reveal the size options inline,
