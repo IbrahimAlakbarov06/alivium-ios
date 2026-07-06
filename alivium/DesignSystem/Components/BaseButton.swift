@@ -43,6 +43,8 @@ struct BaseButton: View {
                     icon
                     Text(title)
                         .font(font)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
             }
             .frame(minWidth: minWidth, maxWidth: size == .small ? nil : .infinity)

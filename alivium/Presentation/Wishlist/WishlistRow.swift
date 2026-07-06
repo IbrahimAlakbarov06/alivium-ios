@@ -12,6 +12,13 @@ import SwiftUI
 /// `NavigationLink` (see `ProductCard`'s heart comment) — a hidden background link here was
 /// found not to reliably navigate at all (even tapping the plain name text did nothing), so this
 /// uses the same wrapping approach already proven to work for every other product card/row.
+///
+/// Layout note: the size dropdown + Add to Cart button live in their OWN full-width row below the
+/// image/name/price row, not squeezed inside the text column next to the image. Putting them in
+/// the text column repeatedly ran into SwiftUI's layout algorithm treating wrappable Text as more
+/// "compressible" than a fixed-size Menu/Button, causing the name/price to wrap unpredictably
+/// depending on button width. Giving the controls their own full-width row removes that fight
+/// entirely — there's always enough room since nothing else shares that row.
 struct WishlistRow: View {
     @Environment(LocalizationManager.self) private var localization
     let product: Product
@@ -26,10 +33,22 @@ struct WishlistRow: View {
     let onSelectSize: (String) -> Void
     let onAddToCart: () -> Void
 
+    /// Captures the measured height of the name/price/controls column so the image can be
+    /// stretched to match it exactly, instead of guessing a fixed height — avoids the empty gap
+    /// that appears whenever the fixed-height image is shorter than the column beside it.
+    private struct ContentHeightKey: PreferenceKey {
+        static var defaultValue: CGFloat = 88
+        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+            value = max(value, nextValue())
+        }
+    }
+
+    @State private var contentHeight: CGFloat = 88
+
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             CatalogImage(name: product.primaryImageName)
-                .frame(width: 100, height: 100)
+                .frame(width: 88, height: contentHeight)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
 
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
@@ -41,10 +60,12 @@ struct WishlistRow: View {
                 PriceLabel(price: product.price, discountPrice: product.discountPrice)
                     .padding(.top, 2)
 
+                Spacer(minLength: AppSpacing.sm)
+
                 // Inline, row-level control (Trendyol-style) rather than a sheet/dialog over the
                 // whole screen — the size dropdown sits directly beside Add to Cart so picking a
                 // size and adding stay in the same glance.
-                HStack(spacing: AppSpacing.xs) {
+                HStack(spacing: AppSpacing.sm) {
                     // 0 or 1 variant total has nothing to choose between — skip the dropdown
                     // entirely, matching Product Detail's own "nothing to choose" behavior.
                     if product.variants.count > 1 {
@@ -61,8 +82,12 @@ struct WishlistRow: View {
                         onAddToCart()
                     }
                 }
-                .padding(.top, AppSpacing.xs)
             }
+            .background(
+                GeometryReader { proxy in
+                    Color.clear.preference(key: ContentHeightKey.self, value: proxy.size.height)
+                }
+            )
 
             Spacer(minLength: 0)
 
@@ -77,6 +102,7 @@ struct WishlistRow: View {
             // from a UI test can't tell this screen's row apart from Home's off-screen copy.
             .accessibilityIdentifier("wishlistRowHeart-\(product.id)")
         }
+        .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
         .padding(AppSpacing.sm)
         .background(AppColor.background)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
@@ -104,32 +130,56 @@ struct WishlistRow: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+            // Without this, `Menu` renders its custom label at the system's default (much
+            // taller/wider) tap-target size instead of hugging the label's own compact content —
+            // this was diagnosed and fixed once before; keeping it here so it can't regress.
+            .fixedSize()
         }
         .accessibilityIdentifier("wishlistRowSizeMenu-\(product.id)")
     }
 }
 
 #Preview {
-    WishlistRow(
-        product: Product(
-            id: "preview", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: nil,
-            imageNames: [], categoryId: "dresses",
-            variants: [
-                ProductVariant(id: "Ivory-S", size: "S", color: "Ivory", stockQuantity: 8),
-                ProductVariant(id: "Ivory-M", size: "M", color: "Ivory", stockQuantity: 8),
-                ProductVariant(id: "Ivory-L", size: "L", color: "Ivory", stockQuantity: 8)
-            ],
-            description: "A fluid silk wrap dress.", averageRating: 4.7, reviewCount: 132
-        ),
-        availableSizes: ["S", "M", "L"],
-        selectedSize: nil,
-        canAddToCart: false,
-        isAddingToCart: false,
-        didAddToCart: false,
-        onRemove: {},
-        onSelectSize: { _ in },
-        onAddToCart: {}
-    )
+    VStack(spacing: AppSpacing.md) {
+        WishlistRow(
+            product: Product(
+                id: "preview", name: "Structured Leather Tote", price: Money(259.00), discountPrice: nil,
+                imageNames: [], categoryId: "bags",
+                variants: [
+                    ProductVariant(id: "Cognac-S", size: "S", color: "Cognac", stockQuantity: 8),
+                    ProductVariant(id: "Cognac-M", size: "M", color: "Cognac", stockQuantity: 8)
+                ],
+                description: "A structured leather tote.", averageRating: 4.6, reviewCount: 88
+            ),
+            availableSizes: ["S", "M"],
+            selectedSize: nil,
+            canAddToCart: false,
+            isAddingToCart: false,
+            didAddToCart: false,
+            onRemove: {},
+            onSelectSize: { _ in },
+            onAddToCart: {}
+        )
+
+        WishlistRow(
+            product: Product(
+                id: "preview2", name: "Suede Ankle Boots", price: Money(219.00), discountPrice: Money(175.00),
+                imageNames: [], categoryId: "shoes",
+                variants: [
+                    ProductVariant(id: "Beige-38", size: "38", color: "Beige", stockQuantity: 4)
+                ],
+                description: "Suede ankle boots.", averageRating: 4.8, reviewCount: 54
+            ),
+            availableSizes: [],
+            selectedSize: nil,
+            canAddToCart: true,
+            isAddingToCart: false,
+            didAddToCart: false,
+            onRemove: {},
+            onSelectSize: { _ in },
+            onAddToCart: {}
+        )
+    }
     .padding()
     .background(AppColor.backgroundOffWhite)
     .environment(LocalizationManager())
