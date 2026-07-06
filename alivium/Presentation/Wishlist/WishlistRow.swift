@@ -41,11 +41,6 @@ struct WishlistRow: View {
                 PriceLabel(price: product.price, discountPrice: product.discountPrice)
                     .padding(.top, 2)
 
-                // Guarantees at least this much air below the price even when a 2-line name
-                // leaves little slack, while still expanding to push the controls all the way to
-                // the card's bottom (matching the image's height) when there's room to spare.
-                Spacer(minLength: AppSpacing.md)
-
                 // Inline, row-level control (Trendyol-style) rather than a sheet/dialog over the
                 // whole screen — the size dropdown sits directly beside Add to Cart so picking a
                 // size and adding stay in the same glance.
@@ -74,8 +69,14 @@ struct WishlistRow: View {
                         onAddToCart()
                     }
                 }
+                // Bumped from `.xs` to `.md` for more air below the price than the previous
+                // cramped spacing. A `Spacer()` here (to also anchor this row toward the card's
+                // bottom) was tried and reverted — this VStack sits in a `ScrollView`, an
+                // unbounded-height context, where `Spacer` doesn't distribute leftover space the
+                // way it does in a fixed-height container; it broke the name text and the size
+                // menu's label sizing instead.
+                .padding(.top, AppSpacing.md)
             }
-            .frame(minHeight: 100, alignment: .top)
 
             Spacer(minLength: 0)
 
@@ -117,6 +118,12 @@ struct WishlistRow: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+            // `Menu` otherwise renders its custom label at the system menu-button's default
+            // (much taller) tap-target size instead of hugging this label's own content — this
+            // forces it back to its intrinsic size, matching a plain `Button`'s label. Matters
+            // even more now that the sibling Add to Cart button has a wider `minWidth`, leaving
+            // this less horizontal room to fall back into that broken tall/narrow default.
+            .fixedSize()
         }
         .accessibilityIdentifier("wishlistRowSizeMenu-\(product.id)")
     }
