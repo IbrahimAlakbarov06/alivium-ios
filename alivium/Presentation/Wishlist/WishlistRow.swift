@@ -28,18 +28,36 @@ struct WishlistRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
+            // Shrunk from 100x100 to free up the width the size menu + a consistently-sized Add
+            // to Cart button need below — at 100x100 there wasn't enough row width left for both
+            // without squeezing the name/price text into wrapping (see the `minWidth`s below).
             CatalogImage(name: product.primaryImageName)
-                .frame(width: 100, height: 100)
+                .frame(width: 84, height: 84)
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
 
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                // `minWidth` on name/price counteracts a SwiftUI quirk in this leading VStack:
+                // without it, wrappable `Text` is treated as the most "flexible" child and gets
+                // squeezed first to make room for the size menu/button below (which refuse to
+                // shrink, via `fixedSize()`/`minWidth`) — even when there's technically enough
+                // shared width. This floors these two at the widest name/price we ship so they
+                // stop absorbing that squeeze.
                 Text(product.name)
                     .font(AppTypography.bodyEmphasis)
                     .foregroundStyle(AppColor.textPrimary)
                     .lineLimit(2)
+                    .frame(minWidth: 185, alignment: .leading)
 
                 PriceLabel(price: product.price, discountPrice: product.discountPrice)
                     .padding(.top, 2)
+                    .frame(minWidth: 185, alignment: .leading)
+
+                // Bigger, intentional-looking gap below the price than the previous cramped
+                // padding. Not a true bottom-anchor: this VStack sits in a ScrollView (unbounded
+                // height), where a bare `Spacer()` doesn't get extra space to distribute the way
+                // it would in a fixed-height container — it was tried and it broke this row's
+                // layout — so this just guarantees a floor, same as a plain top padding would.
+                Spacer(minLength: AppSpacing.md)
 
                 // Inline, row-level control (Trendyol-style) rather than a sheet/dialog over the
                 // whole screen — the size dropdown sits directly beside Add to Cart so picking a
@@ -56,12 +74,18 @@ struct WishlistRow: View {
                         kind: .primary,
                         size: .small,
                         isLoading: isAddingToCart,
-                        isEnabled: canAddToCart
+                        isEnabled: canAddToCart,
+                        // Fixed floor, not content-hugging — without it, the pill's width tracks
+                        // whichever of the four (2 states x 2 languages) strings is showing, so
+                        // it visibly resizes on state/language change and AZ's "Səbətə əlavə
+                        // edildi" (the widest, ~139pt including this padding) reads as oversized
+                        // next to EN's much shorter "Added to Cart". 140 comfortably covers that
+                        // widest string so every state/language renders the same considered size.
+                        minWidth: 140
                     ) {
                         onAddToCart()
                     }
                 }
-                .padding(.top, AppSpacing.xs)
             }
 
             Spacer(minLength: 0)
@@ -104,6 +128,12 @@ struct WishlistRow: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
+            // `Menu` otherwise renders its custom label at the system menu-button's default
+            // (much taller) tap-target size instead of hugging this label's own content — this
+            // forces it back to its intrinsic size, matching a plain `Button`'s label. Needed now
+            // that the sibling Add to Cart button's `minWidth` leaves this less horizontal room
+            // to get squeezed into that broken tall/narrow default.
+            .fixedSize()
         }
         .accessibilityIdentifier("wishlistRowSizeMenu-\(product.id)")
     }
