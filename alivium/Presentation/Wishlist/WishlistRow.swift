@@ -27,17 +27,24 @@ struct WishlistRow: View {
     let onAddToCart: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: AppSpacing.md) {
-            image
+        HStack(alignment: .top, spacing: AppSpacing.md) {
+            CatalogImage(name: product.primaryImageName)
+                .frame(width: 100, height: 100)
+                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
 
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(product.name)
                     .font(AppTypography.bodyEmphasis)
                     .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                    .lineLimit(2)
 
                 PriceLabel(price: product.price, discountPrice: product.discountPrice)
+                    .padding(.top, 2)
+
+                // Guarantees at least this much air below the price even when a 2-line name
+                // leaves little slack, while still expanding to push the controls all the way to
+                // the card's bottom (matching the image's height) when there's room to spare.
+                Spacer(minLength: AppSpacing.md)
 
                 // Inline, row-level control (Trendyol-style) rather than a sheet/dialog over the
                 // whole screen — the size dropdown sits directly beside Add to Cart so picking a
@@ -55,16 +62,20 @@ struct WishlistRow: View {
                         size: .small,
                         isLoading: isAddingToCart,
                         isEnabled: canAddToCart,
-                        // Fixed floor so the pill doesn't visibly resize switching between the
-                        // "Add to Cart"/"Added to Cart" states, in either language — sized to fit
-                        // the longest of the four (AZ "Səbətə əlavə edildi" is the widest).
-                        minWidth: 150
+                        // Fixed floor, not content-hugging — without it, the pill's width tracks
+                        // whichever of the four (2 states x 2 languages) strings is currently
+                        // showing, so it visibly resizes on state/language change and AZ's
+                        // "Səbətə əlavə edildi" (the widest, ~139pt including this padding) reads
+                        // as oversized next to EN's much shorter "Added to Cart". This floors it
+                        // at that widest string's width so every state/language renders the same
+                        // considered size instead of cramped in one and ballooning in the other.
+                        minWidth: 145
                     ) {
                         onAddToCart()
                     }
                 }
-                .padding(.top, AppSpacing.xs)
             }
+            .frame(minHeight: 100, alignment: .top)
 
             Spacer(minLength: 0)
 
@@ -83,14 +94,6 @@ struct WishlistRow: View {
         .background(AppColor.background)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
         .shadow(color: AppColor.primaryDeep.opacity(0.08), radius: 12, x: 0, y: 6)
-    }
-
-    /// `.fit` (not the usual grid/rail `.fill` crop) — a saved item's own photo matters more here
-    /// than a uniform thumbnail, so the whole product should stay visible.
-    private var image: some View {
-        CatalogImage(name: product.primaryImageName, contentMode: .fit)
-            .frame(width: 96, height: 96)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
     }
 
     /// Compact dropdown, not a full-screen sheet/dialog — tap to reveal the size options inline,
@@ -114,10 +117,6 @@ struct WishlistRow: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm))
-            // `Menu` otherwise renders its custom label at the system menu-button's default
-            // (much taller) tap-target size instead of hugging this label's own content — this
-            // forces it back to its intrinsic size, matching a plain `Button`'s label.
-            .fixedSize()
         }
         .accessibilityIdentifier("wishlistRowSizeMenu-\(product.id)")
     }
