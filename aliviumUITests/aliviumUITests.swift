@@ -1300,6 +1300,147 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testCancelPendingOrderUpdatesStatusEverywhere() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+            sleep(1)
+        }
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let orderHistoryRow = app.buttons["Sifariş tarixçəsi"].firstMatch
+        if !orderHistoryRow.waitForExistence(timeout: 3) {
+            tabBar.buttons["Profil"].tap()
+        }
+        XCTAssertTrue(orderHistoryRow.waitForExistence(timeout: 5))
+        orderHistoryRow.tap()
+
+        // order-3 is the seeded Pending order.
+        let pendingOrderRow = app.buttons["orderHistoryRow-order-3"].firstMatch
+        XCTAssertTrue(pendingOrderRow.waitForExistence(timeout: 5))
+        pendingOrderRow.tap()
+
+        XCTAssertTrue(app.staticTexts["#AL-70532"].firstMatch.waitForExistence(timeout: 5))
+        let cancelButton = app.buttons["cancelOrderButton"].firstMatch
+        XCTAssertTrue(cancelButton.waitForExistence(timeout: 5), "Expected a Pending order to show Cancel Order")
+        save("cancelOrder_1_detail_pending")
+        cancelButton.tap()
+
+        let confirmButton = app.sheets.buttons["Sifarişi ləğv et"].firstMatch
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 5), "Expected a confirmation dialog before cancelling")
+        confirmButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Ləğv edildi"].firstMatch.waitForExistence(timeout: 5), "Expected the status to update to Cancelled in Order Detail")
+        XCTAssertFalse(app.buttons["cancelOrderButton"].firstMatch.exists, "Expected Cancel Order to disappear once already cancelled")
+        save("cancelOrder_2_detail_cancelled")
+
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+
+        let listRowStatus = app.buttons["orderHistoryRow-order-3"].staticTexts["Ləğv edildi"].firstMatch
+        XCTAssertTrue(listRowStatus.waitForExistence(timeout: 5), "Expected Order History's list row to reflect the cancellation too")
+        save("cancelOrder_3_list_reflects_cancelled")
+    }
+
+    @MainActor
+    func testAddressesScreenSyncsWithCheckoutAndSupportsAddAndDelete() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5))
+        guestButton.tap()
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let addressesRow = app.buttons["Ünvanlar"].firstMatch
+        if !addressesRow.waitForExistence(timeout: 3) {
+            tabBar.buttons["Profil"].tap()
+        }
+        XCTAssertTrue(addressesRow.waitForExistence(timeout: 5))
+        addressesRow.tap()
+
+        // Same two seeded addresses Checkout's Address step reads from — confirms a shared
+        // AddressRepository, not a disconnected list.
+        XCTAssertTrue(app.staticTexts["Home"].firstMatch.waitForExistence(timeout: 5), "Expected the same seeded Home address Checkout uses")
+        XCTAssertTrue(app.staticTexts["Office"].firstMatch.exists, "Expected the same seeded Office address Checkout uses")
+        save("addresses_1_list_matches_checkout")
+
+        app.buttons["addNewAddressButton"].firstMatch.tap()
+
+        let phonePrefix = app.staticTexts["+994"].firstMatch
+        XCTAssertTrue(phonePrefix.waitForExistence(timeout: 5), "Expected a fixed +994 prefix on the phone field")
+        save("addresses_2_add_form_phone_prefix")
+
+        let fullNameField = app.textFields["Ad Soyad"].firstMatch
+        fullNameField.tap()
+        fullNameField.typeText("Test User")
+        let phoneField = app.textFields["Telefon nömrəsi"].firstMatch
+        phoneField.tap()
+        phoneField.typeText("55 111 22 33")
+        let addressLineField = app.textFields["Ünvan"].firstMatch
+        addressLineField.tap()
+        addressLineField.typeText("Test Street 1")
+        let cityField = app.textFields["Şəhər"].firstMatch
+        cityField.tap()
+        cityField.typeText("Gəncə")
+
+        app.buttons["saveAddressButton"].firstMatch.tap()
+
+        let newAddressText = app.staticTexts["Test User"].firstMatch
+        XCTAssertTrue(newAddressText.waitForExistence(timeout: 5), "Expected the newly added address to appear in the list")
+        save("addresses_3_new_address_added")
+
+        // Delete the newly added address — its row is always last (appended), so its delete
+        // button (identified per-row as "deleteAddressButton-<id>", a random UUID) is the last
+        // match among all delete buttons currently on screen.
+        let deleteButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "deleteAddressButton-"))
+        XCTAssertTrue(deleteButtons.count > 0, "Expected at least one delete action")
+        deleteButtons.element(boundBy: deleteButtons.count - 1).tap()
+
+        let deleteConfirmButton = app.sheets.buttons["Sil"].firstMatch
+        XCTAssertTrue(deleteConfirmButton.waitForExistence(timeout: 5))
+        deleteConfirmButton.tap()
+
+        XCTAssertFalse(app.staticTexts["Test User"].firstMatch.waitForExistence(timeout: 5), "Expected the deleted address to be gone")
+        save("addresses_4_deleted")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

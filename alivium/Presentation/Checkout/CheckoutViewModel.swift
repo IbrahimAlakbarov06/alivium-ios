@@ -20,21 +20,14 @@ final class CheckoutViewModel: Identifiable {
 
     private(set) var addressState: CheckoutAddressState = .idle
     var selectedAddressId: String?
-    var isShowingAddAddressForm = false
-
-    // New-address form fields — bound directly from AddAddressView, matching how Login/Register
-    // bind straight to their ViewModel's plain `var` properties rather than a separate form model.
-    var newAddressLabel = ""
-    var newAddressFullName = ""
-    var newAddressPhone = ""
-    var newAddressLine = ""
-    var newAddressCity = ""
-    var newAddressPostalCode = ""
 
     var selectedPaymentMethod: PaymentMethod = .cashOnDelivery
     private(set) var isPlacingOrder = false
 
-    private let addressRepository: AddressRepository
+    /// Not `private` — `CheckoutAddressView` hands this straight to `AddAddressView`, which talks
+    /// to the repository directly rather than through this ViewModel (see `AddAddressView`'s own
+    /// doc comment for why it's a standalone, reusable form).
+    let addressRepository: AddressRepository
     private let cartRepository: CartRepository
     private let orderRepository: OrderRepository
     private let cartBadgeStore: CartBadgeStore
@@ -49,13 +42,6 @@ final class CheckoutViewModel: Identifiable {
     }
 
     var canContinueFromAddress: Bool { selectedAddressId != nil }
-
-    var canSaveNewAddress: Bool {
-        !newAddressFullName.trimmingCharacters(in: .whitespaces).isEmpty
-            && !newAddressPhone.trimmingCharacters(in: .whitespaces).isEmpty
-            && !newAddressLine.trimmingCharacters(in: .whitespaces).isEmpty
-            && !newAddressCity.trimmingCharacters(in: .whitespaces).isEmpty
-    }
 
     var subtotal: Money {
         let minorUnits = items.reduce(0) { $0 + $1.product.effectivePrice.minorUnits * $1.quantity }
@@ -100,37 +86,6 @@ final class CheckoutViewModel: Identifiable {
         } catch {
             addressState = .error(.somethingWentWrong)
         }
-    }
-
-    func saveNewAddress() async {
-        guard canSaveNewAddress else { return }
-        let address = Address(
-            id: UUID().uuidString,
-            label: newAddressLabel.trimmingCharacters(in: .whitespaces).isEmpty ? "Address" : newAddressLabel,
-            fullName: newAddressFullName,
-            phone: newAddressPhone,
-            addressLine: newAddressLine,
-            city: newAddressCity,
-            postalCode: newAddressPostalCode
-        )
-        do {
-            try await addressRepository.addAddress(address)
-            await loadAddresses()
-            selectedAddressId = address.id
-            resetNewAddressForm()
-            isShowingAddAddressForm = false
-        } catch {
-            // Phase 1 mock never actually throws here.
-        }
-    }
-
-    private func resetNewAddressForm() {
-        newAddressLabel = ""
-        newAddressFullName = ""
-        newAddressPhone = ""
-        newAddressLine = ""
-        newAddressCity = ""
-        newAddressPostalCode = ""
     }
 
     /// Places the order — persists a real `Order` record (so Order History reflects what was

@@ -15,4 +15,9 @@ protocol OrderRepository {
     /// Called once Checkout's Payment step actually places an order — persists it so Order
     /// History reflects real usage, not just the static seed data.
     func placeOrder(_ order: Order) async throws
+    /// Currently only reached from cancelling a Pending order, but modeled as a general status
+    /// update (not `cancelOrder(id:)`) — matches how a real backend's Order status almost
+    /// certainly moves through a single `PATCH /orders/{id}/status` rather than one endpoint per
+    /// transition.
+    func updateStatus(orderId: String, status: OrderStatus) async throws
 }

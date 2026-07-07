@@ -17,10 +17,15 @@ struct ProfileView: View {
     @State var chatViewModel: ChatViewModel
     let makeOrderHistoryViewModel: () -> OrderHistoryViewModel
     let makeOrderDetailViewModel: (Order) -> OrderDetailViewModel
+    let makeAddressesViewModel: () -> AddressesViewModel
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var isShowingLogOutConfirm = false
     @State private var isShowingDeleteAccountConfirm = false
     @State private var isShowingChat = false
+    /// Addresses is a leaf screen (its own add/edit form is a sheet, not a further push), so the
+    /// simpler `isPresented`-driven destination is safe here — same reasoning `HomeView` gives
+    /// for Notifications, unlike Order History below.
+    @State private var isShowingAddresses = false
     /// Shared by Order History AND Order Detail's pushes (`NavigationLink(value: order)` inside
     /// `OrderHistoryView` pushes onto this same path) — matches `HomeView.path`'s exact reasoning:
     /// an `.navigationDestination(isPresented:)`/`(item:)` destination re-asserts its own "on the
@@ -53,6 +58,9 @@ struct ProfileView: View {
             .background(AppColor.backgroundOffWhite)
             .navigationDestination(isPresented: $isShowingChat) {
                 ChatView(viewModel: chatViewModel)
+            }
+            .navigationDestination(isPresented: $isShowingAddresses) {
+                AddressesView(viewModel: makeAddressesViewModel())
             }
             .navigationDestination(for: ProfileOrderHistoryRoute.self) { _ in
                 OrderHistoryView(
@@ -183,7 +191,7 @@ struct ProfileView: View {
             }
             ProfileRowDivider()
             ProfileRow(icon: "mappin.and.ellipse", title: localization.string(.addresses)) {
-                // TODO: navigate to Addresses once it exists.
+                isShowingAddresses = true
             }
             ProfileRowDivider()
             ProfileRow(icon: "creditcard", title: localization.string(.paymentMethods)) {
@@ -294,7 +302,8 @@ struct ProfileView: View {
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
         chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
         makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
-        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order) },
+        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()) },
+        makeAddressesViewModel: { AddressesViewModel(addressRepository: MockAddressRepository()) },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )
@@ -307,7 +316,8 @@ struct ProfileView: View {
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
         chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
         makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
-        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order) },
+        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()) },
+        makeAddressesViewModel: { AddressesViewModel(addressRepository: MockAddressRepository()) },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )

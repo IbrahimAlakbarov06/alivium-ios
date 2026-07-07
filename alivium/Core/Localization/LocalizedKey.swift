@@ -244,6 +244,18 @@ enum LocalizedKey: Hashable {
     case orderStatusDelivered
     case orderStatusCancelled
     case orderCancelledMessage
+    case cancelOrder
+    case cancelOrderConfirmTitle
+    case cancelOrderConfirmMessage
+
+    // MARK: - Addresses
+    case addressesEmptyTitle
+    case addressesEmptySubtitle
+    case editAddress
+    case editAddressTitle
+    case deleteAddress
+    case deleteAddressConfirmTitle
+    case deleteAddressConfirmMessage
 
     func value(for language: AppLanguage) -> String {
         switch self {
@@ -704,6 +716,34 @@ enum LocalizedKey: Hashable {
             return language == .az ? "Ləğv edildi" : "Cancelled"
         case .orderCancelledMessage:
             return language == .az ? "Bu sifariş ləğv edilib." : "This order was cancelled."
+        case .cancelOrder:
+            return language == .az ? "Sifarişi ləğv et" : "Cancel Order"
+        case .cancelOrderConfirmTitle:
+            return language == .az ? "Sifariş ləğv edilsin?" : "Cancel Order?"
+        case .cancelOrderConfirmMessage:
+            return language == .az
+                ? "Bu sifarişi ləğv etmək istədiyinizə əminsiniz?"
+                : "Are you sure you want to cancel this order?"
+
+        // MARK: Addresses
+        case .addressesEmptyTitle:
+            return language == .az ? "Hələ ünvan yoxdur" : "No Addresses Yet"
+        case .addressesEmptySubtitle:
+            return language == .az
+                ? "Çatdırılmanı sürətləndirmək üçün bir ünvan əlavə edin."
+                : "Add an address to speed up checkout."
+        case .editAddress:
+            return language == .az ? "Redaktə et" : "Edit"
+        case .editAddressTitle:
+            return language == .az ? "Ünvanı redaktə et" : "Edit Address"
+        case .deleteAddress:
+            return language == .az ? "Sil" : "Delete"
+        case .deleteAddressConfirmTitle:
+            return language == .az ? "Ünvan silinsin?" : "Delete Address?"
+        case .deleteAddressConfirmMessage:
+            return language == .az
+                ? "Bu ünvanı silmək istədiyinizə əminsiniz?"
+                : "Are you sure you want to delete this address?"
         }
     }
 

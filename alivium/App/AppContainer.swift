@@ -122,7 +122,11 @@ final class AppContainer {
     }
 
     func makeOrderDetailViewModel(for order: Order) -> OrderDetailViewModel {
-        OrderDetailViewModel(order: order)
+        OrderDetailViewModel(order: order, orderRepository: orderRepository)
+    }
+
+    func makeAddressesViewModel() -> AddressesViewModel {
+        AddressesViewModel(addressRepository: addressRepository)
     }
 
     func makeNotificationsViewModel() -> NotificationsViewModel {

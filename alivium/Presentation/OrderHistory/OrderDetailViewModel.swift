@@ -13,9 +13,32 @@ import Observation
 /// sake (CLAUDE.md 9.1: "no over-engineering... pragmatic senior code, not ceremony").
 @Observable
 final class OrderDetailViewModel {
-    let order: Order
+    private(set) var order: Order
+    private(set) var isCancelling = false
 
-    init(order: Order) {
+    private let orderRepository: OrderRepository
+
+    var canCancel: Bool { order.status == .pending }
+
+    init(order: Order, orderRepository: OrderRepository) {
         self.order = order
+        self.orderRepository = orderRepository
+    }
+
+    /// Only reachable while `order.status == .pending` — the View gates the Cancel action the
+    /// same way, but this stays defensive since a confirmation dialog can, in principle, fire
+    /// after the underlying state already moved on.
+    @discardableResult
+    func cancelOrder() async -> Bool {
+        guard canCancel, !isCancelling else { return false }
+        isCancelling = true
+        defer { isCancelling = false }
+        do {
+            try await orderRepository.updateStatus(orderId: order.id, status: .cancelled)
+            order.status = .cancelled
+            return true
+        } catch {
+            return false
+        }
     }
 }

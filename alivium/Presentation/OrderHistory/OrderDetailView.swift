@@ -9,7 +9,8 @@ import SwiftUI
 /// a status timeline, and the price breakdown — everything Order History's row only summarizes.
 struct OrderDetailView: View {
     @Environment(LocalizationManager.self) private var localization
-    let viewModel: OrderDetailViewModel
+    @State var viewModel: OrderDetailViewModel
+    @State private var isShowingCancelConfirm = false
 
     private var order: Order { viewModel.order }
 
@@ -22,12 +23,30 @@ struct OrderDetailView: View {
                 addressCard
                 orderInfoCard
                 totalsCard
+                if viewModel.canCancel {
+                    cancelOrderButton
+                }
             }
             .padding(AppSpacing.md)
         }
-        .background(AppColor.backgroundOffWhite)
+        // A soft warm gradient (the same recipe Auth's screens use) instead of a flat off-white —
+        // enough to keep this reading as a considered Alivium screen rather than a stark,
+        // monochrome utility list, without competing with a hero moment like Onboarding's.
+        .background(AuthBackground())
         .navigationTitle(localization.string(.orderDetailTitle))
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            localization.string(.cancelOrderConfirmTitle),
+            isPresented: $isShowingCancelConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(localization.string(.cancelOrder), role: .destructive) {
+                Task { await viewModel.cancelOrder() }
+            }
+            Button(localization.string(.cancel), role: .cancel) {}
+        } message: {
+            Text(localization.string(.cancelOrderConfirmMessage))
+        }
     }
 
     // MARK: - Header
@@ -93,9 +112,9 @@ struct OrderDetailView: View {
             VStack(spacing: 0) {
                 ZStack {
                     Circle()
-                        .fill(isReached ? AppColor.primary : AppColor.surface)
+                        .fill(isReached ? AppColor.accent : AppColor.surface)
                         .overlay(
-                            Circle().stroke(isReached ? AppColor.primary : AppColor.textSecondary.opacity(0.3), lineWidth: 1.5)
+                            Circle().stroke(isReached ? AppColor.accent : AppColor.textSecondary.opacity(0.3), lineWidth: 1.5)
                         )
                     if isCompleted {
                         Image(systemName: "checkmark")
@@ -107,7 +126,7 @@ struct OrderDetailView: View {
 
                 if !isLast {
                     Rectangle()
-                        .fill(isCompleted ? AppColor.primary : AppColor.textSecondary.opacity(0.2))
+                        .fill(isCompleted ? AppColor.accent : AppColor.textSecondary.opacity(0.2))
                         .frame(width: 2)
                         .frame(minHeight: 24)
                 }
@@ -236,6 +255,24 @@ struct OrderDetailView: View {
         .shadow(color: AppColor.primaryDeep.opacity(0.06), radius: 10, x: 0, y: 4)
     }
 
+    // MARK: - Cancel
+
+    /// Only shown while `viewModel.canCancel` (status is Pending) — de-emphasized like Profile's
+    /// own Delete Account, a plain destructive-tinted text button rather than a filled `BaseButton`,
+    /// so it reads as available but never competes with a primary action.
+    private var cancelOrderButton: some View {
+        Button {
+            isShowingCancelConfirm = true
+        } label: {
+            Text(localization.string(.cancelOrder))
+                .font(AppTypography.bodyEmphasis)
+                .foregroundStyle(AppColor.error)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppSpacing.sm)
+        }
+        .accessibilityIdentifier("cancelOrderButton")
+    }
+
     private func infoRow(title: String, value: String, emphasized: Bool = false) -> some View {
         HStack {
             Text(title)
@@ -279,7 +316,8 @@ struct OrderDetailView: View {
                     ),
                     shippingMethod: .standard, paymentMethod: .cashOnDelivery, status: .shipped,
                     subtotal: Money(189.00), placedAt: Date()
-                )
+                ),
+                orderRepository: MockOrderRepository()
             )
         )
     }

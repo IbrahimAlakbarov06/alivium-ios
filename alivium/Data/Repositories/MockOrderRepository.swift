@@ -87,4 +87,10 @@ final class MockOrderRepository: OrderRepository {
         try await Task.sleep(for: .milliseconds(300))
         orders.append(order)
     }
+
+    func updateStatus(orderId: String, status: OrderStatus) async throws {
+        try await Task.sleep(for: .milliseconds(300))
+        guard let index = orders.firstIndex(where: { $0.id == orderId }) else { return }
+        orders[index].status = status
+    }
 }

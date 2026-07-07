@@ -5,10 +5,12 @@
 
 import SwiftUI
 
-/// Color-coded per status — muted gray while nothing has happened yet, gold/accent while the
-/// order is actively moving (confirmed through shipped), primary green once delivered, and error
-/// red for a cancelled order. Shared between `OrderHistoryRow` and `OrderDetailView`'s header so
-/// the two screens can never disagree on what a given status looks like.
+/// Color-coded per status — muted gray while nothing has happened yet (or once cancelled), and
+/// gold/accent for everything actively moving through to Delivered — gold reads as our brand's
+/// "positive/highlight" color everywhere else in the app, so Delivered stays in that same family
+/// (a bolder, filled treatment) rather than switching to an unrelated green. Shared between
+/// `OrderHistoryRow` and `OrderDetailView`'s header so the two screens can never disagree on what
+/// a given status looks like.
 struct OrderStatusBadge: View {
     @Environment(LocalizationManager.self) private var localization
     let status: OrderStatus
@@ -36,19 +38,17 @@ struct OrderStatusBadge: View {
 
     private var foregroundColor: Color {
         switch status {
-        case .pending: return AppColor.textSecondary
+        case .pending, .cancelled: return AppColor.textSecondary
         case .confirmed, .processing, .shipped: return AppColor.accentDeep
-        case .delivered: return AppColor.primary
-        case .cancelled: return AppColor.error
+        case .delivered: return .white
         }
     }
 
     private var backgroundColor: Color {
         switch status {
-        case .pending: return AppColor.textSecondary.opacity(0.12)
+        case .pending, .cancelled: return AppColor.textSecondary.opacity(0.12)
         case .confirmed, .processing, .shipped: return AppColor.accent.opacity(0.18)
-        case .delivered: return AppColor.primary.opacity(0.12)
-        case .cancelled: return AppColor.error.opacity(0.12)
+        case .delivered: return AppColor.accent
         }
     }
 }

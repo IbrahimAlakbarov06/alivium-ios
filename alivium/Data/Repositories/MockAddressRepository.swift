@@ -26,4 +26,15 @@ final class MockAddressRepository: AddressRepository {
         try await Task.sleep(for: .milliseconds(300))
         addresses.append(address)
     }
+
+    func updateAddress(_ address: Address) async throws {
+        try await Task.sleep(for: .milliseconds(300))
+        guard let index = addresses.firstIndex(where: { $0.id == address.id }) else { return }
+        addresses[index] = address
+    }
+
+    func deleteAddress(id: String) async throws {
+        try await Task.sleep(for: .milliseconds(200))
+        addresses.removeAll { $0.id == id }
+    }
 }

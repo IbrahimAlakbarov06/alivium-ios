@@ -19,6 +19,9 @@ struct BaseTextField: View {
     var autocapitalization: TextInputAutocapitalization? = nil
     var disablesAutocorrection: Bool? = nil
     var errorMessage: String? = nil
+    /// A fixed, non-editable label shown before the field's own text (e.g. "+994" ahead of a
+    /// phone number) — `text` only ever holds what the shopper types after it.
+    var prefix: String? = nil
 
     @State private var isSecureTextVisible: Bool = false
     @FocusState private var isFocused: Bool
@@ -28,6 +31,12 @@ struct BaseTextField: View {
             HStack(spacing: AppSpacing.xs) {
                 if style == .search {
                     Image(systemName: "magnifyingglass")
+                        .foregroundStyle(AppColor.textSecondary)
+                }
+
+                if let prefix {
+                    Text(prefix)
+                        .font(AppTypography.body)
                         .foregroundStyle(AppColor.textSecondary)
                 }
 

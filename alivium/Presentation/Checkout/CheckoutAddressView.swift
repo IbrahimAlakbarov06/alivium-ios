@@ -12,6 +12,7 @@ import SwiftUI
 struct CheckoutAddressView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: CheckoutViewModel
+    @State private var isShowingAddAddressForm = false
     let onCancel: () -> Void
     let onContinue: () -> Void
 
@@ -22,8 +23,18 @@ struct CheckoutAddressView: View {
         }
         .background(AppColor.backgroundOffWhite)
         .task { viewModel.onAppearAddressStep() }
-        .sheet(isPresented: $viewModel.isShowingAddAddressForm) {
-            AddAddressView(viewModel: viewModel)
+        .sheet(isPresented: $isShowingAddAddressForm) {
+            AddAddressView(
+                addressRepository: viewModel.addressRepository,
+                onSave: { address in
+                    isShowingAddAddressForm = false
+                    Task {
+                        await viewModel.loadAddresses()
+                        viewModel.selectedAddressId = address.id
+                    }
+                },
+                onCancel: { isShowingAddAddressForm = false }
+            )
         }
     }
 
@@ -127,7 +138,7 @@ struct CheckoutAddressView: View {
 
     private var addNewAddressButton: some View {
         Button {
-            viewModel.isShowingAddAddressForm = true
+            isShowingAddAddressForm = true
         } label: {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "plus.circle")

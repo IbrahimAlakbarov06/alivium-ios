@@ -27,6 +27,13 @@ struct OrderHistoryView: View {
             .navigationTitle(localization.string(.orderHistory))
             .navigationBarTitleDisplayMode(.inline)
             .task { viewModel.onAppear() }
+            // Plain `.onAppear` (not `.task`, which only fires once for this view's lifetime)
+            // so returning here after cancelling an order in Order Detail picks up its new
+            // status — this view stays mounted underneath that push the whole time.
+            .onAppear {
+                guard viewModel.state != .idle else { return }
+                Task { await viewModel.loadOrders() }
+            }
     }
 
     @ViewBuilder
@@ -103,7 +110,7 @@ struct OrderHistoryView: View {
             onRequestAuthFlow: {}
         )
         .navigationDestination(for: Order.self) { order in
-            OrderDetailView(viewModel: OrderDetailViewModel(order: order))
+            OrderDetailView(viewModel: OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()))
         }
     }
     .environment(LocalizationManager())
