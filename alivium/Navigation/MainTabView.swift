@@ -18,6 +18,7 @@ struct MainTabView: View {
     @State private var chatViewModel: ChatViewModel
     let onLogOut: () -> Void
     private let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    private let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     private let cartBadgeStore: CartBadgeStore
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
@@ -29,19 +30,30 @@ struct MainTabView: View {
         _chatViewModel = State(initialValue: container.makeChatViewModel())
         self.onLogOut = onLogOut
         self.makeProductDetailViewModel = { container.makeProductDetailViewModel(for: $0) }
+        self.makeProductListingViewModel = { container.makeProductListingViewModel(source: $0) }
         self.cartBadgeStore = container.cartBadgeStore
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                HomeView(viewModel: homeViewModel, makeProductDetailViewModel: makeProductDetailViewModel, onRequestAuthFlow: onLogOut)
+                HomeView(
+                    viewModel: homeViewModel,
+                    makeProductDetailViewModel: makeProductDetailViewModel,
+                    makeProductListingViewModel: makeProductListingViewModel,
+                    onRequestAuthFlow: onLogOut
+                )
             }
             .tabItem { Label(localization.string(.homeTab), systemImage: "house.fill") }
             .tag(AppTab.home)
 
             NavigationStack {
-                SearchView(viewModel: searchViewModel, makeProductDetailViewModel: makeProductDetailViewModel, onRequestAuthFlow: onLogOut)
+                SearchView(
+                    viewModel: searchViewModel,
+                    makeProductDetailViewModel: makeProductDetailViewModel,
+                    makeProductListingViewModel: makeProductListingViewModel,
+                    onRequestAuthFlow: onLogOut
+                )
             }
             .tabItem { Label(localization.string(.searchTab), systemImage: "magnifyingglass") }
             .tag(AppTab.search)

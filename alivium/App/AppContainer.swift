@@ -91,6 +91,15 @@ final class AppContainer {
         CartViewModel(cartRepository: cartRepository, cartBadgeStore: cartBadgeStore)
     }
 
+    func makeProductListingViewModel(source: ProductListingSource) -> ProductListingViewModel {
+        ProductListingViewModel(
+            source: source,
+            productRepository: productRepository,
+            wishlistRepository: wishlistRepository,
+            userSession: userSession
+        )
+    }
+
     func makeProductDetailViewModel(for product: Product) -> ProductDetailViewModel {
         ProductDetailViewModel(
             product: product,

@@ -8,7 +8,7 @@ import Foundation
 /// Every user-facing string in the app, resolved per `AppLanguage`. Enum-driven like
 /// `BaseButton`'s style enum — one centralized catalog instead of strings scattered across
 /// views, so every screen stays in sync and nothing gets translated inconsistently or missed.
-enum LocalizedKey: Equatable {
+enum LocalizedKey: Hashable {
     // MARK: - Onboarding
     case skip
     case next
@@ -109,6 +109,17 @@ enum LocalizedKey: Equatable {
     case categoryBags
     case categoryAccessories
     case categorySale
+
+    // MARK: - Category / Product Listing
+    case sortLabel
+    case sortFeatured
+    case sortPriceLowToHigh
+    case sortPriceHighToLow
+    case sortTopRated
+    case onSaleFilter
+    case categoryEmptyTitle
+    case categoryEmptySubtitle
+    case noProductsMatchFilters
 
     // MARK: - Wishlist
     case wishlistEmptyTitle
@@ -371,6 +382,28 @@ enum LocalizedKey: Equatable {
         case .categorySale:
             return language == .az ? "Endirim" : "Sale"
 
+        // MARK: Category / Product Listing
+        case .sortLabel:
+            return language == .az ? "Sırala" : "Sort"
+        case .sortFeatured:
+            return language == .az ? "Seçilmiş" : "Featured"
+        case .sortPriceLowToHigh:
+            return language == .az ? "Qiymət: Aşağıdan Yuxarı" : "Price: Low to High"
+        case .sortPriceHighToLow:
+            return language == .az ? "Qiymət: Yuxarıdan Aşağı" : "Price: High to Low"
+        case .sortTopRated:
+            return language == .az ? "Ən Yüksək Reytinq" : "Top Rated"
+        case .onSaleFilter:
+            return language == .az ? "Endirimli" : "On Sale"
+        case .categoryEmptyTitle:
+            return language == .az ? "Hələ məhsul yoxdur" : "No Products Yet"
+        case .categoryEmptySubtitle:
+            return language == .az
+                ? "Bu kateqoriyada yeni məhsullar üçün tezliklə yenidən yoxlayın."
+                : "Check back soon for new arrivals in this category."
+        case .noProductsMatchFilters:
+            return language == .az ? "Filtrlərinizə uyğun məhsul tapılmadı" : "No products match your filters"
+
         // MARK: Wishlist
         case .wishlistEmptyTitle:
             return language == .az ? "Seçilmişlər siyahınız boşdur" : "Your Wishlist is Empty"
@@ -515,6 +548,18 @@ enum LocalizedKey: Equatable {
         case "bags": return .categoryBags
         case "accessories": return .categoryAccessories
         case "sale": return .categorySale
+        default: return nil
+        }
+    }
+
+    /// Maps a `ProductSortOption`'s raw value to its catalog key — same indirection as
+    /// `categoryName(forId:)`, keeping this file free of a direct `Domain` import.
+    static func sortOptionName(forId id: String) -> LocalizedKey? {
+        switch id {
+        case "featured": return .sortFeatured
+        case "priceLowToHigh": return .sortPriceLowToHigh
+        case "priceHighToLow": return .sortPriceHighToLow
+        case "topRated": return .sortTopRated
         default: return nil
         }
     }

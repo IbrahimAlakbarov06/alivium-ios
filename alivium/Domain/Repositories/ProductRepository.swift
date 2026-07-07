@@ -14,4 +14,6 @@ protocol ProductRepository {
     /// Simple substring match on product name in Phase 1 (Discover's search-as-you-type);
     /// becomes a real search endpoint call in Phase 2.
     func searchProducts(query: String) async throws -> [Product]
+    /// Backs the Category/Product Listing screen reached from a Discover category tap.
+    func fetchProducts(byCategory categoryId: String) async throws -> [Product]
 }

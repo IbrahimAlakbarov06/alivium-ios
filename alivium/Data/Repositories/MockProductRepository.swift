@@ -158,4 +158,10 @@ final class MockProductRepository: ProductRepository {
         let all = Self.featuredProducts + Self.recommendedProducts
         return all.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
+
+    func fetchProducts(byCategory categoryId: String) async throws -> [Product] {
+        try await Task.sleep(for: .seconds(1))
+        let all = Self.featuredProducts + Self.recommendedProducts
+        return all.filter { $0.categoryId == categoryId }
+    }
 }

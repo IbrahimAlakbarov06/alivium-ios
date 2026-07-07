@@ -9,8 +9,13 @@ struct SearchView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: SearchViewModel
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
     let onRequestAuthFlow: () -> Void
+    /// Pushed imperatively from a category banner/subcategory row tap — see HomeView's identical
+    /// property for why `.navigationDestination(item:)` fits better than a `NavigationLink` value
+    /// here (both are plain `Button` actions, not link-wrapped rows).
+    @State private var pushedListingSource: ProductListingSource?
 
     /// Top-level categories with a big banner — leaf categories that also work as full-width
     /// browse entry points. Ids, not names, so this stays correct if copy changes.
@@ -36,6 +41,13 @@ struct SearchView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(
                 viewModel: makeProductDetailViewModel(product),
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
+            )
+        }
+        .navigationDestination(item: $pushedListingSource) { source in
+            ProductListingView(
+                viewModel: makeProductListingViewModel(source),
                 makeProductDetailViewModel: makeProductDetailViewModel,
                 onRequestAuthFlow: onRequestAuthFlow
             )
@@ -133,13 +145,13 @@ struct SearchView: View {
                                 viewModel.toggleCategoryExpansion(category)
                             }
                         } else {
-                            // TODO: navigate to Category/Product Listing once it exists.
+                            pushedListingSource = .category(category)
                         }
                     }
 
                     if isExpanded {
-                        SubcategoryList(subcategories: category.subcategories) { _ in
-                            // TODO: navigate to Category/Product Listing once it exists.
+                        SubcategoryList(subcategories: category.subcategories) { subcategory in
+                            pushedListingSource = .category(subcategory)
                         }
                     }
                 }
@@ -234,6 +246,14 @@ struct SearchView: View {
                     cartRepository: MockCartRepository(),
                     wishlistRepository: MockWishlistRepository(),
                     cartBadgeStore: CartBadgeStore(),
+                    userSession: UserSession()
+                )
+            },
+            makeProductListingViewModel: { source in
+                ProductListingViewModel(
+                    source: source,
+                    productRepository: MockProductRepository(),
+                    wishlistRepository: MockWishlistRepository(),
                     userSession: UserSession()
                 )
             },

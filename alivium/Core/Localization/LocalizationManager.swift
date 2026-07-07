@@ -43,4 +43,11 @@ final class LocalizationManager {
         guard let key = LocalizedKey.categoryName(forId: category.id) else { return category.name }
         return string(key)
     }
+
+    /// Same fallback shape as `string(forCategory:)` — resolves through the catalog, defaulting
+    /// to the raw case name if a future `ProductSortOption` case is added without copy yet.
+    func string(forSort option: ProductSortOption) -> String {
+        guard let key = LocalizedKey.sortOptionName(forId: option.rawValue) else { return option.rawValue }
+        return string(key)
+    }
 }

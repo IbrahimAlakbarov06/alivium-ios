@@ -9,8 +9,13 @@ struct HomeView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: HomeViewModel
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
     let onRequestAuthFlow: () -> Void
+    /// Pushed imperatively from a rail's "Show all" tap — a plain `Button` action, not a
+    /// `NavigationLink` value, so `.navigationDestination(item:)` is the natural fit instead of
+    /// wrapping the whole `SectionHeader` in a hidden background link like the product cards do.
+    @State private var pushedListingSource: ProductListingSource?
 
     var body: some View {
         ScrollView {
@@ -28,6 +33,13 @@ struct HomeView: View {
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(
                 viewModel: makeProductDetailViewModel(product),
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
+            )
+        }
+        .navigationDestination(item: $pushedListingSource) { source in
+            ProductListingView(
+                viewModel: makeProductListingViewModel(source),
                 makeProductDetailViewModel: makeProductDetailViewModel,
                 onRequestAuthFlow: onRequestAuthFlow
             )
@@ -81,7 +93,7 @@ struct HomeView: View {
                 .padding(.horizontal, AppSpacing.md)
 
             productRail(
-                title: localization.string(.featuredProducts),
+                titleKey: .featuredProducts,
                 products: feed.featuredProducts,
                 layout: .rail
             )
@@ -95,7 +107,7 @@ struct HomeView: View {
             }
 
             productRail(
-                title: localization.string(.recommended),
+                titleKey: .recommended,
                 products: feed.recommendedProducts,
                 layout: .wide
             )
@@ -123,10 +135,10 @@ struct HomeView: View {
         }
     }
 
-    private func productRail(title: String, products: [Product], layout: ProductCardLayout) -> some View {
+    private func productRail(titleKey: LocalizedKey, products: [Product], layout: ProductCardLayout) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            SectionHeader(title: title, actionTitle: localization.string(.showAll)) {
-                // TODO: navigate to Category/Product Listing once it exists.
+            SectionHeader(title: localization.string(titleKey), actionTitle: localization.string(.showAll)) {
+                pushedListingSource = .curated(titleKey: titleKey, products: products)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -208,6 +220,14 @@ struct HomeView: View {
                     cartRepository: MockCartRepository(),
                     wishlistRepository: MockWishlistRepository(),
                     cartBadgeStore: CartBadgeStore(),
+                    userSession: UserSession()
+                )
+            },
+            makeProductListingViewModel: { source in
+                ProductListingViewModel(
+                    source: source,
+                    productRepository: MockProductRepository(),
+                    wishlistRepository: MockWishlistRepository(),
                     userSession: UserSession()
                 )
             },
