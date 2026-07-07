@@ -5,7 +5,7 @@
 
 /// Mirrors the backend's `ShippingMethod` enum (CLAUDE.md 6) — already defined there, so this
 /// shape is ready to wire to the real value once Checkout/Order networking lands in Phase 2.
-enum ShippingMethod: String, CaseIterable, Identifiable, Equatable {
+enum ShippingMethod: String, CaseIterable, Identifiable, Equatable, Hashable {
     case free
     case standard
     case fast

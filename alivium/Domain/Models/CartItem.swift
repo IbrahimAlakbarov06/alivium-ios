@@ -3,7 +3,7 @@
 //  alivium
 //
 
-struct CartItem: Identifiable, Equatable {
+struct CartItem: Identifiable, Equatable, Hashable {
     let id: String
     let product: Product
     let selectedVariant: ProductVariant?

@@ -30,6 +30,9 @@ struct MainTabView: View {
     private let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
     private let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     private let makeCollectionDetailViewModel: (ProductCollection) -> CollectionDetailViewModel
+    private let makeCheckoutViewModel: ([CartItem], ShippingMethod) -> CheckoutViewModel
+    private let makeOrderHistoryViewModel: () -> OrderHistoryViewModel
+    private let makeOrderDetailViewModel: (Order) -> OrderDetailViewModel
     private let cartBadgeStore: CartBadgeStore
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
@@ -44,6 +47,11 @@ struct MainTabView: View {
         self.makeProductDetailViewModel = { container.makeProductDetailViewModel(for: $0) }
         self.makeProductListingViewModel = { container.makeProductListingViewModel(source: $0) }
         self.makeCollectionDetailViewModel = { container.makeCollectionDetailViewModel(for: $0) }
+        self.makeCheckoutViewModel = { items, shippingMethod in
+            container.makeCheckoutViewModel(items: items, selectedShippingMethod: shippingMethod)
+        }
+        self.makeOrderHistoryViewModel = { container.makeOrderHistoryViewModel() }
+        self.makeOrderDetailViewModel = { container.makeOrderDetailViewModel(for: $0) }
         self.cartBadgeStore = container.cartBadgeStore
     }
 
@@ -90,6 +98,7 @@ struct MainTabView: View {
                 CartView(
                     viewModel: cartViewModel,
                     makeProductDetailViewModel: makeProductDetailViewModel,
+                    makeCheckoutViewModel: makeCheckoutViewModel,
                     onBrowseHome: { selectedTab = .home },
                     onRequestAuthFlow: onLogOut
                 )
@@ -101,7 +110,14 @@ struct MainTabView: View {
             // spring-driven dot transition) rather than an instant static number swap.
             .animation(.spring(response: 0.35, dampingFraction: 0.55), value: cartBadgeStore.itemCount)
 
-            ProfileView(viewModel: profileViewModel, chatViewModel: chatViewModel, onRequestAuthFlow: onLogOut)
+            ProfileView(
+                viewModel: profileViewModel,
+                chatViewModel: chatViewModel,
+                makeOrderHistoryViewModel: makeOrderHistoryViewModel,
+                makeOrderDetailViewModel: makeOrderDetailViewModel,
+                onRequestAuthFlow: onLogOut,
+                onBrowseHome: { selectedTab = .home }
+            )
                 .tabItem { Label(localization.string(.profileTab), systemImage: "person") }
                 .tag(AppTab.profile)
         }

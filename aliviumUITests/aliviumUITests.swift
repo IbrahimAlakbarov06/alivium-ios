@@ -1080,6 +1080,226 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testCheckoutFlowFromCartToConfirmation() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5))
+        guestButton.tap()
+
+        // --- Add an item to Cart via Product Detail ---
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1)
+
+        let silkDress = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(silkDress.waitForExistence(timeout: 5))
+        silkDress.tap()
+
+        app.buttons["M"].firstMatch.tap()
+        let addToCartButton = app.buttons["Səbətə əlavə et"].firstMatch
+        XCTAssertTrue(addToCartButton.waitForExistence(timeout: 5))
+        addToCartButton.tap()
+        sleep(1)
+        app.buttons["productDetailBackButton"].firstMatch.tap()
+
+        // --- Cart: proceed to checkout ---
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Səbət"].tap()
+
+        let proceedButton = app.buttons["proceedToCheckoutButton"].firstMatch
+        XCTAssertTrue(proceedButton.waitForExistence(timeout: 5), "Expected the item added from Product Detail to appear in Cart")
+        save("checkout_1_cart_with_item")
+        proceedButton.tap()
+
+        // --- Step 1: Address ---
+        let homeAddressRow = app.buttons["checkoutAddressRow-addr-1"].firstMatch
+        XCTAssertTrue(homeAddressRow.waitForExistence(timeout: 5), "Expected the seeded Home address")
+        XCTAssertTrue(app.staticTexts["Office"].firstMatch.exists, "Expected the seeded Office address too")
+        homeAddressRow.tap()
+        save("checkout_2_address_selected")
+
+        let continueButton = app.buttons["checkoutContinueButton"].firstMatch
+        XCTAssertTrue(continueButton.isEnabled, "Expected Continue enabled once an address is selected")
+        continueButton.tap()
+
+        // --- Step 2: Payment ---
+        let cashRow = app.buttons["paymentMethodCashOnDelivery"].firstMatch
+        XCTAssertTrue(cashRow.waitForExistence(timeout: 5), "Expected Cash on Delivery as a real, selectable option")
+        XCTAssertTrue(cashRow.isEnabled, "Expected Cash on Delivery to be selectable")
+
+        let cardRow = app.buttons["paymentMethodCard"].firstMatch
+        XCTAssertTrue(cardRow.exists, "Expected Card to be visually present")
+        XCTAssertFalse(cardRow.isEnabled, "Expected Card to be non-functional (Coming soon), not selectable")
+        XCTAssertTrue(app.staticTexts["Tezliklə"].firstMatch.exists, "Expected a Coming soon label on the Card option")
+        save("checkout_3_payment_methods")
+
+        // Cash on Delivery is the default — confirm tapping it (still selected) works without error.
+        cashRow.tap()
+
+        let placeOrderButton = app.buttons["placeOrderButton"].firstMatch
+        XCTAssertTrue(placeOrderButton.waitForExistence(timeout: 5))
+        placeOrderButton.tap()
+
+        // --- Step 3: Confirmation ---
+        let orderPlacedTitle = app.staticTexts["Sifariş verildi!"].firstMatch
+        XCTAssertTrue(orderPlacedTitle.waitForExistence(timeout: 5), "Expected the Order Placed confirmation")
+        XCTAssertTrue(app.staticTexts["Sifariş nömrəsi"].firstMatch.exists, "Expected an order number row")
+        XCTAssertTrue(app.staticTexts["Təxmini çatdırılma"].firstMatch.exists, "Expected an estimated delivery row")
+        save("checkout_4_confirmation")
+
+        let backToHomeButton = app.buttons["orderConfirmationBackToHomeButton"].firstMatch
+        XCTAssertTrue(backToHomeButton.waitForExistence(timeout: 5))
+        backToHomeButton.tap()
+
+        // --- Back on Home, then Cart should be empty (order placement cleared it) ---
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5), "Expected Back to Home to land on the Home tab")
+        save("checkout_5_back_at_home")
+
+        tabBar.buttons["Səbət"].tap()
+        let cartEmptyTitle = app.staticTexts["Səbətiniz boşdur"].firstMatch
+        XCTAssertTrue(cartEmptyTitle.waitForExistence(timeout: 5), "Expected Cart to be empty after a completed order")
+        save("checkout_6_cart_empty")
+    }
+
+    @MainActor
+    func testOrderHistoryShowsSeededOrdersAndNewlyPlacedOrder() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        // Order History requires a real session (guest gets a sign-in prompt instead), so this
+        // logs in for real rather than continuing as guest.
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+            sleep(1)
+        }
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let orderHistoryRow = app.buttons["Sifariş tarixçəsi"].firstMatch
+        if !orderHistoryRow.waitForExistence(timeout: 3) {
+            // The tab tap can occasionally race the post-login transition animation; retry once
+            // (same race documented in testProfileGuestAndAuthenticatedFlow).
+            tabBar.buttons["Profil"].tap()
+        }
+        XCTAssertTrue(orderHistoryRow.waitForExistence(timeout: 5))
+        orderHistoryRow.tap()
+
+        // --- Order History: seeded orders ---
+        let seededOrderRow = app.buttons["orderHistoryRow-order-3"].firstMatch
+        XCTAssertTrue(seededOrderRow.waitForExistence(timeout: 5), "Expected the seeded Pending order")
+        XCTAssertTrue(app.buttons["orderHistoryRow-order-2"].firstMatch.exists, "Expected the seeded Shipped order")
+        XCTAssertTrue(app.buttons["orderHistoryRow-order-1"].firstMatch.exists, "Expected the seeded Delivered order")
+        save("orderHistory_1_seeded_list")
+
+        seededOrderRow.tap()
+
+        // --- Order Detail ---
+        XCTAssertTrue(app.staticTexts["#AL-70532"].firstMatch.waitForExistence(timeout: 5), "Expected the tapped order's number")
+        XCTAssertTrue(app.staticTexts["Gözləmədə"].firstMatch.exists, "Expected the Pending status badge/timeline stage")
+        XCTAssertTrue(app.staticTexts["Cashmere Blend Sweater"].firstMatch.exists, "Expected the order's real line item")
+        save("orderHistory_2_detail")
+
+        // Order Detail's back button shows the previous screen's title ("Sifariş tarixçəsi") as
+        // its label rather than a generic "Back" (unlike a push from a titleless screen), so it's
+        // looked up by its stable `identifier` instead.
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+
+        // --- Place a brand-new order through Checkout ---
+        tabBar.buttons["Əsas"].tap()
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1)
+
+        let silkDress = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(silkDress.waitForExistence(timeout: 5))
+        silkDress.tap()
+
+        app.buttons["M"].firstMatch.tap()
+        let addToCartButton = app.buttons["Səbətə əlavə et"].firstMatch
+        XCTAssertTrue(addToCartButton.waitForExistence(timeout: 5))
+        addToCartButton.tap()
+        sleep(1)
+        app.buttons["productDetailBackButton"].firstMatch.tap()
+
+        tabBar.buttons["Səbət"].tap()
+        let proceedButton = app.buttons["proceedToCheckoutButton"].firstMatch
+        XCTAssertTrue(proceedButton.waitForExistence(timeout: 5))
+        proceedButton.tap()
+
+        let addressRow = app.buttons["checkoutAddressRow-addr-1"].firstMatch
+        XCTAssertTrue(addressRow.waitForExistence(timeout: 5))
+        addressRow.tap()
+        app.buttons["checkoutContinueButton"].firstMatch.tap()
+
+        let placeOrderButton = app.buttons["placeOrderButton"].firstMatch
+        XCTAssertTrue(placeOrderButton.waitForExistence(timeout: 5))
+        placeOrderButton.tap()
+
+        let backToHomeButton = app.buttons["orderConfirmationBackToHomeButton"].firstMatch
+        XCTAssertTrue(backToHomeButton.waitForExistence(timeout: 5))
+        backToHomeButton.tap()
+
+        // --- Order History should now show the just-placed order at the top ---
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+        let orderHistoryRowAgain = app.buttons["Sifariş tarixçəsi"].firstMatch
+        if !orderHistoryRowAgain.waitForExistence(timeout: 3) {
+            tabBar.buttons["Profil"].tap()
+        }
+        XCTAssertTrue(orderHistoryRowAgain.waitForExistence(timeout: 5))
+        orderHistoryRowAgain.tap()
+
+        let scrollView = app.scrollViews["orderHistoryScrollView"].firstMatch
+        XCTAssertTrue(scrollView.waitForExistence(timeout: 5))
+        let firstRowOrderNumber = scrollView.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '#AL-'")).firstMatch
+        XCTAssertTrue(firstRowOrderNumber.waitForExistence(timeout: 5))
+        XCTAssertFalse(
+            ["#AL-58213", "#AL-61947", "#AL-70532"].contains(firstRowOrderNumber.label),
+            "Expected the newly placed order's number at the top, not a seeded order's"
+        )
+        save("orderHistory_3_new_order_at_top")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

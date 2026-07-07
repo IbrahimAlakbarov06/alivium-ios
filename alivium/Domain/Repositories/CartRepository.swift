@@ -10,4 +10,6 @@ protocol CartRepository {
     func addItem(product: Product, variant: ProductVariant?, quantity: Int) async throws -> CartItem
     func updateQuantity(itemId: String, quantity: Int) async throws
     func removeItem(itemId: String) async throws
+    /// Empties the cart entirely — called once Checkout successfully places an order.
+    func clearCart() async throws
 }

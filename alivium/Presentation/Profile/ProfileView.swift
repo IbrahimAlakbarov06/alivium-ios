@@ -5,22 +5,38 @@
 
 import SwiftUI
 
+/// A marker value (no associated data) that pushes `OrderHistoryView` onto `ProfileView.path` —
+/// see that property's doc comment for why this can't be a boolean/optional-driven destination.
+private enum ProfileOrderHistoryRoute: Hashable {
+    case show
+}
+
 struct ProfileView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: ProfileViewModel
     @State var chatViewModel: ChatViewModel
+    let makeOrderHistoryViewModel: () -> OrderHistoryViewModel
+    let makeOrderDetailViewModel: (Order) -> OrderDetailViewModel
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var isShowingLogOutConfirm = false
     @State private var isShowingDeleteAccountConfirm = false
     @State private var isShowingChat = false
+    /// Shared by Order History AND Order Detail's pushes (`NavigationLink(value: order)` inside
+    /// `OrderHistoryView` pushes onto this same path) — matches `HomeView.path`'s exact reasoning:
+    /// an `.navigationDestination(isPresented:)`/`(item:)` destination re-asserts its own "on the
+    /// path" invariant, which shoves a second push (Order Detail) right back off the stack the
+    /// moment it lands on top. A single shared `NavigationPath` has no such invariant to reassert.
+    @State private var path = NavigationPath()
 
     /// Fires once we should drop back to the Auth flow — from a confirmed Log Out, a confirmed
     /// Delete Account, or Guest tapping the header's "Log In / Sign Up" CTA directly (which
     /// needs no repository call, since a guest has no session to tear down).
     let onRequestAuthFlow: () -> Void
+    /// Wired to the tab shell's Home tab — Order History's empty-state "Start Browsing" CTA.
+    let onBrowseHome: () -> Void
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: AppSpacing.xxl) {
                     headerCard
@@ -37,6 +53,16 @@ struct ProfileView: View {
             .background(AppColor.backgroundOffWhite)
             .navigationDestination(isPresented: $isShowingChat) {
                 ChatView(viewModel: chatViewModel)
+            }
+            .navigationDestination(for: ProfileOrderHistoryRoute.self) { _ in
+                OrderHistoryView(
+                    viewModel: makeOrderHistoryViewModel(),
+                    onBrowseHome: onBrowseHome,
+                    onRequestAuthFlow: onRequestAuthFlow
+                )
+            }
+            .navigationDestination(for: Order.self) { order in
+                OrderDetailView(viewModel: makeOrderDetailViewModel(order))
             }
         }
         .confirmationDialog(
@@ -153,7 +179,7 @@ struct ProfileView: View {
     private var accountSection: some View {
         ProfileSectionCard(title: localization.string(.accountSection)) {
             ProfileRow(icon: "shippingbox", title: localization.string(.orderHistory)) {
-                // TODO: navigate to Order History once it exists.
+                path.append(ProfileOrderHistoryRoute.show)
             }
             ProfileRowDivider()
             ProfileRow(icon: "mappin.and.ellipse", title: localization.string(.addresses)) {
@@ -267,16 +293,23 @@ struct ProfileView: View {
     return ProfileView(
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
         chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
-        onRequestAuthFlow: {}
+        makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
+        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order) },
+        onRequestAuthFlow: {},
+        onBrowseHome: {}
     )
     .environment(LocalizationManager())
 }
 
 #Preview("Guest") {
-    ProfileView(
-        viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: UserSession()),
+    let session = UserSession()
+    return ProfileView(
+        viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
         chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
-        onRequestAuthFlow: {}
+        makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
+        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order) },
+        onRequestAuthFlow: {},
+        onBrowseHome: {}
     )
     .environment(LocalizationManager())
 }

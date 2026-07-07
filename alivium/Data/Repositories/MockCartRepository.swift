@@ -38,4 +38,9 @@ final class MockCartRepository: CartRepository {
         try await Task.sleep(for: .milliseconds(200))
         items.removeAll { $0.id == itemId }
     }
+
+    func clearCart() async throws {
+        try await Task.sleep(for: .milliseconds(200))
+        items.removeAll()
+    }
 }

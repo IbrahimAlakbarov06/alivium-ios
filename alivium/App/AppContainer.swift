@@ -17,6 +17,8 @@ final class AppContainer {
     let cartRepository: CartRepository
     let reviewRepository: ReviewRepository
     let notificationRepository: NotificationRepository
+    let addressRepository: AddressRepository
+    let orderRepository: OrderRepository
     let localizationManager: LocalizationManager
     let userSession: UserSession
     let cartBadgeStore: CartBadgeStore
@@ -30,6 +32,8 @@ final class AppContainer {
         self.cartRepository = MockCartRepository()
         self.reviewRepository = MockReviewRepository()
         self.notificationRepository = MockNotificationRepository()
+        self.addressRepository = MockAddressRepository()
+        self.orderRepository = MockOrderRepository()
         self.localizationManager = LocalizationManager()
         self.userSession = UserSession()
         self.cartBadgeStore = CartBadgeStore()
@@ -100,6 +104,25 @@ final class AppContainer {
             wishlistRepository: wishlistRepository,
             userSession: userSession
         )
+    }
+
+    func makeCheckoutViewModel(items: [CartItem], selectedShippingMethod: ShippingMethod) -> CheckoutViewModel {
+        CheckoutViewModel(
+            items: items,
+            selectedShippingMethod: selectedShippingMethod,
+            addressRepository: addressRepository,
+            cartRepository: cartRepository,
+            orderRepository: orderRepository,
+            cartBadgeStore: cartBadgeStore
+        )
+    }
+
+    func makeOrderHistoryViewModel() -> OrderHistoryViewModel {
+        OrderHistoryViewModel(orderRepository: orderRepository, userSession: userSession)
+    }
+
+    func makeOrderDetailViewModel(for order: Order) -> OrderDetailViewModel {
+        OrderDetailViewModel(order: order)
     }
 
     func makeNotificationsViewModel() -> NotificationsViewModel {

@@ -9,9 +9,18 @@ struct CartView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: CartViewModel
     @State private var isPromoCodeExpanded = false
+    /// Built lazily — the moment "Proceed to Checkout" is tapped — so it snapshots whatever
+    /// `viewModel.items`/`selectedShippingMethod` actually are at that instant, rather than a
+    /// live reference that would keep changing under the checkout flow's feet. Presentation is
+    /// driven directly off this optional via `.fullScreenCover(item:)` rather than a separate
+    /// `Bool` — a `Bool` set alongside the optional in the same action races the cover's content
+    /// closure, which can fire while the optional is still nil.
+    @State private var checkoutViewModel: CheckoutViewModel?
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
+    let makeCheckoutViewModel: ([CartItem], ShippingMethod) -> CheckoutViewModel
 
-    /// Wired to the tab shell's Home tab — "Start Browsing" from the empty state.
+    /// Wired to the tab shell's Home tab — "Start Browsing" from the empty state, and also where
+    /// Checkout's "Back to Home" on a completed order lands.
     let onBrowseHome: () -> Void
     /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow, needed
     /// here so a pushed Product Detail's wishlist-heart sign-in prompt has somewhere to go.
@@ -33,6 +42,16 @@ struct CartView: View {
                 viewModel: makeProductDetailViewModel(product),
                 makeProductDetailViewModel: makeProductDetailViewModel,
                 onRequestAuthFlow: onRequestAuthFlow
+            )
+        }
+        .fullScreenCover(item: $checkoutViewModel) { checkoutViewModel in
+            CheckoutFlowView(
+                viewModel: checkoutViewModel,
+                onCancel: { self.checkoutViewModel = nil },
+                onOrderComplete: {
+                    self.checkoutViewModel = nil
+                    onBrowseHome()
+                }
             )
         }
     }
@@ -231,8 +250,9 @@ struct CartView: View {
             }
 
             BaseButton(title: localization.string(.proceedToCheckout), kind: .primary, size: .large) {
-                // TODO: navigate to Checkout once it exists.
+                checkoutViewModel = makeCheckoutViewModel(viewModel.items, viewModel.selectedShippingMethod)
             }
+            .accessibilityIdentifier("proceedToCheckoutButton")
         }
         .padding(AppSpacing.md)
         .background(AppColor.background)
@@ -281,6 +301,16 @@ struct CartView: View {
                     wishlistRepository: MockWishlistRepository(),
                     cartBadgeStore: CartBadgeStore(),
                     userSession: UserSession()
+                )
+            },
+            makeCheckoutViewModel: { items, shippingMethod in
+                CheckoutViewModel(
+                    items: items,
+                    selectedShippingMethod: shippingMethod,
+                    addressRepository: MockAddressRepository(),
+                    cartRepository: MockCartRepository(),
+                    orderRepository: MockOrderRepository(),
+                    cartBadgeStore: CartBadgeStore()
                 )
             },
             onBrowseHome: {},

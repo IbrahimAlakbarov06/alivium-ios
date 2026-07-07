@@ -205,6 +205,46 @@ enum LocalizedKey: Hashable {
     case daysAgoSuffix
     case yesterday
 
+    // MARK: - Checkout
+    case checkoutAddressTitle
+    case addNewAddress
+    case addressLabelPlaceholder
+    case phoneNumberPlaceholder
+    case addressLinePlaceholder
+    case cityPlaceholder
+    case postalCodePlaceholder
+    case saveAddress
+    case continueLabel
+    case checkoutPaymentTitle
+    case paymentMethodSectionTitle
+    case cashOnDelivery
+    case creditDebitCard
+    case orderSummarySectionTitle
+    case placeOrder
+    case orderPlacedTitle
+    case orderPlacedSubtitle
+    case orderNumberLabel
+    case estimatedDeliveryLabel
+    case backToHome
+
+    // MARK: - Order History
+    case orderHistoryEmptyTitle
+    case orderHistoryEmptySubtitle
+    case orderHistoryGuestTitle
+    case orderHistoryGuestSubtitle
+    case orderDetailTitle
+    case orderPlacedOnLabel
+    case orderStatusSectionTitle
+    case orderItemsSectionTitle
+    case orderInfoSectionTitle
+    case orderStatusPending
+    case orderStatusConfirmed
+    case orderStatusProcessing
+    case orderStatusShipped
+    case orderStatusDelivered
+    case orderStatusCancelled
+    case orderCancelledMessage
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -582,6 +622,88 @@ enum LocalizedKey: Hashable {
             return language == .az ? "gün əvvəl" : "days ago"
         case .yesterday:
             return language == .az ? "Dünən" : "Yesterday"
+
+        // MARK: Checkout
+        case .checkoutAddressTitle:
+            return language == .az ? "Çatdırılma ünvanı" : "Delivery Address"
+        case .addNewAddress:
+            return language == .az ? "Yeni ünvan əlavə et" : "Add New Address"
+        case .addressLabelPlaceholder:
+            return language == .az ? "Ad (məs: Ev, Ofis)" : "Label (e.g. Home, Office)"
+        case .phoneNumberPlaceholder:
+            return language == .az ? "Telefon nömrəsi" : "Phone Number"
+        case .addressLinePlaceholder:
+            return language == .az ? "Ünvan" : "Address"
+        case .cityPlaceholder:
+            return language == .az ? "Şəhər" : "City"
+        case .postalCodePlaceholder:
+            return language == .az ? "Poçt indeksi" : "Postal Code"
+        case .saveAddress:
+            return language == .az ? "Ünvanı yadda saxla" : "Save Address"
+        case .continueLabel:
+            return language == .az ? "Davam et" : "Continue"
+        case .checkoutPaymentTitle:
+            return language == .az ? "Ödəniş" : "Payment"
+        case .paymentMethodSectionTitle:
+            return language == .az ? "Ödəniş üsulu" : "Payment Method"
+        case .cashOnDelivery:
+            return language == .az ? "Çatdırılanda nağd ödəniş" : "Cash on Delivery"
+        case .creditDebitCard:
+            return language == .az ? "Kredit/Debet Kartı" : "Credit/Debit Card"
+        case .orderSummarySectionTitle:
+            return language == .az ? "Sifariş xülasəsi" : "Order Summary"
+        case .placeOrder:
+            return language == .az ? "Sifarişi ver" : "Place Order"
+        case .orderPlacedTitle:
+            return language == .az ? "Sifariş verildi!" : "Order Placed!"
+        case .orderPlacedSubtitle:
+            return language == .az
+                ? "Sifarişiniz üçün təşəkkürlər. Yola çıxan kimi sizə xəbər verəcəyik."
+                : "Thank you for your order. We'll let you know once it's on its way."
+        case .orderNumberLabel:
+            return language == .az ? "Sifariş nömrəsi" : "Order Number"
+        case .estimatedDeliveryLabel:
+            return language == .az ? "Təxmini çatdırılma" : "Estimated Delivery"
+        case .backToHome:
+            return language == .az ? "Əsas səhifəyə qayıt" : "Back to Home"
+
+        // MARK: Order History
+        case .orderHistoryEmptyTitle:
+            return language == .az ? "Hələ sifariş yoxdur" : "No Orders Yet"
+        case .orderHistoryEmptySubtitle:
+            return language == .az
+                ? "Verdiyiniz sifarişlər burada görünəcək."
+                : "Orders you place will show up here."
+        case .orderHistoryGuestTitle:
+            return language == .az ? "Sifarişlərinizi görmək üçün daxil olun" : "Sign in to see your orders"
+        case .orderHistoryGuestSubtitle:
+            return language == .az
+                ? "Sifariş tarixçənizi izləmək üçün hesab yaradın."
+                : "Create an account to keep track of your past orders."
+        case .orderDetailTitle:
+            return language == .az ? "Sifariş təfərrüatları" : "Order Details"
+        case .orderPlacedOnLabel:
+            return language == .az ? "Sifariş tarixi" : "Placed on"
+        case .orderStatusSectionTitle:
+            return language == .az ? "Sifariş statusu" : "Order Status"
+        case .orderItemsSectionTitle:
+            return language == .az ? "Sifariş məhsulları" : "Order Items"
+        case .orderInfoSectionTitle:
+            return language == .az ? "Sifariş məlumatı" : "Order Info"
+        case .orderStatusPending:
+            return language == .az ? "Gözləmədə" : "Pending"
+        case .orderStatusConfirmed:
+            return language == .az ? "Təsdiqləndi" : "Confirmed"
+        case .orderStatusProcessing:
+            return language == .az ? "Hazırlanır" : "Processing"
+        case .orderStatusShipped:
+            return language == .az ? "Yola salındı" : "Shipped"
+        case .orderStatusDelivered:
+            return language == .az ? "Çatdırıldı" : "Delivered"
+        case .orderStatusCancelled:
+            return language == .az ? "Ləğv edildi" : "Cancelled"
+        case .orderCancelledMessage:
+            return language == .az ? "Bu sifariş ləğv edilib." : "This order was cancelled."
         }
     }
 
