@@ -68,11 +68,9 @@ final class WishlistViewModel {
         }
     }
 
-    /// In display order (S/M/L), matching `ProductDetailViewModel.availableSizes`.
+    /// In real-world display order, matching `ProductDetailViewModel.availableSizes`.
     func availableSizes(for product: Product) -> [String] {
-        let order = ["S", "M", "L"]
-        let present = Set(product.variants.map(\.size))
-        return order.filter { present.contains($0) }
+        ProductVariant.sortedSizes(in: product.variants)
     }
 
     func selectedSize(for product: Product) -> String? {

@@ -18,12 +18,72 @@ final class SearchViewModel {
     var query: String = "" {
         didSet { scheduleSearch(for: query) }
     }
+    /// Raw, unfiltered/unsorted results straight from the repository — `displayedResults` is
+    /// always derived from this so adjusting a filter never needs a re-search.
     private(set) var searchResults: [Product] = []
     private(set) var isSearchLoading = false
     private(set) var wishlistedProductIds: Set<String> = []
     /// Set when a Guest taps a result card's heart — the View shows a sign-in prompt instead of
     /// toggling the wishlist.
     var needsSignInForWishlist = false
+
+    // MARK: - Filters
+
+    static let priceBounds: ClosedRange<Double> = 0...400
+
+    var isFilterSheetPresented = false
+    var sortOption: ProductSortOption = .featured
+    /// `nil` means "every category" — set from the distinct `categoryId`s actually present in
+    /// `searchResults` (see `availableFilterCategoryIds`), not the full nav category tree, so the
+    /// picker never offers a category with zero matching results.
+    var filterCategoryId: String?
+    var minPrice: Double = SearchViewModel.priceBounds.lowerBound {
+        didSet { if minPrice > maxPrice { maxPrice = minPrice } }
+    }
+    var maxPrice: Double = SearchViewModel.priceBounds.upperBound {
+        didSet { if maxPrice < minPrice { minPrice = maxPrice } }
+    }
+
+    var hasActiveFilters: Bool {
+        filterCategoryId != nil
+            || sortOption != .featured
+            || minPrice > Self.priceBounds.lowerBound
+            || maxPrice < Self.priceBounds.upperBound
+    }
+
+    /// Distinct categories actually present in the current raw results, not the full Discover
+    /// category tree — filtering to a category with nothing in it would just show empty results.
+    var availableFilterCategoryIds: [String] {
+        Array(Set(searchResults.map(\.categoryId))).sorted()
+    }
+
+    /// What the results grid actually renders — `searchResults` filtered by category/price and
+    /// sorted, recomputed live as the filter sheet's controls change.
+    var displayedResults: [Product] {
+        var items = searchResults
+        if let filterCategoryId {
+            items = items.filter { $0.categoryId == filterCategoryId }
+        }
+        items = items.filter { $0.effectivePrice.majorUnits >= minPrice && $0.effectivePrice.majorUnits <= maxPrice }
+        switch sortOption {
+        case .featured:
+            break
+        case .priceLowToHigh:
+            items.sort { $0.effectivePrice < $1.effectivePrice }
+        case .priceHighToLow:
+            items.sort { $0.effectivePrice > $1.effectivePrice }
+        case .topRated:
+            items.sort { $0.averageRating > $1.averageRating }
+        }
+        return items
+    }
+
+    func resetFilters() {
+        filterCategoryId = nil
+        sortOption = .featured
+        minPrice = Self.priceBounds.lowerBound
+        maxPrice = Self.priceBounds.upperBound
+    }
 
     /// Non-empty, non-whitespace query — the View switches from category browsing to search
     /// results the moment this flips, without waiting on the debounce below.

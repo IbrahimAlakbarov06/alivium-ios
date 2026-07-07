@@ -17,14 +17,26 @@ final class MockProductRepository: ProductRepository {
         stockPhotos[index % stockPhotos.count]
     }
 
-    /// Two colors x three sizes per product — gives Product Detail's variant selector a real
-    /// second axis to choose from, rather than a color "choice" of exactly one option.
-    private static func variants(colors: [String]) -> [ProductVariant] {
+    /// Real-world EU shoe sizing — distinct from clothing's S/M/L, so a shoe's size chips/dropdown
+    /// read as an actual shoe size run rather than a mislabeled clothing size.
+    private static let shoeSizes = ["36", "37", "38", "39", "40", "41"]
+
+    /// Two colors x N sizes per product — gives Product Detail's variant selector a real second
+    /// axis to choose from, rather than a color "choice" of exactly one option. `sizes` defaults
+    /// to clothing's S/M/L; shoes pass `shoeSizes` instead.
+    private static func variants(colors: [String], sizes: [String] = ["S", "M", "L"]) -> [ProductVariant] {
         colors.flatMap { color in
-            ["S", "M", "L"].map { size in
+            sizes.map { size in
                 ProductVariant(id: "\(color)-\(size)", size: size, color: color, stockQuantity: 8)
             }
         }
+    }
+
+    /// Bags and accessories realistically come in one size — a single variant, not a color x size
+    /// grid, so Product Detail/WishlistRow's "nothing to choose" gating (based on total variant
+    /// count) hides the size/color pickers entirely instead of offering a false choice.
+    private static func singleVariant(color: String) -> [ProductVariant] {
+        [ProductVariant(id: "\(color)-OneSize", size: "One Size", color: color, stockQuantity: 8)]
     }
 
     /// Built once and reused by `fetchFeaturedProducts`/`fetchRecommendedProducts` (each with
@@ -66,7 +78,7 @@ final class MockProductRepository: ProductRepository {
         Product(
             id: "p-5", name: "Structured Leather Tote", price: Money(259.00), discountPrice: nil,
             imageNames: [stockPhoto(4)], categoryId: "bags",
-            variants: variants(colors: ["Cognac", "Black"]),
+            variants: singleVariant(color: "Cognac"),
             description: "Full-grain leather tote with a structured base, interior zip pocket, and room for a 13\" laptop.",
             averageRating: 4.9, reviewCount: 211
         ),
@@ -97,7 +109,7 @@ final class MockProductRepository: ProductRepository {
         Product(
             id: "p-9", name: "Suede Ankle Boots", price: Money(219.00), discountPrice: Money(175.00),
             imageNames: [stockPhoto(2)], categoryId: "shoes",
-            variants: variants(colors: ["Taupe", "Black"]),
+            variants: variants(colors: ["Taupe", "Black"], sizes: shoeSizes),
             description: "Soft suede ankle boots on a stacked block heel, with a cushioned footbed built for all-day wear.",
             averageRating: 4.6, reviewCount: 178
         ),
@@ -111,14 +123,14 @@ final class MockProductRepository: ProductRepository {
         Product(
             id: "p-11", name: "Wide Brim Felt Hat", price: Money(79.00), discountPrice: nil,
             imageNames: [stockPhoto(4)], categoryId: "accessories",
-            variants: variants(colors: ["Black", "Camel"]),
+            variants: singleVariant(color: "Black"),
             description: "A wide-brim wool felt hat with a grosgrain band — the finishing touch for cooler-weather styling.",
             averageRating: 4.3, reviewCount: 29
         ),
         Product(
             id: "p-12", name: "Gold-Tone Hoop Earrings", price: Money(59.00), discountPrice: nil,
             imageNames: [stockPhoto(5)], categoryId: "accessories",
-            variants: [],
+            variants: singleVariant(color: "Gold"),
             description: "Lightweight gold-tone hoops with a polished finish — a everyday staple that layers well with other pieces.",
             averageRating: 4.7, reviewCount: 154
         )

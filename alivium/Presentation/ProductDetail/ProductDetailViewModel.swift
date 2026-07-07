@@ -28,11 +28,10 @@ final class ProductDetailViewModel {
     private let cartBadgeStore: CartBadgeStore
     private let userSession: UserSession
 
-    /// In display order (S/M/L), not just whatever order the mock data happens to list.
+    /// In real-world display order (numeric for shoes, XS-XXL for clothing), not just whatever
+    /// order the mock data happens to list.
     var availableSizes: [String] {
-        let order = ["S", "M", "L"]
-        let present = Set(product.variants.map(\.size))
-        return order.filter { present.contains($0) }
+        ProductVariant.sortedSizes(in: product.variants)
     }
 
     var availableColors: [String] {

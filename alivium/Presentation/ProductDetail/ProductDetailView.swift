@@ -141,7 +141,10 @@ struct ProductDetailView: View {
 
     @ViewBuilder
     private var variantSelectors: some View {
-        if !viewModel.availableSizes.isEmpty {
+        // `> 1`, not `!isEmpty` — a product with exactly one size (or one color) has nothing to
+        // actually choose between, matching WishlistRow's identical "skip the dropdown" gate on
+        // `variants.count`.
+        if viewModel.availableSizes.count > 1 {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text(localization.string(.selectSize))
                     .font(AppTypography.bodyEmphasis)
@@ -157,7 +160,7 @@ struct ProductDetailView: View {
             }
         }
 
-        if !viewModel.availableColors.isEmpty {
+        if viewModel.availableColors.count > 1 {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text(localization.string(.selectColor))
                     .font(AppTypography.bodyEmphasis)

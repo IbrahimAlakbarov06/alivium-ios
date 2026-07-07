@@ -95,6 +95,15 @@ enum LocalizedKey: Hashable {
     case noResultsFound
     case items
 
+    // MARK: - Search filters
+    case filtersTitle
+    case priceRangeLabel
+    case minPriceLabel
+    case maxPriceLabel
+    case categoryFilterLabel
+    case allCategories
+    case resetFilters
+
     // MARK: - Category names (mock data's stable ids -> display names)
     case categoryNewIn
     case categoryClothing
@@ -353,6 +362,22 @@ enum LocalizedKey: Hashable {
             return language == .az ? "Nəticə tapılmadı" : "No results found"
         case .items:
             return language == .az ? "məhsul" : "Items"
+
+        // MARK: Search filters
+        case .filtersTitle:
+            return language == .az ? "Filtrlər" : "Filters"
+        case .priceRangeLabel:
+            return language == .az ? "Qiymət aralığı" : "Price Range"
+        case .minPriceLabel:
+            return language == .az ? "Min" : "Min"
+        case .maxPriceLabel:
+            return language == .az ? "Maks" : "Max"
+        case .categoryFilterLabel:
+            return language == .az ? "Kateqoriya" : "Category"
+        case .allCategories:
+            return language == .az ? "Hamısı" : "All"
+        case .resetFilters:
+            return language == .az ? "Sıfırla" : "Reset"
 
         // MARK: Category names
         case .categoryNewIn:

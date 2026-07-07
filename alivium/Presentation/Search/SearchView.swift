@@ -59,6 +59,9 @@ struct SearchView: View {
         } message: {
             Text(localization.string(.wishlistGuestSubtitle))
         }
+        .sheet(isPresented: $viewModel.isFilterSheetPresented) {
+            SearchFilterSheet(viewModel: viewModel)
+        }
     }
 
     private var topBar: some View {
@@ -84,15 +87,16 @@ struct SearchView: View {
             )
 
             Button {
-                // TODO: present a real filter sheet once filtering criteria exist.
+                viewModel.isFilterSheetPresented = true
             } label: {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(AppColor.textPrimary)
+                    .foregroundStyle(viewModel.hasActiveFilters ? AppColor.background : AppColor.textPrimary)
                     .frame(width: 44, height: 44)
-                    .background(AppColor.surface)
+                    .background(viewModel.hasActiveFilters ? AppColor.primary : AppColor.surface)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
             }
+            .accessibilityIdentifier("searchFilterButton")
         }
     }
 
@@ -189,7 +193,7 @@ struct SearchView: View {
             ProgressView()
                 .tint(AppColor.primary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if viewModel.searchResults.isEmpty {
+        } else if viewModel.displayedResults.isEmpty {
             emptyResultsState
         } else {
             ScrollView {
@@ -197,7 +201,7 @@ struct SearchView: View {
                     columns: [GridItem(.flexible(), spacing: AppSpacing.md), GridItem(.flexible())],
                     spacing: AppSpacing.lg
                 ) {
-                    ForEach(viewModel.searchResults) { product in
+                    ForEach(viewModel.displayedResults) { product in
                         // A hidden background link, not a wrapping one — matching Home's rail
                         // (see its identical comment). Wrapping `NavigationLink` around a
                         // `ProductCard` that contains its own real wishlist `Button` let the

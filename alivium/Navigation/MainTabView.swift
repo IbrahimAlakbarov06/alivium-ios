@@ -101,12 +101,15 @@ struct MainTabView: View {
         // Loaded proactively (not just on first tab appearance) so the badge above is correct
         // the moment the tab shell shows, regardless of which tab the user visits first.
         .task { cartViewModel.onAppear() }
-        // TabView keeps every tab's view alive after its first appearance, so Cart's `.task`
-        // only fires once — without this, adding an item from Product Detail and switching to
-        // Cart wouldn't show it until the next cold launch.
+        // TabView keeps every tab's view alive after its first appearance, so Cart/Wishlist's own
+        // `.task { onAppear() }` only fires once each — without this, favoriting a product from
+        // Home/Search/Product Detail (or adding a cart item) wouldn't show up on that tab until
+        // the next cold launch, since the ViewModel's cached `state` never got a reason to reload.
         .onChange(of: selectedTab) { _, newValue in
             if newValue == .cart {
                 Task { await cartViewModel.loadCart() }
+            } else if newValue == .wishlist {
+                Task { await wishlistViewModel.loadWishlist() }
             }
         }
     }
