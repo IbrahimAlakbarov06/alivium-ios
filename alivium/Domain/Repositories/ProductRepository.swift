@@ -16,4 +16,6 @@ protocol ProductRepository {
     func searchProducts(query: String) async throws -> [Product]
     /// Backs the Category/Product Listing screen reached from a Discover category tap.
     func fetchProducts(byCategory categoryId: String) async throws -> [Product]
+    /// Backs Collection Detail, reached from a `CollectionCard` tap.
+    func fetchProducts(collectionId: String) async throws -> [Product]
 }

@@ -26,6 +26,7 @@ struct MainTabView: View {
     let onLogOut: () -> Void
     private let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
     private let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
+    private let makeCollectionDetailViewModel: (ProductCollection) -> CollectionDetailViewModel
     private let cartBadgeStore: CartBadgeStore
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
@@ -38,6 +39,7 @@ struct MainTabView: View {
         self.onLogOut = onLogOut
         self.makeProductDetailViewModel = { container.makeProductDetailViewModel(for: $0) }
         self.makeProductListingViewModel = { container.makeProductListingViewModel(source: $0) }
+        self.makeCollectionDetailViewModel = { container.makeCollectionDetailViewModel(for: $0) }
         self.cartBadgeStore = container.cartBadgeStore
     }
 
@@ -48,6 +50,7 @@ struct MainTabView: View {
                     viewModel: homeViewModel,
                     makeProductDetailViewModel: makeProductDetailViewModel,
                     makeProductListingViewModel: makeProductListingViewModel,
+                    makeCollectionDetailViewModel: makeCollectionDetailViewModel,
                     onRequestAuthFlow: onLogOut,
                     path: $homePath
                 )

@@ -56,6 +56,8 @@ final class ProductListingViewModel {
                 allProducts = try await productRepository.fetchProducts(byCategory: category.id)
             case .curated(_, let products):
                 allProducts = products
+            case .collection(let collection):
+                allProducts = try await productRepository.fetchProducts(collectionId: collection.id)
             }
             applySortAndFilter()
             state = allProducts.isEmpty ? .empty : .loaded

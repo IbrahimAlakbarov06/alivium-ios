@@ -10,6 +10,7 @@ struct HomeView: View {
     @State var viewModel: HomeViewModel
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
     let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
+    let makeCollectionDetailViewModel: (ProductCollection) -> CollectionDetailViewModel
     /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
     let onRequestAuthFlow: () -> Void
     /// Owned by the tab shell and bound to this tab's `NavigationStack`, so a rail's "Show all"
@@ -45,6 +46,13 @@ struct HomeView: View {
         .navigationDestination(for: ProductListingSource.self) { source in
             ProductListingView(
                 viewModel: makeProductListingViewModel(source),
+                makeProductDetailViewModel: makeProductDetailViewModel,
+                onRequestAuthFlow: onRequestAuthFlow
+            )
+        }
+        .navigationDestination(for: ProductCollection.self) { collection in
+            CollectionDetailView(
+                viewModel: makeCollectionDetailViewModel(collection),
                 makeProductDetailViewModel: makeProductDetailViewModel,
                 onRequestAuthFlow: onRequestAuthFlow
             )
@@ -106,7 +114,7 @@ struct HomeView: View {
 
             if let spotlight = feed.topCollections.first {
                 CollectionCard(collection: spotlight, aspectRatio: 16.0 / 9.0) {
-                    // TODO: navigate to Collection detail once it exists.
+                    path.append(spotlight)
                 }
                 .padding(.horizontal, AppSpacing.md)
             }
@@ -178,14 +186,14 @@ struct HomeView: View {
             LazyVGrid(columns: columns, spacing: AppSpacing.md) {
                 ForEach(gridPair) { collection in
                     CollectionCard(collection: collection) {
-                        // TODO: navigate to Collection detail once it exists.
+                        path.append(collection)
                     }
                 }
             }
 
             ForEach(fullWidthRest) { collection in
                 CollectionCard(collection: collection, aspectRatio: 16.0 / 9.0) {
-                    // TODO: navigate to Collection detail once it exists.
+                    path.append(collection)
                 }
             }
         }
@@ -234,6 +242,14 @@ private struct HomePreviewContainer: View {
                 makeProductListingViewModel: { source in
                     ProductListingViewModel(
                         source: source,
+                        productRepository: MockProductRepository(),
+                        wishlistRepository: MockWishlistRepository(),
+                        userSession: UserSession()
+                    )
+                },
+                makeCollectionDetailViewModel: { collection in
+                    CollectionDetailViewModel(
+                        collection: collection,
                         productRepository: MockProductRepository(),
                         wishlistRepository: MockWishlistRepository(),
                         userSession: UserSession()

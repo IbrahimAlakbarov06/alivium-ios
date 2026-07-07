@@ -43,50 +43,23 @@ struct ProductListingView: View {
             return localization.string(forCategory: category)
         case .curated(let titleKey, _):
             return localization.string(titleKey)
+        case .collection(let collection):
+            // Unreached in practice — Collection Detail owns its own screen and never pushes
+            // `ProductListingView` itself with this case (see `ProductListingSource`'s doc
+            // comment) — but a real fallback here costs nothing and keeps the switch honest.
+            return collection.name
         }
     }
 
     private var filterSortBar: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Menu {
-                Picker("", selection: $viewModel.sortOption) {
-                    ForEach(ProductSortOption.allCases, id: \.self) { option in
-                        Text(localization.string(forSort: option)).tag(option)
-                    }
-                }
-            } label: {
-                pill(icon: "arrow.up.arrow.down", title: localization.string(forSort: viewModel.sortOption), isActive: false)
-            }
-
-            Button {
-                viewModel.isOnSaleOnly.toggle()
-            } label: {
-                pill(icon: "tag", title: localization.string(.onSaleFilter), isActive: viewModel.isOnSaleOnly)
-            }
-
-            Spacer()
-
-            if viewModel.state == .loaded {
-                Text("\(viewModel.displayedProducts.count) \(localization.string(.items))")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColor.textSecondary)
-            }
-        }
-    }
-
-    private func pill(icon: String, title: String, isActive: Bool) -> some View {
-        HStack(spacing: AppSpacing.xxs) {
-            Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
-            Text(title)
-                .font(AppTypography.caption)
-                .lineLimit(1)
-        }
-        .foregroundStyle(isActive ? AppColor.background : AppColor.textPrimary)
-        .padding(.horizontal, AppSpacing.sm)
-        .padding(.vertical, AppSpacing.xs)
-        .background(isActive ? AppColor.primary : AppColor.surface)
-        .clipShape(Capsule())
+        ProductSortFilterBar(
+            sortOption: $viewModel.sortOption,
+            isOnSaleOnly: $viewModel.isOnSaleOnly,
+            resultCount: viewModel.state == .loaded ? viewModel.displayedProducts.count : nil,
+            itemsSuffix: localization.string(.items),
+            onSaleLabel: localization.string(.onSaleFilter),
+            sortOptionLabel: { localization.string(forSort: $0) }
+        )
     }
 
     @ViewBuilder
@@ -111,32 +84,12 @@ struct ProductListingView: View {
 
     private var grid: some View {
         ScrollView {
-            if viewModel.displayedProducts.isEmpty {
-                Text(localization.string(.noProductsMatchFilters))
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColor.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, AppSpacing.xxl)
-            } else {
-                LazyVGrid(
-                    columns: [GridItem(.flexible(), spacing: AppSpacing.md), GridItem(.flexible())],
-                    spacing: AppSpacing.lg
-                ) {
-                    ForEach(viewModel.displayedProducts) { product in
-                        // A hidden background link, not a wrapping one — matching Home's rail.
-                        // Wrapping `NavigationLink` around a `ProductCard` that contains its own
-                        // real wishlist `Button` lets the two gestures race, so a tap only opens
-                        // Product Detail intermittently instead of reliably on the first tap.
-                        ProductCard(product: product, layout: .grid, isWishlisted: viewModel.isWishlisted(product)) {
-                            viewModel.toggleWishlist(for: product)
-                        }
-                        .background {
-                            NavigationLink(value: product) { Color.clear }
-                        }
-                    }
-                }
-                .padding(AppSpacing.md)
-            }
+            ProductGrid(
+                products: viewModel.displayedProducts,
+                isWishlisted: viewModel.isWishlisted,
+                onToggleWishlist: viewModel.toggleWishlist,
+                noMatchesText: localization.string(.noProductsMatchFilters)
+            )
         }
     }
 

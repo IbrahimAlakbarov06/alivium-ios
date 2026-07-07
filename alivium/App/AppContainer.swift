@@ -100,6 +100,15 @@ final class AppContainer {
         )
     }
 
+    func makeCollectionDetailViewModel(for collection: ProductCollection) -> CollectionDetailViewModel {
+        CollectionDetailViewModel(
+            collection: collection,
+            productRepository: productRepository,
+            wishlistRepository: wishlistRepository,
+            userSession: userSession
+        )
+    }
+
     func makeProductDetailViewModel(for product: Product) -> ProductDetailViewModel {
         ProductDetailViewModel(
             product: product,

@@ -947,6 +947,70 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testCollectionDetailOpensFromHomeAndNavigatesToProduct() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5))
+        guestButton.tap()
+
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1)
+
+        // The spotlight `CollectionCard` ("The Autumn Edit", `feed.topCollections.first`) sits
+        // just below the Featured Products rail — one swipe brings it into view.
+        app.swipeUp()
+        sleep(1)
+
+        let autumnEditCard = app.staticTexts["The Autumn Edit"].firstMatch
+        XCTAssertTrue(autumnEditCard.waitForExistence(timeout: 5), "Expected the spotlight Collection card on Home")
+        save("collection_1_home_scrolled")
+        autumnEditCard.tap()
+
+        // --- Collection Detail: editorial header + description above a working grid ---
+        let backButton = app.buttons["collectionDetailBackButton"].firstMatch
+        XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Expected Collection Detail to open")
+        XCTAssertTrue(app.staticTexts["The Autumn Edit"].firstMatch.waitForExistence(timeout: 5), "Expected the collection name in the hero header")
+        XCTAssertTrue(
+            app.staticTexts["Considered outerwear and knitwear for the season's first chill — pieces built to layer."].firstMatch.exists,
+            "Expected the collection's description below/over the hero imagery"
+        )
+        save("collection_2_detail_header")
+
+        // One of "The Autumn Edit"'s real mock products (p-2) should render in the grid below.
+        let coatInGrid = app.staticTexts["Tailored Wool Coat"].firstMatch
+        XCTAssertTrue(coatInGrid.waitForExistence(timeout: 5), "Expected the collection's products in the grid below the header")
+        save("collection_3_grid_visible")
+
+        // --- Tapping a product opens Product Detail correctly ---
+        coatInGrid.tap()
+        let productDetailBack = app.buttons["productDetailBackButton"].firstMatch
+        XCTAssertTrue(productDetailBack.waitForExistence(timeout: 5), "Expected tapping a product in the collection grid to open Product Detail")
+        XCTAssertTrue(app.staticTexts["Tailored Wool Coat"].firstMatch.waitForExistence(timeout: 5))
+        save("collection_4_product_detail_opened")
+
+        // Back should return to Collection Detail, then Home.
+        productDetailBack.tap()
+        XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Expected back from Product Detail to return to Collection Detail")
+        backButton.tap()
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5), "Expected back from Collection Detail to return to Home")
+        save("collection_5_back_at_home")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

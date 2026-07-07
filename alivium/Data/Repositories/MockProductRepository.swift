@@ -49,42 +49,42 @@ final class MockProductRepository: ProductRepository {
             id: "p-1", name: "Silk Wrap Midi Dress", price: Money(189.00), discountPrice: nil,
             // Three images (reusing the Onboarding stock photos) so this product's gallery can
             // actually be tested with real multi-image paging/dot-pagination.
-            imageNames: ["Onboarding1", "Onboarding2", "Onboarding3"], categoryId: "dresses",
+            imageNames: ["Onboarding1", "Onboarding2", "Onboarding3"], categoryId: "dresses", collectionId: "c-2",
             variants: variants(colors: ["Ivory", "Blush"]),
             description: "Cut from fluid silk with a self-tie waist, this wrap dress moves beautifully from day into evening. Fully lined.",
             averageRating: 4.7, reviewCount: 132
         ),
         Product(
             id: "p-2", name: "Tailored Wool Coat", price: Money(349.00), discountPrice: Money(279.00),
-            imageNames: [stockPhoto(1)], categoryId: "new-in",
+            imageNames: [stockPhoto(1)], categoryId: "new-in", collectionId: "c-1",
             variants: variants(colors: ["Camel", "Charcoal"]),
             description: "A structured, wool-blend coat with a clean lapel and horn-style buttons — built to be the one coat you reach for all season.",
             averageRating: 4.8, reviewCount: 96
         ),
         Product(
             id: "p-3", name: "Cashmere Blend Sweater", price: Money(159.00), discountPrice: nil,
-            imageNames: [stockPhoto(2)], categoryId: "sweaters",
+            imageNames: [stockPhoto(2)], categoryId: "sweaters", collectionId: "c-3",
             variants: variants(colors: ["Oatmeal", "Black"]),
             description: "Soft cashmere-blend knit with a relaxed fit and ribbed trim — an everyday layer that still feels a little special.",
             averageRating: 4.6, reviewCount: 84
         ),
         Product(
             id: "p-4", name: "Pleated Satin Skirt", price: Money(129.00), discountPrice: nil,
-            imageNames: [stockPhoto(3)], categoryId: "skirts",
+            imageNames: [stockPhoto(3)], categoryId: "skirts", collectionId: "c-2",
             variants: variants(colors: ["Champagne", "Ivory"]),
             description: "Fine knife pleats in a fluid satin finish, finished with a hidden side zip for a clean silhouette.",
             averageRating: 4.5, reviewCount: 58
         ),
         Product(
             id: "p-5", name: "Structured Leather Tote", price: Money(259.00), discountPrice: nil,
-            imageNames: [stockPhoto(4)], categoryId: "bags",
+            imageNames: [stockPhoto(4)], categoryId: "bags", collectionId: "c-3",
             variants: singleVariant(color: "Cognac"),
             description: "Full-grain leather tote with a structured base, interior zip pocket, and room for a 13\" laptop.",
             averageRating: 4.9, reviewCount: 211
         ),
         Product(
             id: "p-6", name: "Linen Wide-Leg Trousers", price: Money(139.00), discountPrice: nil,
-            imageNames: [stockPhoto(5)], categoryId: "pants",
+            imageNames: [stockPhoto(5)], categoryId: "pants", collectionId: "c-1",
             variants: variants(colors: ["Sand", "White"]),
             description: "Breathable linen-blend trousers with a high rise and wide leg — dresses up or down with equal ease.",
             averageRating: 4.4, reviewCount: 47
@@ -94,42 +94,42 @@ final class MockProductRepository: ProductRepository {
     static let recommendedProducts: [Product] = [
         Product(
             id: "p-7", name: "Belted Trench Coat", price: Money(299.00), discountPrice: nil,
-            imageNames: [stockPhoto(0)], categoryId: "new-in",
+            imageNames: [stockPhoto(0)], categoryId: "new-in", collectionId: "c-1",
             variants: variants(colors: ["Stone", "Camel"]),
             description: "A classic double-breasted trench in water-resistant cotton twill, with a fully adjustable belt.",
             averageRating: 4.7, reviewCount: 103
         ),
         Product(
             id: "p-8", name: "Ribbed Knit Turtleneck", price: Money(89.00), discountPrice: nil,
-            imageNames: [stockPhoto(1)], categoryId: "sweaters",
+            imageNames: [stockPhoto(1)], categoryId: "sweaters", collectionId: "c-1",
             variants: variants(colors: ["Charcoal", "Ivory"]),
             description: "A close-fitting ribbed turtleneck in a soft mid-weight knit — the layer every capsule wardrobe needs.",
             averageRating: 4.5, reviewCount: 66
         ),
         Product(
             id: "p-9", name: "Suede Ankle Boots", price: Money(219.00), discountPrice: Money(175.00),
-            imageNames: [stockPhoto(2)], categoryId: "shoes",
+            imageNames: [stockPhoto(2)], categoryId: "shoes", collectionId: "c-3",
             variants: variants(colors: ["Taupe", "Black"], sizes: shoeSizes),
             description: "Soft suede ankle boots on a stacked block heel, with a cushioned footbed built for all-day wear.",
             averageRating: 4.6, reviewCount: 178
         ),
         Product(
             id: "p-10", name: "Silk Blouse", price: Money(149.00), discountPrice: nil,
-            imageNames: [stockPhoto(3)], categoryId: "t-shirts",
+            imageNames: [stockPhoto(3)], categoryId: "t-shirts", collectionId: "c-2",
             variants: variants(colors: ["Blush", "White"]),
             description: "A relaxed silk blouse with mother-of-pearl buttons and a soft drape — equally at home at a desk or dinner.",
             averageRating: 4.6, reviewCount: 72
         ),
         Product(
             id: "p-11", name: "Wide Brim Felt Hat", price: Money(79.00), discountPrice: nil,
-            imageNames: [stockPhoto(4)], categoryId: "accessories",
+            imageNames: [stockPhoto(4)], categoryId: "accessories", collectionId: "c-4",
             variants: singleVariant(color: "Black"),
             description: "A wide-brim wool felt hat with a grosgrain band — the finishing touch for cooler-weather styling.",
             averageRating: 4.3, reviewCount: 29
         ),
         Product(
             id: "p-12", name: "Gold-Tone Hoop Earrings", price: Money(59.00), discountPrice: nil,
-            imageNames: [stockPhoto(5)], categoryId: "accessories",
+            imageNames: [stockPhoto(5)], categoryId: "accessories", collectionId: "c-4",
             variants: singleVariant(color: "Gold"),
             description: "Lightweight gold-tone hoops with a polished finish — a everyday staple that layers well with other pieces.",
             averageRating: 4.7, reviewCount: 154
@@ -157,11 +157,26 @@ final class MockProductRepository: ProductRepository {
 
     func fetchCollections() async throws -> [ProductCollection] {
         try await Task.sleep(for: .seconds(1))
+        // `productCount` matches the number of mock products actually tagged with this
+        // collection's id below — a card claiming "32 items" when the detail screen then shows
+        // only 3 would be an obvious mock-data tell.
         return [
-            ProductCollection(id: "c-1", name: "The Autumn Edit", imageName: Self.stockPhoto(0), productCount: 24),
-            ProductCollection(id: "c-2", name: "Evening Elegance", imageName: Self.stockPhoto(1), productCount: 18),
-            ProductCollection(id: "c-3", name: "Workwear Essentials", imageName: Self.stockPhoto(2), productCount: 32),
-            ProductCollection(id: "c-4", name: "Accessories Edit", imageName: Self.stockPhoto(3), productCount: 27)
+            ProductCollection(
+                id: "c-1", name: "The Autumn Edit", imageName: Self.stockPhoto(0), productCount: 4,
+                description: "Considered outerwear and knitwear for the season's first chill — pieces built to layer."
+            ),
+            ProductCollection(
+                id: "c-2", name: "Evening Elegance", imageName: Self.stockPhoto(1), productCount: 3,
+                description: "Fluid silks and satins for when the occasion calls for a little more polish."
+            ),
+            ProductCollection(
+                id: "c-3", name: "Workwear Essentials", imageName: Self.stockPhoto(2), productCount: 3,
+                description: "Sharp, considered basics that carry a desk-to-dinner wardrobe all week long."
+            ),
+            ProductCollection(
+                id: "c-4", name: "Accessories Edit", imageName: Self.stockPhoto(3), productCount: 2,
+                description: "The finishing touches — hats and jewelry to complete any look."
+            )
         ]
     }
 
@@ -175,5 +190,11 @@ final class MockProductRepository: ProductRepository {
         try await Task.sleep(for: .seconds(1))
         let all = Self.featuredProducts + Self.recommendedProducts
         return all.filter { $0.categoryId == categoryId }
+    }
+
+    func fetchProducts(collectionId: String) async throws -> [Product] {
+        try await Task.sleep(for: .seconds(1))
+        let all = Self.featuredProducts + Self.recommendedProducts
+        return all.filter { $0.collectionId == collectionId }
     }
 }

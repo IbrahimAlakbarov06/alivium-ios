@@ -43,7 +43,7 @@ struct CollectionCard: View {
 
 #Preview {
     CollectionCard(
-        collection: ProductCollection(id: "c-1", name: "The Autumn Edit", imageName: "Collection1", productCount: 24),
+        collection: ProductCollection(id: "c-1", name: "The Autumn Edit", imageName: "Collection1", productCount: 24, description: "Considered pieces for the new season."),
         action: {}
     )
     .frame(width: 180)

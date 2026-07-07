@@ -13,4 +13,10 @@ enum ProductListingSource: Hashable {
     /// A Home rail's "Show all" — the products are already in memory from the home feed, so
     /// there's no reason to refetch them.
     case curated(titleKey: LocalizedKey, products: [Product])
+    /// A `CollectionCard` tap — the repository fetches by `collection.id`. `ProductListingView`
+    /// itself never actually renders this case (Collection Detail owns its own screen/header and
+    /// only reuses `ProductListingViewModel`'s fetch/sort/filter logic by composition), but it's
+    /// still a case here rather than a second parallel enum, since one enum-driven source for
+    /// "how does this screen's product set get fetched" is simpler than two.
+    case collection(ProductCollection)
 }
