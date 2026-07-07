@@ -8,6 +8,9 @@ import SwiftUI
 struct HomeView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: HomeViewModel
+    /// Owned by the tab shell (like `viewModel` itself) so the bell's badge and the pushed
+    /// `NotificationsView` always agree on the same read/unread state.
+    let notificationsViewModel: NotificationsViewModel
     let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
     let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     let makeCollectionDetailViewModel: (ProductCollection) -> CollectionDetailViewModel
@@ -22,6 +25,11 @@ struct HomeView: View {
     /// duplicate listing screen on top of Product Detail. A single shared `NavigationPath` has
     /// no such invariant to re-assert.
     @Binding var path: NavigationPath
+    /// Notifications is a leaf screen (no further pushes from within it), so the simpler
+    /// `isPresented`-driven destination is safe here — unlike `ProductListingSource`, there's no
+    /// risk of a second push landing on top of it and triggering the item/path re-assertion bug
+    /// documented on `path` above.
+    @State private var isShowingNotifications = false
 
     var body: some View {
         ScrollView {
@@ -56,6 +64,9 @@ struct HomeView: View {
                 makeProductDetailViewModel: makeProductDetailViewModel,
                 onRequestAuthFlow: onRequestAuthFlow
             )
+        }
+        .navigationDestination(isPresented: $isShowingNotifications) {
+            NotificationsView(viewModel: notificationsViewModel)
         }
         .alert(localization.string(.wishlistGuestTitle), isPresented: $viewModel.needsSignInForWishlist) {
             Button(localization.string(.logInOrSignUp)) { onRequestAuthFlow() }
@@ -92,9 +103,24 @@ struct HomeView: View {
 
             Spacer()
 
-            Image(systemName: "bell")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(AppColor.textPrimary)
+            Button {
+                isShowingNotifications = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bell")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(AppColor.textPrimary)
+
+                    if notificationsViewModel.unreadCount > 0 {
+                        Circle()
+                            .fill(AppColor.accent)
+                            .frame(width: 8, height: 8)
+                            .offset(x: 4, y: -2)
+                            .accessibilityIdentifier("homeBellUnreadDot")
+                    }
+                }
+            }
+            .accessibilityIdentifier("homeNotificationsBellButton")
         }
     }
 
@@ -228,6 +254,7 @@ private struct HomePreviewContainer: View {
                     wishlistRepository: MockWishlistRepository(),
                     userSession: UserSession()
                 ),
+                notificationsViewModel: NotificationsViewModel(notificationRepository: MockNotificationRepository()),
                 makeProductDetailViewModel: { product in
                     ProductDetailViewModel(
                         product: product,

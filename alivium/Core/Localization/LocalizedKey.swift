@@ -195,6 +195,16 @@ enum LocalizedKey: Hashable {
     case deleteAccountConfirmMessage
     case cancel
 
+    // MARK: - Notifications
+    case notificationsEmptyTitle
+    case notificationsEmptySubtitle
+    case markAllAsRead
+    case justNow
+    case minutesAgoSuffix
+    case hoursAgoSuffix
+    case daysAgoSuffix
+    case yesterday
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -552,6 +562,26 @@ enum LocalizedKey: Hashable {
                 : "This will permanently delete your account. This action cannot be undone."
         case .cancel:
             return language == .az ? "Ləğv et" : "Cancel"
+
+        // MARK: Notifications
+        case .notificationsEmptyTitle:
+            return language == .az ? "Hələ bildiriş yoxdur" : "No Notifications Yet"
+        case .notificationsEmptySubtitle:
+            return language == .az
+                ? "Sifarişləriniz, endirimlər və hesab fəaliyyəti haqqında bildirişlər burada görünəcək."
+                : "Updates on your orders, sales, and account activity will show up here."
+        case .markAllAsRead:
+            return language == .az ? "Hamısını oxunmuş et" : "Mark All as Read"
+        case .justNow:
+            return language == .az ? "İndicə" : "Just now"
+        case .minutesAgoSuffix:
+            return language == .az ? "dəqiqə əvvəl" : "minutes ago"
+        case .hoursAgoSuffix:
+            return language == .az ? "saat əvvəl" : "hours ago"
+        case .daysAgoSuffix:
+            return language == .az ? "gün əvvəl" : "days ago"
+        case .yesterday:
+            return language == .az ? "Dünən" : "Yesterday"
         }
     }
 

@@ -16,6 +16,7 @@ final class AppContainer {
     let wishlistRepository: WishlistRepository
     let cartRepository: CartRepository
     let reviewRepository: ReviewRepository
+    let notificationRepository: NotificationRepository
     let localizationManager: LocalizationManager
     let userSession: UserSession
     let cartBadgeStore: CartBadgeStore
@@ -28,6 +29,7 @@ final class AppContainer {
         self.wishlistRepository = MockWishlistRepository()
         self.cartRepository = MockCartRepository()
         self.reviewRepository = MockReviewRepository()
+        self.notificationRepository = MockNotificationRepository()
         self.localizationManager = LocalizationManager()
         self.userSession = UserSession()
         self.cartBadgeStore = CartBadgeStore()
@@ -98,6 +100,10 @@ final class AppContainer {
             wishlistRepository: wishlistRepository,
             userSession: userSession
         )
+    }
+
+    func makeNotificationsViewModel() -> NotificationsViewModel {
+        NotificationsViewModel(notificationRepository: notificationRepository)
     }
 
     func makeCollectionDetailViewModel(for collection: ProductCollection) -> CollectionDetailViewModel {

@@ -1011,6 +1011,75 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testNotificationsOpenFromBellAndMarkAsRead() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Shapes (SwiftUI `Circle()`) don't reliably surface as a specific XCUIElement type in
+        // the accessibility tree, so match by identifier across any element type rather than
+        // guessing `.images`/`.otherElements`.
+        func element(_ identifier: String) -> XCUIElement {
+            app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5))
+        guestButton.tap()
+
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1) // let the proactive `notificationsViewModel.onAppear()` fetch complete
+
+        let bellButton = app.buttons["homeNotificationsBellButton"].firstMatch
+        XCTAssertTrue(bellButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(element("homeBellUnreadDot").waitForExistence(timeout: 5), "Expected an unread badge dot on the bell before opening Notifications")
+        save("notifications_1_home_bell_badge")
+
+        bellButton.tap()
+
+        // --- Notifications screen: seeded rows, mixed read/unread ---
+        let shippedTitle = app.staticTexts["Your order has shipped"].firstMatch
+        XCTAssertTrue(shippedTitle.waitForExistence(timeout: 5), "Expected the seeded notifications to load")
+        XCTAssertTrue(app.staticTexts["20% off new arrivals"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["New reply from Support"].firstMatch.exists)
+        let unreadDotForShipped = element("notificationUnreadDot-n-1")
+        XCTAssertTrue(unreadDotForShipped.waitForExistence(timeout: 5), "Expected an unread dot on the still-unread order notification")
+        save("notifications_2_list_loaded")
+
+        // --- Tapping a notification marks it read (removes its unread dot) ---
+        shippedTitle.tap()
+        sleep(1)
+        XCTAssertFalse(unreadDotForShipped.exists, "Expected tapping a notification to remove its unread dot")
+        save("notifications_3_marked_read")
+
+        // --- Mark All as Read clears the remaining unread dot and hides itself ---
+        let markAllButton = app.buttons["Hamısını oxunmuş et"].firstMatch
+        XCTAssertTrue(markAllButton.waitForExistence(timeout: 5), "Expected Mark All as Read while an unread notification remains")
+        markAllButton.tap()
+        sleep(1)
+        XCTAssertFalse(element("notificationUnreadDot-n-2").exists, "Expected Mark All as Read to clear every remaining unread dot")
+        XCTAssertFalse(app.buttons["Hamısını oxunmuş et"].exists, "Expected Mark All as Read to hide itself once nothing is unread")
+        save("notifications_4_all_read")
+
+        // Back to Home — the bell badge should be gone too, since it shares this same ViewModel.
+        app.navigationBars.buttons["Back"].firstMatch.tap()
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        XCTAssertFalse(element("homeBellUnreadDot").exists, "Expected Home's bell badge to clear once everything is read")
+        save("notifications_5_bell_badge_cleared")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

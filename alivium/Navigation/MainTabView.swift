@@ -16,6 +16,9 @@ struct MainTabView: View {
     @State private var cartViewModel: CartViewModel
     @State private var profileViewModel: ProfileViewModel
     @State private var chatViewModel: ChatViewModel
+    /// Owned here (not created per-push) so Home's bell badge and the pushed `NotificationsView`
+    /// always agree on the same read/unread state — matches `homeViewModel`'s own lifetime.
+    @State private var notificationsViewModel: NotificationsViewModel
     /// Owned here (not privately inside Home/Search) and bound into each tab's `NavigationStack`
     /// so a "Show all"/category tap can `path.append(_:)` a `ProductListingSource` onto the same
     /// path `NavigationLink(value:)` pushes products onto — see HomeView's doc comment for why an
@@ -36,6 +39,7 @@ struct MainTabView: View {
         _cartViewModel = State(initialValue: container.makeCartViewModel())
         _profileViewModel = State(initialValue: container.makeProfileViewModel())
         _chatViewModel = State(initialValue: container.makeChatViewModel())
+        _notificationsViewModel = State(initialValue: container.makeNotificationsViewModel())
         self.onLogOut = onLogOut
         self.makeProductDetailViewModel = { container.makeProductDetailViewModel(for: $0) }
         self.makeProductListingViewModel = { container.makeProductListingViewModel(source: $0) }
@@ -48,6 +52,7 @@ struct MainTabView: View {
             NavigationStack(path: $homePath) {
                 HomeView(
                     viewModel: homeViewModel,
+                    notificationsViewModel: notificationsViewModel,
                     makeProductDetailViewModel: makeProductDetailViewModel,
                     makeProductListingViewModel: makeProductListingViewModel,
                     makeCollectionDetailViewModel: makeCollectionDetailViewModel,
@@ -104,6 +109,9 @@ struct MainTabView: View {
         // Loaded proactively (not just on first tab appearance) so the badge above is correct
         // the moment the tab shell shows, regardless of which tab the user visits first.
         .task { cartViewModel.onAppear() }
+        // Same reasoning as Cart's badge above — Home's bell badge should already be correct
+        // the moment Home shows, not just after the user opens Notifications once.
+        .task { notificationsViewModel.onAppear() }
         // TabView keeps every tab's view alive after its first appearance, so Cart/Wishlist's own
         // `.task { onAppear() }` only fires once each — without this, favoriting a product from
         // Home/Search/Product Detail (or adding a cart item) wouldn't show up on that tab until
