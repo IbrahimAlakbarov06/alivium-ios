@@ -16,6 +16,13 @@ struct MainTabView: View {
     @State private var cartViewModel: CartViewModel
     @State private var profileViewModel: ProfileViewModel
     @State private var chatViewModel: ChatViewModel
+    /// Owned here (not privately inside Home/Search) and bound into each tab's `NavigationStack`
+    /// so a "Show all"/category tap can `path.append(_:)` a `ProductListingSource` onto the same
+    /// path `NavigationLink(value:)` pushes products onto — see HomeView's doc comment for why an
+    /// `.navigationDestination(item:)`-driven push doesn't compose safely with a second push on
+    /// top of it.
+    @State private var homePath = NavigationPath()
+    @State private var searchPath = NavigationPath()
     let onLogOut: () -> Void
     private let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
     private let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
@@ -36,23 +43,25 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            NavigationStack {
+            NavigationStack(path: $homePath) {
                 HomeView(
                     viewModel: homeViewModel,
                     makeProductDetailViewModel: makeProductDetailViewModel,
                     makeProductListingViewModel: makeProductListingViewModel,
-                    onRequestAuthFlow: onLogOut
+                    onRequestAuthFlow: onLogOut,
+                    path: $homePath
                 )
             }
             .tabItem { Label(localization.string(.homeTab), systemImage: "house.fill") }
             .tag(AppTab.home)
 
-            NavigationStack {
+            NavigationStack(path: $searchPath) {
                 SearchView(
                     viewModel: searchViewModel,
                     makeProductDetailViewModel: makeProductDetailViewModel,
                     makeProductListingViewModel: makeProductListingViewModel,
-                    onRequestAuthFlow: onLogOut
+                    onRequestAuthFlow: onLogOut,
+                    path: $searchPath
                 )
             }
             .tabItem { Label(localization.string(.searchTab), systemImage: "magnifyingglass") }

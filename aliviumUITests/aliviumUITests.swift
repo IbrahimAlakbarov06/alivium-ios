@@ -653,6 +653,87 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testCategoryListingAndSearchProductNavigation() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let guestButton = app.buttons["Qonaq kimi davam edin"].firstMatch
+        XCTAssertTrue(guestButton.waitForExistence(timeout: 5))
+        guestButton.tap()
+
+        let homeWordmark = app.staticTexts["ALIVIUM"].firstMatch
+        XCTAssertTrue(homeWordmark.waitForExistence(timeout: 5))
+        sleep(1)
+
+        // --- Home "Show all" -> Category/Product Listing -> Product Detail ---
+        let showAllButton = app.buttons["Hamısına bax"].firstMatch
+        XCTAssertTrue(showAllButton.waitForExistence(timeout: 5), "Expected a Show all action on Home's Featured Products rail")
+        showAllButton.tap()
+        sleep(1)
+        save("listing_1_opened")
+
+        let listingProduct = app.staticTexts["Silk Wrap Midi Dress"].firstMatch
+        XCTAssertTrue(listingProduct.waitForExistence(timeout: 5), "Expected Featured Products in the listing grid")
+        listingProduct.tap()
+
+        let productDetailBack = app.buttons["productDetailBackButton"].firstMatch
+        XCTAssertTrue(productDetailBack.waitForExistence(timeout: 5), "Expected tapping a product in Category/Product Listing to open Product Detail on the first tap")
+        save("listing_2_product_detail_opened")
+        productDetailBack.tap()
+
+        // --- Search results -> Product Detail, repeated across several distinct products to
+        // rule out flakiness rather than a one-off race ---
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Axtar"].tap()
+
+        let searchField = app.textFields["Don, ayaqqabı, çanta axtarın..."].firstMatch
+        XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+
+        let queries: [(String, String)] = [
+            ("Tailored", "Tailored Wool Coat"),
+            ("Cashmere", "Cashmere Blend Sweater"),
+            ("Structured", "Structured Leather Tote"),
+            ("Suede", "Suede Ankle Boots")
+        ]
+
+        for (index, entry) in queries.enumerated() {
+            let (query, productName) = entry
+            searchField.tap()
+            searchField.typeText(query)
+
+            let result = app.staticTexts[productName].firstMatch
+            XCTAssertTrue(result.waitForExistence(timeout: 5), "Expected a search result for '\(query)'")
+            result.tap()
+
+            XCTAssertTrue(
+                productDetailBack.waitForExistence(timeout: 5),
+                "Expected tapping the '\(productName)' search result to open Product Detail on the first tap (attempt \(index + 1))"
+            )
+            save("search_nav_\(index)_\(productName)")
+            productDetailBack.tap()
+
+            // Back on Search results — clear the field before the next query.
+            XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+            if let existingValue = searchField.value as? String {
+                searchField.tap()
+                searchField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingValue.count))
+            }
+        }
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

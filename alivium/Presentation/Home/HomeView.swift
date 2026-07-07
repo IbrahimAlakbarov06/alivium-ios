@@ -12,10 +12,15 @@ struct HomeView: View {
     let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
     let onRequestAuthFlow: () -> Void
-    /// Pushed imperatively from a rail's "Show all" tap — a plain `Button` action, not a
-    /// `NavigationLink` value, so `.navigationDestination(item:)` is the natural fit instead of
-    /// wrapping the whole `SectionHeader` in a hidden background link like the product cards do.
-    @State private var pushedListingSource: ProductListingSource?
+    /// Owned by the tab shell and bound to this tab's `NavigationStack`, so a rail's "Show all"
+    /// tap can push a `ProductListingSource` with `path.append(_:)` onto the SAME path that
+    /// `NavigationLink(value:)` pushes products onto. An `.navigationDestination(item:)` bound to
+    /// its own private `@State` optional was tried first, but it maintains its own "this
+    /// destination is on the path whenever the item is non-nil" invariant — once a *second* push
+    /// (Product Detail) landed on top, the stack re-asserted that invariant and shoved a
+    /// duplicate listing screen on top of Product Detail. A single shared `NavigationPath` has
+    /// no such invariant to re-assert.
+    @Binding var path: NavigationPath
 
     var body: some View {
         ScrollView {
@@ -37,7 +42,7 @@ struct HomeView: View {
                 onRequestAuthFlow: onRequestAuthFlow
             )
         }
-        .navigationDestination(item: $pushedListingSource) { source in
+        .navigationDestination(for: ProductListingSource.self) { source in
             ProductListingView(
                 viewModel: makeProductListingViewModel(source),
                 makeProductDetailViewModel: makeProductDetailViewModel,
@@ -138,7 +143,7 @@ struct HomeView: View {
     private func productRail(titleKey: LocalizedKey, products: [Product], layout: ProductCardLayout) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             SectionHeader(title: localization.string(titleKey), actionTitle: localization.string(.showAll)) {
-                pushedListingSource = .curated(titleKey: titleKey, products: products)
+                path.append(ProductListingSource.curated(titleKey: titleKey, products: products))
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -201,38 +206,47 @@ struct HomeView: View {
     }
 }
 
-#Preview {
-    NavigationStack {
-        HomeView(
-            viewModel: HomeViewModel(
-                fetchHomeFeedUseCase: DefaultFetchHomeFeedUseCase(
-                    productRepository: MockProductRepository(),
-                    categoryRepository: MockCategoryRepository()
+private struct HomePreviewContainer: View {
+    @State private var path = NavigationPath()
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            HomeView(
+                viewModel: HomeViewModel(
+                    fetchHomeFeedUseCase: DefaultFetchHomeFeedUseCase(
+                        productRepository: MockProductRepository(),
+                        categoryRepository: MockCategoryRepository()
+                    ),
+                    wishlistRepository: MockWishlistRepository(),
+                    userSession: UserSession()
                 ),
-                wishlistRepository: MockWishlistRepository(),
-                userSession: UserSession()
-            ),
-            makeProductDetailViewModel: { product in
-                ProductDetailViewModel(
-                    product: product,
-                    productRepository: MockProductRepository(),
-                    reviewRepository: MockReviewRepository(),
-                    cartRepository: MockCartRepository(),
-                    wishlistRepository: MockWishlistRepository(),
-                    cartBadgeStore: CartBadgeStore(),
-                    userSession: UserSession()
-                )
-            },
-            makeProductListingViewModel: { source in
-                ProductListingViewModel(
-                    source: source,
-                    productRepository: MockProductRepository(),
-                    wishlistRepository: MockWishlistRepository(),
-                    userSession: UserSession()
-                )
-            },
-            onRequestAuthFlow: {}
-        )
+                makeProductDetailViewModel: { product in
+                    ProductDetailViewModel(
+                        product: product,
+                        productRepository: MockProductRepository(),
+                        reviewRepository: MockReviewRepository(),
+                        cartRepository: MockCartRepository(),
+                        wishlistRepository: MockWishlistRepository(),
+                        cartBadgeStore: CartBadgeStore(),
+                        userSession: UserSession()
+                    )
+                },
+                makeProductListingViewModel: { source in
+                    ProductListingViewModel(
+                        source: source,
+                        productRepository: MockProductRepository(),
+                        wishlistRepository: MockWishlistRepository(),
+                        userSession: UserSession()
+                    )
+                },
+                onRequestAuthFlow: {},
+                path: $path
+            )
+        }
+        .environment(LocalizationManager())
     }
-    .environment(LocalizationManager())
+}
+
+#Preview {
+    HomePreviewContainer()
 }

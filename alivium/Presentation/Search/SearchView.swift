@@ -12,10 +12,11 @@ struct SearchView: View {
     let makeProductListingViewModel: (ProductListingSource) -> ProductListingViewModel
     /// Wired the same way as Profile/Wishlist's Guest CTA — drops back to the Auth flow.
     let onRequestAuthFlow: () -> Void
-    /// Pushed imperatively from a category banner/subcategory row tap — see HomeView's identical
-    /// property for why `.navigationDestination(item:)` fits better than a `NavigationLink` value
-    /// here (both are plain `Button` actions, not link-wrapped rows).
-    @State private var pushedListingSource: ProductListingSource?
+    /// Owned by the tab shell and bound to this tab's `NavigationStack` — see HomeView's
+    /// identical property for why a shared `NavigationPath` replaced a private
+    /// `.navigationDestination(item:)` optional (the item-based destination re-asserted itself
+    /// on top of Product Detail after a category-banner tap pushed both in sequence).
+    @Binding var path: NavigationPath
 
     /// Top-level categories with a big banner — leaf categories that also work as full-width
     /// browse entry points. Ids, not names, so this stays correct if copy changes.
@@ -45,7 +46,7 @@ struct SearchView: View {
                 onRequestAuthFlow: onRequestAuthFlow
             )
         }
-        .navigationDestination(item: $pushedListingSource) { source in
+        .navigationDestination(for: ProductListingSource.self) { source in
             ProductListingView(
                 viewModel: makeProductListingViewModel(source),
                 makeProductDetailViewModel: makeProductDetailViewModel,
@@ -145,13 +146,13 @@ struct SearchView: View {
                                 viewModel.toggleCategoryExpansion(category)
                             }
                         } else {
-                            pushedListingSource = .category(category)
+                            path.append(ProductListingSource.category(category))
                         }
                     }
 
                     if isExpanded {
                         SubcategoryList(subcategories: category.subcategories) { subcategory in
-                            pushedListingSource = .category(subcategory)
+                            path.append(ProductListingSource.category(subcategory))
                         }
                     }
                 }
@@ -197,18 +198,17 @@ struct SearchView: View {
                     spacing: AppSpacing.lg
                 ) {
                     ForEach(viewModel.searchResults) { product in
-                        NavigationLink(value: product) {
-                            ProductCard(product: product, layout: .grid, isWishlisted: viewModel.isWishlisted(product)) {
-                                viewModel.toggleWishlist(for: product)
-                            }
-                                // `CatalogImage` opts out of hit-testing (elsewhere, that lets a
-                                // hidden background NavigationLink receive the tap instead) —
-                                // here the Link wraps the card directly, so without an explicit
-                                // content shape its tappable region would shrink to just the
-                                // name/price text, since the image no longer contributes one.
-                                .contentShape(Rectangle())
+                        // A hidden background link, not a wrapping one — matching Home's rail
+                        // (see its identical comment). Wrapping `NavigationLink` around a
+                        // `ProductCard` that contains its own real wishlist `Button` let the
+                        // two gestures race, so a tap only reached Product Detail intermittently
+                        // (needing a second tap) instead of reliably on the first.
+                        ProductCard(product: product, layout: .grid, isWishlisted: viewModel.isWishlisted(product)) {
+                            viewModel.toggleWishlist(for: product)
                         }
-                        .buttonStyle(.plain)
+                        .background {
+                            NavigationLink(value: product) { Color.clear }
+                        }
                     }
                 }
                 .padding(AppSpacing.md)
@@ -229,36 +229,45 @@ struct SearchView: View {
     }
 }
 
-#Preview {
-    NavigationStack {
-        SearchView(
-            viewModel: SearchViewModel(
-                categoryRepository: MockCategoryRepository(),
-                productRepository: MockProductRepository(),
-                wishlistRepository: MockWishlistRepository(),
-                userSession: UserSession()
-            ),
-            makeProductDetailViewModel: { product in
-                ProductDetailViewModel(
-                    product: product,
-                    productRepository: MockProductRepository(),
-                    reviewRepository: MockReviewRepository(),
-                    cartRepository: MockCartRepository(),
-                    wishlistRepository: MockWishlistRepository(),
-                    cartBadgeStore: CartBadgeStore(),
-                    userSession: UserSession()
-                )
-            },
-            makeProductListingViewModel: { source in
-                ProductListingViewModel(
-                    source: source,
+private struct SearchPreviewContainer: View {
+    @State private var path = NavigationPath()
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            SearchView(
+                viewModel: SearchViewModel(
+                    categoryRepository: MockCategoryRepository(),
                     productRepository: MockProductRepository(),
                     wishlistRepository: MockWishlistRepository(),
                     userSession: UserSession()
-                )
-            },
-            onRequestAuthFlow: {}
-        )
+                ),
+                makeProductDetailViewModel: { product in
+                    ProductDetailViewModel(
+                        product: product,
+                        productRepository: MockProductRepository(),
+                        reviewRepository: MockReviewRepository(),
+                        cartRepository: MockCartRepository(),
+                        wishlistRepository: MockWishlistRepository(),
+                        cartBadgeStore: CartBadgeStore(),
+                        userSession: UserSession()
+                    )
+                },
+                makeProductListingViewModel: { source in
+                    ProductListingViewModel(
+                        source: source,
+                        productRepository: MockProductRepository(),
+                        wishlistRepository: MockWishlistRepository(),
+                        userSession: UserSession()
+                    )
+                },
+                onRequestAuthFlow: {},
+                path: $path
+            )
+        }
+        .environment(LocalizationManager())
     }
-    .environment(LocalizationManager())
+}
+
+#Preview {
+    SearchPreviewContainer()
 }

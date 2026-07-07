@@ -123,16 +123,16 @@ struct ProductListingView: View {
                     spacing: AppSpacing.lg
                 ) {
                     ForEach(viewModel.displayedProducts) { product in
-                        NavigationLink(value: product) {
-                            ProductCard(product: product, layout: .grid, isWishlisted: viewModel.isWishlisted(product)) {
-                                viewModel.toggleWishlist(for: product)
-                            }
-                            // Matches Discover's search-results grid — the image opts out of
-                            // hit-testing, so without an explicit content shape the tappable
-                            // region shrinks to just the name/price text.
-                            .contentShape(Rectangle())
+                        // A hidden background link, not a wrapping one — matching Home's rail.
+                        // Wrapping `NavigationLink` around a `ProductCard` that contains its own
+                        // real wishlist `Button` lets the two gestures race, so a tap only opens
+                        // Product Detail intermittently instead of reliably on the first tap.
+                        ProductCard(product: product, layout: .grid, isWishlisted: viewModel.isWishlisted(product)) {
+                            viewModel.toggleWishlist(for: product)
                         }
-                        .buttonStyle(.plain)
+                        .background {
+                            NavigationLink(value: product) { Color.clear }
+                        }
                     }
                 }
                 .padding(AppSpacing.md)
