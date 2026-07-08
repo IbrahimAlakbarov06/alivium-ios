@@ -7,6 +7,17 @@
 
 import XCTest
 
+private extension XCUIElement {
+    /// Selects and backspaces over any existing text — used where a field is pre-filled (Edit
+    /// Profile) and a test needs to replace, not append to, its value.
+    func clearText() {
+        guard let stringValue = value as? String, !stringValue.isEmpty else { return }
+        tap()
+        let deleteString = String(repeating: "\u{8}", count: stringValue.count)
+        typeText(deleteString)
+    }
+}
+
 final class aliviumUITests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -162,9 +173,9 @@ final class aliviumUITests: XCTestCase {
 
         // Log Out should require confirmation, then return to the Auth flow. The dialog's own
         // destructive button shares its label with the row that triggered it, but only the
-        // dialog's copy lives under `app.sheets`.
+        // alert's copy lives under `app.alerts`.
         logOutRow.tap()
-        let confirmLogOut = app.sheets.buttons["Çıxış et"].firstMatch
+        let confirmLogOut = app.alerts.buttons["Çıxış et"].firstMatch
         XCTAssertTrue(confirmLogOut.waitForExistence(timeout: 5), "Expected Log Out confirmation dialog")
         save("profile_5_logout_confirm")
         confirmLogOut.tap()
@@ -1352,7 +1363,7 @@ final class aliviumUITests: XCTestCase {
         save("cancelOrder_1_detail_pending")
         cancelButton.tap()
 
-        let confirmButton = app.sheets.buttons["Sifarişi ləğv et"].firstMatch
+        let confirmButton = app.alerts.buttons["Sifarişi ləğv et"].firstMatch
         XCTAssertTrue(confirmButton.waitForExistence(timeout: 5), "Expected a confirmation dialog before cancelling")
         confirmButton.tap()
 
@@ -1438,6 +1449,127 @@ final class aliviumUITests: XCTestCase {
 
         XCTAssertFalse(app.staticTexts["Test User"].firstMatch.waitForExistence(timeout: 5), "Expected the deleted address to be gone")
         save("addresses_4_deleted")
+    }
+
+    @MainActor
+    func testEditProfileAndChangePasswordFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+            sleep(1)
+        }
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        let chevronButton = app.buttons["editProfileChevronButton"].firstMatch
+        if !chevronButton.waitForExistence(timeout: 3) {
+            tabBar.buttons["Profil"].tap()
+        }
+        XCTAssertTrue(chevronButton.waitForExistence(timeout: 5), "Expected the header chevron on an authenticated Profile")
+        chevronButton.tap()
+
+        // --- Edit Profile: pre-filled fields ---
+        let fullNameField = app.textFields["Ad Soyad"].firstMatch
+        XCTAssertTrue(fullNameField.waitForExistence(timeout: 5))
+        XCTAssertEqual(fullNameField.value as? String, "Alivium Member", "Expected the field pre-filled with the signed-in user's name")
+        let editEmailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertEqual(editEmailField.value as? String, "aysel@alivium.com", "Expected the field pre-filled with the signed-in user's email")
+        XCTAssertTrue(app.staticTexts["+994"].firstMatch.exists, "Expected the phone field's fixed +994 prefix")
+        save("editProfile_1_prefilled")
+
+        let saveButton = app.buttons["saveProfileChangesButton"].firstMatch
+        XCTAssertFalse(saveButton.isEnabled, "Expected Save disabled before anything changed")
+
+        // --- Change the name and save ---
+        fullNameField.tap()
+        fullNameField.clearText()
+        fullNameField.typeText("Aysel Quliyeva")
+
+        XCTAssertTrue(saveButton.isEnabled, "Expected Save enabled once a field actually changed")
+        saveButton.tap()
+
+        // Saving should pop back to Profile, whose header should now show the new name.
+        let updatedHeaderName = app.staticTexts["Aysel Quliyeva"].firstMatch
+        XCTAssertTrue(updatedHeaderName.waitForExistence(timeout: 5), "Expected Profile's header to reflect the saved name immediately")
+        save("editProfile_2_header_updated")
+
+        // --- Back into Edit Profile, on to Change Password ---
+        let chevronAgain = app.buttons["editProfileChevronButton"].firstMatch
+        XCTAssertTrue(chevronAgain.waitForExistence(timeout: 5))
+        chevronAgain.tap()
+
+        let changePasswordRow = app.buttons["Şifrəni dəyiş"].firstMatch
+        XCTAssertTrue(changePasswordRow.waitForExistence(timeout: 5))
+        changePasswordRow.tap()
+
+        let currentPasswordField = app.secureTextFields["Cari şifrə"].firstMatch
+        XCTAssertTrue(currentPasswordField.waitForExistence(timeout: 5))
+        let newPasswordField = app.secureTextFields["Yeni şifrə"].firstMatch
+        let confirmPasswordField = app.secureTextFields["Şifrəni təsdiqləyin"].firstMatch
+        let updateButton = app.buttons["updatePasswordButton"].firstMatch
+
+        // --- Mismatched new/confirm shows an inline error and disables the button ---
+        currentPasswordField.tap()
+        currentPasswordField.typeText("password123")
+        newPasswordField.tap()
+        newPasswordField.typeText("newSecret1")
+        confirmPasswordField.tap()
+        confirmPasswordField.typeText("newSecret2")
+
+        XCTAssertTrue(app.staticTexts["Şifrələr uyğun gəlmir"].firstMatch.waitForExistence(timeout: 5), "Expected a mismatch error")
+        XCTAssertFalse(updateButton.isEnabled, "Expected Update Password disabled while mismatched")
+        save("changePassword_1_mismatch")
+
+        // --- Matching passwords but a WRONG current password shows the mock's error path ---
+        confirmPasswordField.tap()
+        confirmPasswordField.clearText()
+        confirmPasswordField.typeText("newSecret1")
+        XCTAssertTrue(updateButton.isEnabled, "Expected Update Password enabled once new/confirm match")
+
+        currentPasswordField.tap()
+        currentPasswordField.clearText()
+        currentPasswordField.typeText("wrongPassword")
+        updateButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Cari şifrə yanlışdır"].firstMatch.waitForExistence(timeout: 5), "Expected an incorrect-current-password error")
+        save("changePassword_2_wrong_current_password")
+
+        // --- The correct current password succeeds ---
+        currentPasswordField.tap()
+        currentPasswordField.clearText()
+        currentPasswordField.typeText("password123")
+        updateButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Şifrə yeniləndi!"].firstMatch.waitForExistence(timeout: 5), "Expected a success alert")
+        save("changePassword_3_success")
+        app.alerts.buttons["Tamam"].firstMatch.tap()
+
+        XCTAssertTrue(app.navigationBars["Profili redaktə et"].firstMatch.waitForExistence(timeout: 5), "Expected OK to return to Edit Profile")
     }
 
     @MainActor

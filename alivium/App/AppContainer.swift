@@ -129,6 +129,14 @@ final class AppContainer {
         AddressesViewModel(addressRepository: addressRepository)
     }
 
+    func makeEditProfileViewModel() -> EditProfileViewModel {
+        EditProfileViewModel(userSession: userSession, authRepository: authRepository)
+    }
+
+    func makeChangePasswordViewModel() -> ChangePasswordViewModel {
+        ChangePasswordViewModel(authRepository: authRepository)
+    }
+
     func makeNotificationsViewModel() -> NotificationsViewModel {
         NotificationsViewModel(notificationRepository: notificationRepository)
     }

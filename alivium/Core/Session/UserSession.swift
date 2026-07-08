@@ -23,6 +23,13 @@ final class UserSession {
         state = .authenticated(user)
     }
 
+    /// Distinct from `signIn(_:)` in intent (not a fresh login, just replacing the stored user
+    /// after an Edit Profile save) even though the underlying assignment is identical — Edit
+    /// Profile calls this rather than `signIn(_:)` so the call site itself reads correctly.
+    func updateUser(_ user: User) {
+        state = .authenticated(user)
+    }
+
     func signOut() {
         state = .guest
     }

@@ -34,6 +34,8 @@ struct MainTabView: View {
     private let makeOrderHistoryViewModel: () -> OrderHistoryViewModel
     private let makeOrderDetailViewModel: (Order) -> OrderDetailViewModel
     private let makeAddressesViewModel: () -> AddressesViewModel
+    private let makeEditProfileViewModel: () -> EditProfileViewModel
+    private let makeChangePasswordViewModel: () -> ChangePasswordViewModel
     private let cartBadgeStore: CartBadgeStore
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
@@ -54,6 +56,8 @@ struct MainTabView: View {
         self.makeOrderHistoryViewModel = { container.makeOrderHistoryViewModel() }
         self.makeOrderDetailViewModel = { container.makeOrderDetailViewModel(for: $0) }
         self.makeAddressesViewModel = { container.makeAddressesViewModel() }
+        self.makeEditProfileViewModel = { container.makeEditProfileViewModel() }
+        self.makeChangePasswordViewModel = { container.makeChangePasswordViewModel() }
         self.cartBadgeStore = container.cartBadgeStore
     }
 
@@ -118,6 +122,8 @@ struct MainTabView: View {
                 makeOrderHistoryViewModel: makeOrderHistoryViewModel,
                 makeOrderDetailViewModel: makeOrderDetailViewModel,
                 makeAddressesViewModel: makeAddressesViewModel,
+                makeEditProfileViewModel: makeEditProfileViewModel,
+                makeChangePasswordViewModel: makeChangePasswordViewModel,
                 onRequestAuthFlow: onLogOut,
                 onBrowseHome: { selectedTab = .home }
             )

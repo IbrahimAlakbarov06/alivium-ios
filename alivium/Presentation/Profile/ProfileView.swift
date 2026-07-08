@@ -11,6 +11,15 @@ private enum ProfileOrderHistoryRoute: Hashable {
     case show
 }
 
+/// Not `private` — `EditProfileView` (a separate file) pushes `.changePassword` onto the same
+/// shared `path` itself, so it needs to reference this type directly. See `ProfileView.path`'s
+/// doc comment for why Edit Profile -> Change Password (a second push landing on top of the
+/// first) needs the shared-path treatment rather than a simpler `isPresented` destination.
+enum ProfileEditRoute: Hashable {
+    case editProfile
+    case changePassword
+}
+
 struct ProfileView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: ProfileViewModel
@@ -18,6 +27,8 @@ struct ProfileView: View {
     let makeOrderHistoryViewModel: () -> OrderHistoryViewModel
     let makeOrderDetailViewModel: (Order) -> OrderDetailViewModel
     let makeAddressesViewModel: () -> AddressesViewModel
+    let makeEditProfileViewModel: () -> EditProfileViewModel
+    let makeChangePasswordViewModel: () -> ChangePasswordViewModel
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var isShowingLogOutConfirm = false
     @State private var isShowingDeleteAccountConfirm = false
@@ -72,11 +83,18 @@ struct ProfileView: View {
             .navigationDestination(for: Order.self) { order in
                 OrderDetailView(viewModel: makeOrderDetailViewModel(order))
             }
+            .navigationDestination(for: ProfileEditRoute.self) { route in
+                switch route {
+                case .editProfile:
+                    EditProfileView(viewModel: makeEditProfileViewModel(), path: $path)
+                case .changePassword:
+                    ChangePasswordView(viewModel: makeChangePasswordViewModel())
+                }
+            }
         }
-        .confirmationDialog(
+        .alert(
             localization.string(.logOutConfirmTitle),
-            isPresented: $isShowingLogOutConfirm,
-            titleVisibility: .visible
+            isPresented: $isShowingLogOutConfirm
         ) {
             Button(localization.string(.logOut), role: .destructive) {
                 Task {
@@ -88,20 +106,17 @@ struct ProfileView: View {
         } message: {
             Text(localization.string(.logOutConfirmMessage))
         }
-        .confirmationDialog(
-            localization.string(.deleteAccountConfirmTitle),
+        .centeredConfirmationDialog(
             isPresented: $isShowingDeleteAccountConfirm,
-            titleVisibility: .visible
+            title: localization.string(.deleteAccountConfirmTitle),
+            message: localization.string(.deleteAccountConfirmMessage),
+            confirmTitle: localization.string(.deleteAccount),
+            cancelTitle: localization.string(.cancel)
         ) {
-            Button(localization.string(.deleteAccount), role: .destructive) {
-                Task {
-                    guard await viewModel.deleteAccount() else { return }
-                    onRequestAuthFlow()
-                }
+            Task {
+                guard await viewModel.deleteAccount() else { return }
+                onRequestAuthFlow()
             }
-            Button(localization.string(.cancel), role: .cancel) {}
-        } message: {
-            Text(localization.string(.deleteAccountConfirmMessage))
         }
     }
 
@@ -125,13 +140,14 @@ struct ProfileView: View {
                 Spacer()
 
                 Button(action: {
-                    // TODO: navigate to an Edit Profile screen once it exists.
+                    path.append(ProfileEditRoute.editProfile)
                 }) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(AppColor.textSecondary)
                 }
                 .accessibilityLabel(localization.string(.editProfile))
+                .accessibilityIdentifier("editProfileChevronButton")
 
             case .guest:
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -304,6 +320,8 @@ struct ProfileView: View {
         makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
         makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()) },
         makeAddressesViewModel: { AddressesViewModel(addressRepository: MockAddressRepository()) },
+        makeEditProfileViewModel: { EditProfileViewModel(userSession: session, authRepository: MockAuthRepository()) },
+        makeChangePasswordViewModel: { ChangePasswordViewModel(authRepository: MockAuthRepository()) },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )
@@ -318,6 +336,8 @@ struct ProfileView: View {
         makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
         makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()) },
         makeAddressesViewModel: { AddressesViewModel(addressRepository: MockAddressRepository()) },
+        makeEditProfileViewModel: { EditProfileViewModel(userSession: session, authRepository: MockAuthRepository()) },
+        makeChangePasswordViewModel: { ChangePasswordViewModel(authRepository: MockAuthRepository()) },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )

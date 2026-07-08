@@ -257,6 +257,16 @@ enum LocalizedKey: Hashable {
     case deleteAddressConfirmTitle
     case deleteAddressConfirmMessage
 
+    // MARK: - Edit Profile / Change Password
+    case saveChanges
+    case changePassword
+    case currentPassword
+    case updatePassword
+    case incorrectCurrentPassword
+    case passwordUpdatedTitle
+    case passwordUpdatedMessage
+    case ok
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -744,6 +754,26 @@ enum LocalizedKey: Hashable {
             return language == .az
                 ? "Bu ünvanı silmək istədiyinizə əminsiniz?"
                 : "Are you sure you want to delete this address?"
+
+        // MARK: Edit Profile / Change Password
+        case .saveChanges:
+            return language == .az ? "Dəyişiklikləri yadda saxla" : "Save Changes"
+        case .changePassword:
+            return language == .az ? "Şifrəni dəyiş" : "Change Password"
+        case .currentPassword:
+            return language == .az ? "Cari şifrə" : "Current Password"
+        case .updatePassword:
+            return language == .az ? "Şifrəni yenilə" : "Update Password"
+        case .incorrectCurrentPassword:
+            return language == .az ? "Cari şifrə yanlışdır" : "Current password is incorrect"
+        case .passwordUpdatedTitle:
+            return language == .az ? "Şifrə yeniləndi!" : "Password Updated!"
+        case .passwordUpdatedMessage:
+            return language == .az
+                ? "Şifrəniz uğurla yeniləndi."
+                : "Your password has been updated successfully."
+        case .ok:
+            return language == .az ? "Tamam" : "OK"
         }
     }
 

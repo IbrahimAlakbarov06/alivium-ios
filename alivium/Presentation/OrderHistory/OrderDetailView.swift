@@ -35,10 +35,9 @@ struct OrderDetailView: View {
         .background(AuthBackground())
         .navigationTitle(localization.string(.orderDetailTitle))
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog(
+        .alert(
             localization.string(.cancelOrderConfirmTitle),
-            isPresented: $isShowingCancelConfirm,
-            titleVisibility: .visible
+            isPresented: $isShowingCancelConfirm
         ) {
             Button(localization.string(.cancelOrder), role: .destructive) {
                 Task { await viewModel.cancelOrder() }
