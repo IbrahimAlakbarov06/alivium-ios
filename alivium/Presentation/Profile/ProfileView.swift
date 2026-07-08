@@ -20,6 +20,16 @@ enum ProfileEditRoute: Hashable {
     case changePassword
 }
 
+/// Not `private` — `OrderDetailView` pushes this directly onto the shared `path` from its
+/// "Rate Product" tap target. A dedicated wrapper around `Product` rather than pushing `Product`
+/// itself, since `Product.self` is already reserved for Product Detail's own push everywhere in
+/// the app (Home, Search, Cart, Wishlist, and now Order Detail's row tap here too) —
+/// `.navigationDestination(for:)` can only resolve one destination per pushed type, so reusing it
+/// for Rate Product too would collide with Product Detail's.
+struct RateProductRoute: Hashable {
+    let product: Product
+}
+
 struct ProfileView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: ProfileViewModel
@@ -30,6 +40,7 @@ struct ProfileView: View {
     let makeEditProfileViewModel: () -> EditProfileViewModel
     let makeChangePasswordViewModel: () -> ChangePasswordViewModel
     let makeRateProductViewModel: (Product) -> RateProductViewModel
+    let makeProductDetailViewModel: (Product) -> ProductDetailViewModel
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var isShowingLogOutConfirm = false
     @State private var isShowingDeleteAccountConfirm = false
@@ -93,7 +104,14 @@ struct ProfileView: View {
                 }
             }
             .navigationDestination(for: Product.self) { product in
-                RateProductView(viewModel: makeRateProductViewModel(product))
+                ProductDetailView(
+                    viewModel: makeProductDetailViewModel(product),
+                    makeProductDetailViewModel: makeProductDetailViewModel,
+                    onRequestAuthFlow: onRequestAuthFlow
+                )
+            }
+            .navigationDestination(for: RateProductRoute.self) { route in
+                RateProductView(viewModel: makeRateProductViewModel(route.product))
             }
         }
         .alert(
@@ -331,6 +349,17 @@ struct ProfileView: View {
         makeRateProductViewModel: { product in
             RateProductViewModel(product: product, reviewRepository: MockReviewRepository(), userSession: session)
         },
+        makeProductDetailViewModel: { product in
+            ProductDetailViewModel(
+                product: product,
+                productRepository: MockProductRepository(),
+                reviewRepository: MockReviewRepository(),
+                cartRepository: MockCartRepository(),
+                wishlistRepository: MockWishlistRepository(),
+                cartBadgeStore: CartBadgeStore(),
+                userSession: session
+            )
+        },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )
@@ -351,6 +380,17 @@ struct ProfileView: View {
         makeChangePasswordViewModel: { ChangePasswordViewModel(authRepository: MockAuthRepository()) },
         makeRateProductViewModel: { product in
             RateProductViewModel(product: product, reviewRepository: MockReviewRepository(), userSession: session)
+        },
+        makeProductDetailViewModel: { product in
+            ProductDetailViewModel(
+                product: product,
+                productRepository: MockProductRepository(),
+                reviewRepository: MockReviewRepository(),
+                cartRepository: MockCartRepository(),
+                wishlistRepository: MockWishlistRepository(),
+                cartBadgeStore: CartBadgeStore(),
+                userSession: session
+            )
         },
         onRequestAuthFlow: {},
         onBrowseHome: {}

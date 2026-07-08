@@ -127,6 +127,7 @@ struct MainTabView: View {
                 makeEditProfileViewModel: makeEditProfileViewModel,
                 makeChangePasswordViewModel: makeChangePasswordViewModel,
                 makeRateProductViewModel: makeRateProductViewModel,
+                makeProductDetailViewModel: makeProductDetailViewModel,
                 onRequestAuthFlow: onLogOut,
                 onBrowseHome: { selectedTab = .home }
             )

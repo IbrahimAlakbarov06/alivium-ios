@@ -166,7 +166,10 @@ struct OrderDetailView: View {
 
             VStack(spacing: AppSpacing.md) {
                 ForEach(order.items) { item in
-                    OrderLineItemRow(item: item, ratingState: ratingState(for: item))
+                    NavigationLink(value: item.product) {
+                        OrderLineItemRow(item: item, ratingState: ratingState(for: item))
+                    }
+                    .buttonStyle(.plain)
                     if item.id != order.items.last?.id {
                         Divider()
                     }
@@ -187,7 +190,7 @@ struct OrderDetailView: View {
         if viewModel.ratedProductIds.contains(item.product.id) {
             return .rated
         }
-        return .notRated(onTap: { path.append(item.product) })
+        return .notRated(onTap: { path.append(RateProductRoute(product: item.product)) })
     }
 
     // MARK: - Address
