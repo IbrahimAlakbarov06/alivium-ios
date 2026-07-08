@@ -29,6 +29,7 @@ struct ProfileView: View {
     let makeAddressesViewModel: () -> AddressesViewModel
     let makeEditProfileViewModel: () -> EditProfileViewModel
     let makeChangePasswordViewModel: () -> ChangePasswordViewModel
+    let makeRateProductViewModel: (Product) -> RateProductViewModel
     @AppStorage("pushNotificationsEnabled") private var pushNotificationsEnabled = true
     @State private var isShowingLogOutConfirm = false
     @State private var isShowingDeleteAccountConfirm = false
@@ -81,7 +82,7 @@ struct ProfileView: View {
                 )
             }
             .navigationDestination(for: Order.self) { order in
-                OrderDetailView(viewModel: makeOrderDetailViewModel(order))
+                OrderDetailView(viewModel: makeOrderDetailViewModel(order), path: $path)
             }
             .navigationDestination(for: ProfileEditRoute.self) { route in
                 switch route {
@@ -90,6 +91,9 @@ struct ProfileView: View {
                 case .changePassword:
                     ChangePasswordView(viewModel: makeChangePasswordViewModel())
                 }
+            }
+            .navigationDestination(for: Product.self) { product in
+                RateProductView(viewModel: makeRateProductViewModel(product))
             }
         }
         .alert(
@@ -318,10 +322,15 @@ struct ProfileView: View {
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
         chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
         makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
-        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()) },
+        makeOrderDetailViewModel: { order in
+            OrderDetailViewModel(order: order, orderRepository: MockOrderRepository(), reviewRepository: MockReviewRepository())
+        },
         makeAddressesViewModel: { AddressesViewModel(addressRepository: MockAddressRepository()) },
         makeEditProfileViewModel: { EditProfileViewModel(userSession: session, authRepository: MockAuthRepository()) },
         makeChangePasswordViewModel: { ChangePasswordViewModel(authRepository: MockAuthRepository()) },
+        makeRateProductViewModel: { product in
+            RateProductViewModel(product: product, reviewRepository: MockReviewRepository(), userSession: session)
+        },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )
@@ -334,10 +343,15 @@ struct ProfileView: View {
         viewModel: ProfileViewModel(authRepository: MockAuthRepository(), userSession: session),
         chatViewModel: ChatViewModel(chatRepository: MockChatRepository()),
         makeOrderHistoryViewModel: { OrderHistoryViewModel(orderRepository: MockOrderRepository(), userSession: session) },
-        makeOrderDetailViewModel: { order in OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()) },
+        makeOrderDetailViewModel: { order in
+            OrderDetailViewModel(order: order, orderRepository: MockOrderRepository(), reviewRepository: MockReviewRepository())
+        },
         makeAddressesViewModel: { AddressesViewModel(addressRepository: MockAddressRepository()) },
         makeEditProfileViewModel: { EditProfileViewModel(userSession: session, authRepository: MockAuthRepository()) },
         makeChangePasswordViewModel: { ChangePasswordViewModel(authRepository: MockAuthRepository()) },
+        makeRateProductViewModel: { product in
+            RateProductViewModel(product: product, reviewRepository: MockReviewRepository(), userSession: session)
+        },
         onRequestAuthFlow: {},
         onBrowseHome: {}
     )

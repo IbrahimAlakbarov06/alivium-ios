@@ -122,7 +122,7 @@ final class AppContainer {
     }
 
     func makeOrderDetailViewModel(for order: Order) -> OrderDetailViewModel {
-        OrderDetailViewModel(order: order, orderRepository: orderRepository)
+        OrderDetailViewModel(order: order, orderRepository: orderRepository, reviewRepository: reviewRepository)
     }
 
     func makeAddressesViewModel() -> AddressesViewModel {
@@ -135,6 +135,10 @@ final class AppContainer {
 
     func makeChangePasswordViewModel() -> ChangePasswordViewModel {
         ChangePasswordViewModel(authRepository: authRepository)
+    }
+
+    func makeRateProductViewModel(for product: Product) -> RateProductViewModel {
+        RateProductViewModel(product: product, reviewRepository: reviewRepository, userSession: userSession)
     }
 
     func makeNotificationsViewModel() -> NotificationsViewModel {

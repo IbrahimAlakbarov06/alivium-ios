@@ -54,7 +54,7 @@ struct ReviewRow: View {
 
 #Preview {
     ReviewRow(review: Review(
-        id: "1", reviewerName: "Aysel M.", rating: 5,
+        id: "1", productId: "p-1", reviewerName: "Aysel M.", rating: 5,
         text: "The fabric feels so much more expensive than the price.",
         date: .now
     ))

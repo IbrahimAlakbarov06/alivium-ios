@@ -9,7 +9,15 @@ import SwiftUI
 /// a plain "x2" quantity label instead of a `QuantityStepper`, and no remove button, since a
 /// placed order's line items can't be edited.
 struct OrderLineItemRow: View {
+    @Environment(LocalizationManager.self) private var localization
     let item: CartItem
+    /// `nil` when the order isn't Delivered — no rating UI at all for any other status.
+    var ratingState: RatingState? = nil
+
+    enum RatingState {
+        case notRated(onTap: () -> Void)
+        case rated
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
@@ -37,7 +45,37 @@ struct OrderLineItemRow: View {
                         .foregroundStyle(AppColor.textSecondary)
                 }
                 .padding(.top, 2)
+
+                if let ratingState {
+                    ratingFooter(ratingState)
+                        .padding(.top, AppSpacing.xxs)
+                }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func ratingFooter(_ state: RatingState) -> some View {
+        switch state {
+        case .notRated(let onTap):
+            Button(action: onTap) {
+                HStack(spacing: AppSpacing.xxs) {
+                    Image(systemName: "star")
+                    Text(localization.string(.rateProduct))
+                }
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColor.primary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("rateProductButton-\(item.product.id)")
+        case .rated:
+            HStack(spacing: AppSpacing.xxs) {
+                Image(systemName: "star.fill")
+                    .foregroundStyle(AppColor.accent)
+                Text(localization.string(.rated))
+            }
+            .font(AppTypography.caption)
+            .foregroundStyle(AppColor.textSecondary)
         }
     }
 }
@@ -53,7 +91,9 @@ struct OrderLineItemRow: View {
             ),
             selectedVariant: ProductVariant(id: "Ivory-M", size: "M", color: "Ivory", stockQuantity: 8),
             quantity: 2
-        )
+        ),
+        ratingState: .notRated(onTap: {})
     )
     .padding()
+    .environment(LocalizationManager())
 }

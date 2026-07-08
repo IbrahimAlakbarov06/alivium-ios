@@ -10,6 +10,7 @@ import SwiftUI
 struct OrderDetailView: View {
     @Environment(LocalizationManager.self) private var localization
     @State var viewModel: OrderDetailViewModel
+    @Binding var path: NavigationPath
     @State private var isShowingCancelConfirm = false
 
     private var order: Order { viewModel.order }
@@ -35,6 +36,10 @@ struct OrderDetailView: View {
         .background(AuthBackground())
         .navigationTitle(localization.string(.orderDetailTitle))
         .navigationBarTitleDisplayMode(.inline)
+        // Plain `.onAppear` (not `.task`, which only fires once for this view's lifetime) so
+        // coming back from Rate Product picks up its just-submitted review — matches
+        // `OrderHistoryView`'s identical reasoning for reflecting a cancellation on return.
+        .onAppear { Task { await viewModel.loadRatedProducts() } }
         .alert(
             localization.string(.cancelOrderConfirmTitle),
             isPresented: $isShowingCancelConfirm
@@ -161,7 +166,7 @@ struct OrderDetailView: View {
 
             VStack(spacing: AppSpacing.md) {
                 ForEach(order.items) { item in
-                    OrderLineItemRow(item: item)
+                    OrderLineItemRow(item: item, ratingState: ratingState(for: item))
                     if item.id != order.items.last?.id {
                         Divider()
                     }
@@ -172,6 +177,17 @@ struct OrderDetailView: View {
         .background(AppColor.background)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg))
         .shadow(color: AppColor.primaryDeep.opacity(0.06), radius: 10, x: 0, y: 4)
+    }
+
+    /// `nil` for any non-Delivered order — `OrderLineItemRow` shows no rating UI at all in that
+    /// case, matching how the "Rate Product" action only ever makes sense once an order has
+    /// actually arrived.
+    private func ratingState(for item: CartItem) -> OrderLineItemRow.RatingState? {
+        guard order.status == .delivered else { return nil }
+        if viewModel.ratedProductIds.contains(item.product.id) {
+            return .rated
+        }
+        return .notRated(onTap: { path.append(item.product) })
     }
 
     // MARK: - Address
@@ -316,8 +332,10 @@ struct OrderDetailView: View {
                     shippingMethod: .standard, paymentMethod: .cashOnDelivery, status: .shipped,
                     subtotal: Money(189.00), placedAt: Date()
                 ),
-                orderRepository: MockOrderRepository()
-            )
+                orderRepository: MockOrderRepository(),
+                reviewRepository: MockReviewRepository()
+            ),
+            path: .constant(NavigationPath())
         )
     }
     .environment(LocalizationManager())

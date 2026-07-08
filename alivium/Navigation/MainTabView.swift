@@ -36,6 +36,7 @@ struct MainTabView: View {
     private let makeAddressesViewModel: () -> AddressesViewModel
     private let makeEditProfileViewModel: () -> EditProfileViewModel
     private let makeChangePasswordViewModel: () -> ChangePasswordViewModel
+    private let makeRateProductViewModel: (Product) -> RateProductViewModel
     private let cartBadgeStore: CartBadgeStore
 
     init(container: AppContainer, onLogOut: @escaping () -> Void) {
@@ -58,6 +59,7 @@ struct MainTabView: View {
         self.makeAddressesViewModel = { container.makeAddressesViewModel() }
         self.makeEditProfileViewModel = { container.makeEditProfileViewModel() }
         self.makeChangePasswordViewModel = { container.makeChangePasswordViewModel() }
+        self.makeRateProductViewModel = { container.makeRateProductViewModel(for: $0) }
         self.cartBadgeStore = container.cartBadgeStore
     }
 
@@ -124,6 +126,7 @@ struct MainTabView: View {
                 makeAddressesViewModel: makeAddressesViewModel,
                 makeEditProfileViewModel: makeEditProfileViewModel,
                 makeChangePasswordViewModel: makeChangePasswordViewModel,
+                makeRateProductViewModel: makeRateProductViewModel,
                 onRequestAuthFlow: onLogOut,
                 onBrowseHome: { selectedTab = .home }
             )

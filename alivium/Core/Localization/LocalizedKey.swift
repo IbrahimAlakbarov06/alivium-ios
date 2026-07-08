@@ -267,6 +267,18 @@ enum LocalizedKey: Hashable {
     case passwordUpdatedMessage
     case ok
 
+    // MARK: - Rate Product
+    case rateProduct
+    case rated
+    case reviewTextPlaceholder
+    case addPhoto
+    case takePhoto
+    case chooseFromLibrary
+    case removePhoto
+    case submitReview
+    case reviewSubmittedTitle
+    case reviewSubmittedMessage
+
     func value(for language: AppLanguage) -> String {
         switch self {
         // MARK: Onboarding
@@ -774,6 +786,32 @@ enum LocalizedKey: Hashable {
                 : "Your password has been updated successfully."
         case .ok:
             return language == .az ? "Tamam" : "OK"
+
+        // MARK: Rate Product
+        case .rateProduct:
+            return language == .az ? "Məhsulu qiymətləndir" : "Rate Product"
+        case .rated:
+            return language == .az ? "Qiymətləndirildi" : "Rated"
+        case .reviewTextPlaceholder:
+            return language == .az
+                ? "Bu məhsul haqqında fikirlərinizi bölüşün..."
+                : "Share your thoughts about this product..."
+        case .addPhoto:
+            return language == .az ? "Şəkil əlavə et" : "Add Photo"
+        case .takePhoto:
+            return language == .az ? "Şəkil çək" : "Take Photo"
+        case .chooseFromLibrary:
+            return language == .az ? "Qalereyadan seç" : "Choose from Library"
+        case .removePhoto:
+            return language == .az ? "Şəkli sil" : "Remove Photo"
+        case .submitReview:
+            return language == .az ? "Rəyi göndər" : "Submit Review"
+        case .reviewSubmittedTitle:
+            return language == .az ? "Təşəkkürlər!" : "Thank You!"
+        case .reviewSubmittedMessage:
+            return language == .az
+                ? "Rəyiniz uğurla göndərildi."
+                : "Your review has been submitted successfully."
         }
     }
 

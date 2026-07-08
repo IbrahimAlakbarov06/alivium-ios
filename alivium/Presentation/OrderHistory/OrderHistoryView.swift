@@ -110,7 +110,14 @@ struct OrderHistoryView: View {
             onRequestAuthFlow: {}
         )
         .navigationDestination(for: Order.self) { order in
-            OrderDetailView(viewModel: OrderDetailViewModel(order: order, orderRepository: MockOrderRepository()))
+            OrderDetailView(
+                viewModel: OrderDetailViewModel(
+                    order: order,
+                    orderRepository: MockOrderRepository(),
+                    reviewRepository: MockReviewRepository()
+                ),
+                path: .constant(NavigationPath())
+            )
         }
     }
     .environment(LocalizationManager())
