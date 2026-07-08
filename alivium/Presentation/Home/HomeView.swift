@@ -90,12 +90,6 @@ struct HomeView: View {
 
     private var topBar: some View {
         HStack {
-            Image(systemName: "line.3.horizontal")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(AppColor.textPrimary)
-
-            Spacer()
-
             Text("ALIVIUM")
                 .font(.system(size: 20, weight: .bold))
                 .tracking(2)
