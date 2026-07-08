@@ -1573,6 +1573,320 @@ final class aliviumUITests: XCTestCase {
     }
 
     @MainActor
+    func testOnboardingFullWalkthroughAndSkip() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset-onboarding"]
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // --- Walk all three pages via Next, ending on Get Started ---
+        let page1Kicker = app.staticTexts["SEÇİLMİŞ KOLLEKSİYA"].firstMatch
+        XCTAssertTrue(page1Kicker.waitForExistence(timeout: 5), "Expected Onboarding page 1 after a fresh (reset) launch")
+        XCTAssertTrue(app.buttons["Keç"].firstMatch.exists, "Expected Skip visible on a non-final page")
+        save("onboarding_1_page1")
+
+        app.buttons["Növbəti"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["FƏRDİ TƏRZ"].firstMatch.waitForExistence(timeout: 5), "Expected page 2's content after Next")
+        save("onboarding_2_page2")
+
+        app.buttons["Növbəti"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["QÜSURSUZ ÇATDIRILMA"].firstMatch.waitForExistence(timeout: 5), "Expected page 3's content after Next")
+        XCTAssertFalse(app.buttons["Keç"].firstMatch.exists, "Skip should be hidden on the final page")
+        let getStartedButton = app.buttons["Başlayaq"].firstMatch
+        XCTAssertTrue(getStartedButton.exists, "Expected the Next button to relabel to Get Started on the final page")
+        save("onboarding_3_page3")
+
+        getStartedButton.tap()
+        XCTAssertTrue(app.buttons["Qonaq kimi davam edin"].firstMatch.waitForExistence(timeout: 5), "Expected Get Started to land on Login")
+        save("onboarding_4_login_via_get_started")
+
+        // --- Skip from page 1 should also land directly on Login ---
+        app.terminate()
+        app.launchArguments = ["--uitest-reset-onboarding"]
+        app.launch()
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5), "Expected a fresh reset to show Onboarding page 1 again")
+        skipButton.tap()
+        XCTAssertTrue(app.buttons["Qonaq kimi davam edin"].firstMatch.waitForExistence(timeout: 5), "Expected Skip to land on Login")
+        save("onboarding_5_login_via_skip")
+    }
+
+    @MainActor
+    func testFullRegisterAndEmailVerificationFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let signUpButton = app.buttons["Qeydiyyat"].firstMatch
+        XCTAssertTrue(signUpButton.waitForExistence(timeout: 5), "Expected Login's Sign Up footer link")
+        signUpButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Hesabınızı yaradın"].firstMatch.waitForExistence(timeout: 5), "Expected Register screen")
+        save("register_1_form")
+
+        app.textFields["Ad Soyad"].firstMatch.tap()
+        app.textFields["Ad Soyad"].firstMatch.typeText("Test User")
+
+        app.textFields["E-poçt ünvanı"].firstMatch.tap()
+        app.textFields["E-poçt ünvanı"].firstMatch.typeText("testuser@alivium.com")
+
+        app.secureTextFields["Şifrə"].firstMatch.tap()
+        app.secureTextFields["Şifrə"].firstMatch.typeText("Password123!")
+
+        app.secureTextFields["Şifrəni təsdiqləyin"].firstMatch.tap()
+        app.secureTextFields["Şifrəni təsdiqləyin"].firstMatch.typeText("Password123!")
+
+        app.buttons["Hesab yarat"].firstMatch.tap()
+
+        XCTAssertTrue(app.staticTexts["E-poçtunuzu təsdiqləyin"].firstMatch.waitForExistence(timeout: 5), "Expected the email-verification step after Register succeeds")
+        save("register_2_verification_code")
+
+        for index in 0..<6 {
+            let cell = app.textFields["otpCell\(index)"].firstMatch
+            cell.tap()
+            cell.typeText("\(index + 1)")
+        }
+
+        app.buttons["Təsdiqlə"].firstMatch.tap()
+
+        XCTAssertTrue(app.staticTexts["ALIVIUM"].firstMatch.waitForExistence(timeout: 5), "Expected email verification to authenticate straight into the tab shell")
+        save("register_3_authenticated_home")
+    }
+
+    @MainActor
+    func testForgotPasswordResetFlowWithBackNavigation() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let forgotPasswordLink = app.buttons["Şifrəni unutmusunuz?"].firstMatch
+        XCTAssertTrue(forgotPasswordLink.waitForExistence(timeout: 5))
+        forgotPasswordLink.tap()
+
+        XCTAssertTrue(app.staticTexts["Şifrənizi yeniləyin"].firstMatch.waitForExistence(timeout: 5), "Expected Forgot Password screen")
+
+        // --- Back chevron here is a real destination, not a dead end ---
+        app.buttons["Geri"].firstMatch.tap()
+        XCTAssertTrue(forgotPasswordLink.waitForExistence(timeout: 5), "Expected back chevron to return to Login")
+
+        forgotPasswordLink.tap()
+        XCTAssertTrue(app.staticTexts["Şifrənizi yeniləyin"].firstMatch.waitForExistence(timeout: 5))
+        save("forgotPassword_1_form")
+
+        app.textFields["E-poçt ünvanı"].firstMatch.tap()
+        app.textFields["E-poçt ünvanı"].firstMatch.typeText("aysel@alivium.com")
+        app.buttons["Linki göndər"].firstMatch.tap()
+
+        XCTAssertTrue(app.staticTexts["Sıfırlama kodunu daxil edin"].firstMatch.waitForExistence(timeout: 5), "Expected the reset-code verification step")
+        save("forgotPassword_2_verification_code")
+
+        // --- Back chevron here returns to Forgot Password, not further back to Login ---
+        app.buttons["Geri"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Şifrənizi yeniləyin"].firstMatch.waitForExistence(timeout: 5), "Expected back chevron to return to Forgot Password, not Login")
+
+        app.buttons["Linki göndər"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Sıfırlama kodunu daxil edin"].firstMatch.waitForExistence(timeout: 5))
+
+        for index in 0..<6 {
+            let cell = app.textFields["otpCell\(index)"].firstMatch
+            cell.tap()
+            cell.typeText("\(index + 1)")
+        }
+        app.buttons["Təsdiqlə"].firstMatch.tap()
+
+        XCTAssertTrue(app.staticTexts["Yeni şifrə təyin edin"].firstMatch.waitForExistence(timeout: 5), "Expected the final Create New Password step")
+        save("forgotPassword_3_create_new_password")
+
+        // --- Back chevron here returns to the verification step, not Forgot Password ---
+        app.buttons["Geri"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Sıfırlama kodunu daxil edin"].firstMatch.waitForExistence(timeout: 5), "Expected back chevron to return to the verification step")
+
+        for index in 0..<6 {
+            let cell = app.textFields["otpCell\(index)"].firstMatch
+            cell.tap()
+            cell.typeText("\(index + 1)")
+        }
+        app.buttons["Təsdiqlə"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Yeni şifrə təyin edin"].firstMatch.waitForExistence(timeout: 5))
+
+        app.secureTextFields["Yeni şifrə"].firstMatch.tap()
+        app.secureTextFields["Yeni şifrə"].firstMatch.typeText("NewPassword123!")
+        app.secureTextFields["Şifrəni təsdiqləyin"].firstMatch.tap()
+        app.secureTextFields["Şifrəni təsdiqləyin"].firstMatch.typeText("NewPassword123!")
+
+        app.buttons["Şifrəni yadda saxla"].firstMatch.tap()
+
+        XCTAssertTrue(app.staticTexts["Xoş gəlmisiniz"].firstMatch.waitForExistence(timeout: 5), "Expected the completed reset flow to land back on a fresh Login screen")
+        save("forgotPassword_4_back_to_login")
+    }
+
+    @MainActor
+    func testRateProductFlowFromDeliveredOrder() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        let emailField = app.textFields["E-poçt ünvanı"].firstMatch
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText("aysel@alivium.com")
+
+        let passwordField = app.secureTextFields["Şifrə"].firstMatch
+        passwordField.tap()
+        passwordField.typeText("password123")
+        app.buttons["Daxil ol"].firstMatch.tap()
+
+        let notNowButton = app.sheets.buttons["Not Now"].firstMatch
+        if notNowButton.waitForExistence(timeout: 3) {
+            notNowButton.tap()
+            sleep(1)
+        }
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        tabBar.buttons["Profil"].tap()
+
+        var orderHistoryRow = app.buttons["Sifariş tarixçəsi"].firstMatch
+        if !orderHistoryRow.waitForExistence(timeout: 3) {
+            tabBar.buttons["Profil"].tap()
+            orderHistoryRow = app.buttons["Sifariş tarixçəsi"].firstMatch
+        }
+        XCTAssertTrue(orderHistoryRow.waitForExistence(timeout: 5))
+        orderHistoryRow.tap()
+
+        let deliveredOrderRow = app.buttons["orderHistoryRow-order-1"].firstMatch
+        XCTAssertTrue(deliveredOrderRow.waitForExistence(timeout: 5), "Expected the seeded Delivered order")
+        deliveredOrderRow.tap()
+
+        let rateButton = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'rateProductButton-'")).firstMatch
+        XCTAssertTrue(rateButton.waitForExistence(timeout: 5), "Expected a Rate Product action on a Delivered order's line item")
+        save("rateProduct_1_order_detail")
+        // This Delivered order has two line items — only this one gets rated below, so the
+        // later "gone" check must target this exact identifier, not "any Rate Product button".
+        let ratedItemButtonIdentifier = rateButton.identifier
+        rateButton.tap()
+
+        XCTAssertTrue(app.navigationBars["Məhsulu qiymətləndir"].firstMatch.waitForExistence(timeout: 5), "Expected Rate Product screen")
+        save("rateProduct_2_form")
+
+        let submitButton = app.buttons["submitReviewButton"].firstMatch
+        XCTAssertFalse(submitButton.isEnabled, "Expected Submit disabled before any star is picked")
+
+        app.images["ratingStar-4"].firstMatch.tap()
+        XCTAssertTrue(submitButton.isEnabled, "Expected Submit enabled once a star rating is picked")
+
+        let reviewTextView = app.textViews.firstMatch
+        reviewTextView.tap()
+        reviewTextView.typeText("Beautiful fabric and true to size.")
+        save("rateProduct_3_filled")
+
+        submitButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Təşəkkürlər!"].firstMatch.waitForExistence(timeout: 5), "Expected the review-submitted confirmation")
+        save("rateProduct_4_submitted")
+        app.alerts.buttons["Tamam"].firstMatch.tap()
+
+        XCTAssertTrue(app.staticTexts["Qiymətləndirildi"].firstMatch.waitForExistence(timeout: 5), "Expected the line item to show Rated after submitting, back on Order Detail")
+        XCTAssertFalse(
+            app.buttons[ratedItemButtonIdentifier].firstMatch.exists,
+            "Expected the Rate Product action to be gone for the now-rated item specifically"
+        )
+        save("rateProduct_5_marked_rated")
+    }
+
+    @MainActor
+    func testLanguageRendersCorrectlyAcrossHomeSearchAndTabBar() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func save(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        let skipButton = app.buttons["Keç"].firstMatch
+        _ = skipButton.waitForExistence(timeout: 5)
+        if skipButton.exists { skipButton.tap() }
+
+        app.buttons["Qonaq kimi davam edin"].firstMatch.tap()
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        XCTAssertTrue(tabBar.buttons["Əsas"].exists)
+        XCTAssertTrue(tabBar.buttons["Axtar"].exists)
+        XCTAssertTrue(tabBar.buttons["Seçilmişlər"].exists)
+        XCTAssertTrue(tabBar.buttons["Səbət"].exists)
+        XCTAssertTrue(tabBar.buttons["Profil"].exists)
+        sleep(1)
+        save("language_1_az_tabbar")
+
+        tabBar.buttons["Profil"].tap()
+        app.staticTexts["EN"].firstMatch.tap()
+        sleep(1)
+
+        XCTAssertTrue(tabBar.buttons["Home"].waitForExistence(timeout: 5), "Expected the tab bar to relabel to English")
+        XCTAssertTrue(tabBar.buttons["Search"].exists)
+        XCTAssertTrue(tabBar.buttons["Wishlist"].exists)
+        XCTAssertTrue(tabBar.buttons["Cart"].exists)
+        XCTAssertTrue(tabBar.buttons["Profile"].exists)
+        save("language_2_en_tabbar")
+
+        tabBar.buttons["Home"].tap()
+        XCTAssertTrue(app.staticTexts["Featured Products"].firstMatch.waitForExistence(timeout: 5), "Expected Home's rail title in English")
+        save("language_3_en_home")
+
+        tabBar.buttons["Search"].tap()
+        XCTAssertTrue(app.textFields["Search dresses, shoes, bags..."].firstMatch.waitForExistence(timeout: 5), "Expected Search's placeholder in English")
+        save("language_4_en_search")
+
+        // --- Revert to AZ so later tests in the suite see the language they expect ---
+        tabBar.buttons["Profile"].tap()
+        app.staticTexts["AZ"].firstMatch.tap()
+        sleep(1)
+        XCTAssertTrue(tabBar.buttons["Əsas"].waitForExistence(timeout: 5), "Expected language to revert back to Azerbaijani")
+        save("language_5_reverted_to_az")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

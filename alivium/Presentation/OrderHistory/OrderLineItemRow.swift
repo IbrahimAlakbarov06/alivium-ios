@@ -8,6 +8,14 @@ import SwiftUI
 /// Read-only counterpart to `CartLineItemRow` — same image + name + variant + price layout, but
 /// a plain "x2" quantity label instead of a `QuantityStepper`, and no remove button, since a
 /// placed order's line items can't be edited.
+///
+/// Pushes Product Detail itself (an internal `NavigationLink`) rather than letting the caller
+/// wrap the whole row, specifically so the "Rate Product" footer below can sit *outside* that
+/// link's label as a true sibling. Nesting the rating `Button` inside the same `NavigationLink`
+/// (as `CartLineItemRow`'s stepper/remove controls do successfully) was tried first, but here the
+/// tap was reliably swallowed by the enclosing link — it opened Product Detail instead of Rate
+/// Product. Rather than depend on that fragile nested-button-in-link resolution, the footer is
+/// kept structurally separate so there's no ambiguity for the OS to resolve.
 struct OrderLineItemRow: View {
     @Environment(LocalizationManager.self) private var localization
     let item: CartItem
@@ -20,36 +28,44 @@ struct OrderLineItemRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: AppSpacing.md) {
-            CatalogImage(name: item.product.primaryImageName)
-                .frame(width: 64, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
+        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+            NavigationLink(value: item.product) {
+                HStack(alignment: .top, spacing: AppSpacing.md) {
+                    CatalogImage(name: item.product.primaryImageName)
+                        .frame(width: 64, height: 64)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md))
 
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(item.product.name)
-                    .font(AppTypography.bodyEmphasis)
-                    .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(2)
+                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                        Text(item.product.name)
+                            .font(AppTypography.bodyEmphasis)
+                            .foregroundStyle(AppColor.textPrimary)
+                            .lineLimit(2)
 
-                if let variant = item.selectedVariant {
-                    Text("\(variant.size) · \(variant.color)")
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColor.textSecondary)
+                        if let variant = item.selectedVariant {
+                            Text("\(variant.size) · \(variant.color)")
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                        }
+
+                        HStack {
+                            PriceLabel(price: item.product.price, discountPrice: item.product.discountPrice)
+                            Spacer()
+                            Text("x\(item.quantity)")
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                        }
+                        .padding(.top, 2)
+                    }
                 }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
 
-                HStack {
-                    PriceLabel(price: item.product.price, discountPrice: item.product.discountPrice)
-                    Spacer()
-                    Text("x\(item.quantity)")
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColor.textSecondary)
-                }
-                .padding(.top, 2)
-
-                if let ratingState {
-                    ratingFooter(ratingState)
-                        .padding(.top, AppSpacing.xxs)
-                }
+            if let ratingState {
+                ratingFooter(ratingState)
+                    // Lines up under the text column, past the 64pt image + its spacing.
+                    .padding(.leading, 64 + AppSpacing.md)
+                    .padding(.top, AppSpacing.xxs)
             }
         }
     }

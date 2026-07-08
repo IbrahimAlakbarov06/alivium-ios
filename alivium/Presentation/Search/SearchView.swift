@@ -71,10 +71,6 @@ struct SearchView: View {
                 .foregroundStyle(AppColor.textPrimary)
 
             Spacer()
-
-            Image(systemName: "bell")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(AppColor.textPrimary)
         }
     }
 

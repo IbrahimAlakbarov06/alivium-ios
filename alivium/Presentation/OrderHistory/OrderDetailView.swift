@@ -166,10 +166,7 @@ struct OrderDetailView: View {
 
             VStack(spacing: AppSpacing.md) {
                 ForEach(order.items) { item in
-                    NavigationLink(value: item.product) {
-                        OrderLineItemRow(item: item, ratingState: ratingState(for: item))
-                    }
-                    .buttonStyle(.plain)
+                    OrderLineItemRow(item: item, ratingState: ratingState(for: item))
                     if item.id != order.items.last?.id {
                         Divider()
                     }
